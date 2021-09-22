@@ -3,7 +3,8 @@
     "save_at" : "output_diaid_pasef",
     "PTM": "None",
     "library_name": "./diaid_pasef/input/test_libraries/20201125_Phospho_CE_energies_Spectronaut_library.xls",
-    "analysis_software": "Spectronaut_library"
+    "analysis_software": "Spectronaut_library",
+    "diaPASEF_method_only_used_for_method_evaluation": "./diaid_pasef/static/DIAParameterspy3TC.txt"
   },
   "method_parameters": {
     "mz": [300, 1200],
@@ -11,7 +12,8 @@
     "num_dia_pasef_scans": 12,
     "im_steps": 2,
     "overlap": 0,
-    "shift_of_final_method": 0.022
+    "shift_of_final_method": 0.022,
+    "scan_area_A1_A2_B1_B2_only_used_for_specific_diaPASEF": [0.7, 0.9, 1.1, 1.5]
   },
   "graphs": {
     "plot_mz": [250, 1250],

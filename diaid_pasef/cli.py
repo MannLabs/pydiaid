@@ -55,3 +55,36 @@ def create_window_scheme(parameter_file_name):
     with open(parameter_file_name, "r") as infile:
         method_conf = json.load(infile)
     diaid_pasef.main.run_all(method_conf)
+
+
+@run.command("specific_diaPASEF", help="Create only a specific diaPASEF method.")
+@click.option(
+    "parameter_file_name",
+    "-p",
+    help=f"Parameter file (check out {DEFAULT_FILE} for an example)",
+    default=DEFAULT_FILE,
+    required=True,
+)
+def create_diaPASEF_method(parameter_file_name,):
+    import diaid_pasef.main
+    import json
+    print(f"Using parameter file {parameter_file_name}")
+    with open(parameter_file_name, "r") as infile:
+        method_conf = json.load(infile)
+    diaid_pasef.main.library_plus_create_methods(method_conf)
+
+@run.command("method_evaluation", help="Evaluate a specific diaPASEF method.")
+@click.option(
+    "parameter_file_name",
+    "-p",
+    help=f"Parameter file (check out {DEFAULT_FILE} for an example)",
+    default=DEFAULT_FILE,
+    required=True,
+)
+def create_diaPASEF_method(parameter_file_name,):
+    import diaid_pasef.main
+    import json
+    print(f"Using parameter file {parameter_file_name}")
+    with open(parameter_file_name, "r") as infile:
+        method_conf = json.load(infile)
+    diaid_pasef.main.library_plus_evaluate_method(method_conf)

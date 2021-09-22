@@ -15,13 +15,84 @@ import skopt
 
 # todo: accelerate slow steps: loading of proteomics library, kernel density
 # estimation, Bayesian optimization
-# todo: availability as pip installer
 # todo: function for creating specific method: specific A1, A2, B1, B2
 # todo: function for evaluation of own method: plot method on to of mz/IM
 # plain, calculate coverage
 
 # todo: make this a parameter
 # DefaultDiaParameters  = [....]
+def library_plus_evaluate_method(
+    method_conf: dict
+) -> None:
+    method_parameters = method_conf["method_parameters"]
+    save_at = method_conf["input"]["save_at"]
+
+    folder_paths = [
+        save_at,
+        save_at+'/input_library',
+        save_at+'/final_method'
+        ]
+    create_folder(folder_paths)
+
+    xi, yi, zi, library = library_information(method_conf, save_at)
+
+    df_parameters_final = pd.read_csv(
+        method_conf["input"]["diaPASEF_method_only_used_for_method_evaluation"],
+        skiprows=4,
+        names=["MS Type", "Cycle Id", "Start IM", "End IM", "Start Mass", "End Mass", "CE"]
+    )
+
+    # save input_parameter as .csv
+    pd.DataFrame(
+        {
+        "column name": list(method_conf["input"].keys()) +
+            list(method_conf["method_parameters"].keys()) +
+            list(method_conf["graphs"].keys()),
+        "column value": list(method_conf["input"].values()) +
+            list(method_conf["method_parameters"].values()) +
+            list(method_conf["graphs"].values())
+        }
+    ).to_csv(save_at + '/final_method/input_parameters.csv', index=False)
+
+    final_method_information(df_parameters_final, xi, yi, zi, method_conf, save_at, library, method_parameters, None)
+
+    print("Method evaluated")
+
+
+def library_plus_create_methods(
+    method_conf: dict
+) -> None:
+    method_parameters = method_conf["method_parameters"]
+    save_at = method_conf["input"]["save_at"]
+    dim = method_parameters["scan_area_A1_A2_B1_B2_only_used_for_specific_diaPASEF"]
+
+    folder_paths = [
+        save_at,
+        save_at+'/input_library',
+        save_at+'/final_method'
+        ]
+    create_folder(folder_paths)
+
+    xi, yi, zi, library = library_information(method_conf, save_at)
+
+    df_parameters_final = create_final_method(
+        library,
+        method_parameters,
+        dim,
+        method_conf
+        )
+
+    # save input_parameter as .csv
+    pd.DataFrame(
+        {
+        "column name": list(method_conf["input"].keys()) +
+            list(method_conf["method_parameters"].keys()),
+        "column value": list(method_conf["input"].values()) +
+            list(method_conf["method_parameters"].values())
+        }
+    ).to_csv(save_at + '/final_method/input_parameters.csv', index=False)
+
+    print("Method created")
 
 
 def run_all(
@@ -40,17 +111,9 @@ def run_all(
         sub-functions.
 
     """
-    input_parameters = method_conf["input"]
     method_parameters = method_conf["method_parameters"]
     optimizer_parameters = method_conf["optimizer"]
-    graph_parameters = method_conf["graphs"]
     save_at = method_conf["input"]["save_at"]
-
-    library = loader.load_library(
-        method_conf["input"]["library_name"],
-        method_conf["input"]["analysis_software"],
-        method_conf["input"]["PTM"]
-        )
 
     folder_paths = [
         save_at, save_at+'/optimization_plots',
@@ -59,12 +122,121 @@ def run_all(
         ]
     create_folder(folder_paths)
 
+    xi, yi, zi, library = library_information(method_conf, save_at)
+
+    opt_result = optimization(library, method_parameters, xi, yi, zi, method_conf, optimizer_parameters)
+
+    df_parameters_final = create_final_method(
+        library,
+        method_parameters,
+        opt_result.x,
+        method_conf
+        )
+
+    # save input_parameter as .csv
+    pd.DataFrame(
+        {
+        "column name": list(method_conf["input"].keys()) +
+            list(method_conf["method_parameters"].keys()) +
+            list(method_conf["graphs"].keys()) +
+            list(method_conf["optimizer"].keys()),
+        "column value": list(method_conf["input"].values()) +
+            list(method_conf["method_parameters"].values()) +
+            list(method_conf["graphs"].values()) +
+            list(method_conf["optimizer"].values())
+        }
+    ).to_csv(save_at + '/final_method/input_parameters.csv', index=False)
+
+    final_method_information(df_parameters_final, xi, yi, zi, method_conf, save_at, library, method_parameters, opt_result)
+
+
+def final_method_information(df_parameters_final, xi, yi, zi, method_conf, save_at, library, method_parameters, opt_result):
+    # plot created method on top of kernel density estimation of library
+    graphs.plot_density_and_method(
+        df_parameters_final,
+        xi,
+        yi,
+        zi,
+        method_conf["graphs"],
+        save_at +'/final_method/Kernel_density_distribution_and_final_method.png'
+    )
+
+    # save parameters for method evaluation as .csv
+    dict_precursors_within_mz = method_evaluation.calculate_precursor_within_mz_range(
+        library,
+        method_parameters["mz"]
+    )
+    dict_precursors_coverage = method_evaluation.coverage(
+        df_parameters_final,
+        library
+    )
+    dict_evaluation_of_final_method = {
+        **dict_precursors_within_mz,
+        **dict_precursors_coverage
+    }
+
+    if opt_result is None:
+        next
+    else:
+        dict_evaluation_of_final_method["final A1, A2, B1, B2 values"] = str([
+            opt_result.x[0] + method_parameters["shift_of_final_method"],
+            opt_result.x[1] + method_parameters["shift_of_final_method"],
+            opt_result.x[2] + method_parameters["shift_of_final_method"],
+            opt_result.x[3] + method_parameters["shift_of_final_method"]]
+        )
+    pd.DataFrame({
+        "column name": list(dict_evaluation_of_final_method.keys()),
+        "column value": list(dict_evaluation_of_final_method.values())
+    }).to_csv(
+        save_at + '/final_method/parameters_to_evaluate_method.csv',
+        index=False)
+
+
+def library_information(method_conf, save_at):
+
+    library = loader.load_library(
+        method_conf["input"]["library_name"],
+        method_conf["input"]["analysis_software"],
+        method_conf["input"]["PTM"]
+        )
+
     # 1st calculate kernel density coordinates:
     xi, yi, zi = graphs.kernel_density_calculation(
         library,
         method_conf["graphs"]["numbins"]
         )
 
+    # plot important plots of the library to understand the method creation
+    # step
+    graphs.plot_precursor_distribution_as_histogram(
+        library, method_conf["graphs"],
+        save_at +
+        '/input_library/Histogram_precursor_distribution_in_library.png'
+        )
+    graphs.plot_density(
+        xi,
+        yi,
+        zi,
+        method_conf["graphs"],
+        save_at + '/input_library/Kernel_density_distribution_library.png')
+
+    # save library specific information
+    dict_charge_of_precursor = method_evaluation.calculate_percentage_multiple_charged_precursors(library)
+    pd.DataFrame(
+        {
+            "column name": list(dict_charge_of_precursor.keys()),
+            "column value": list(dict_charge_of_precursor.values())
+        }
+        ).to_csv(
+            save_at
+            + '/input_library/percentage_of_multiple_charged_precursors.csv',
+            index=False
+            )
+
+    return xi, yi, zi, library
+
+
+def optimization(library, method_parameters, xi, yi, zi, method_conf, optimizer_parameters):
     # Optimize method parameters Bayesian optimization using Gaussian process,
     # values should follow a multivariate gaussian curve
     opt_result = skopt.gp_minimize(
@@ -100,84 +272,8 @@ def run_all(
         optimizer_parameters,
         method_conf
         )
-    df_parameters_final = create_final_method(
-        library,
-        method_parameters,
-        opt_result.x,
-        method_conf
-        )
 
-    # save library specific information
-    dict_charge_of_precursor = method_evaluation.calculate_percentage_multiple_charged_precursors(library)
-    pd.DataFrame(
-        {
-            "column name": list(dict_charge_of_precursor.keys()),
-            "column value": list(dict_charge_of_precursor.values())
-        }
-        ).to_csv(
-            save_at
-            + '/input_library/percentage_of_multiple_charged_precursors.csv',
-            index=False
-            )
-
-    # plot important plots of the library to understand the method creation
-    # step
-    graphs.plot_precursor_distribution_as_histogram(
-        library, method_conf["graphs"],
-        save_at +
-        '/input_library/Histogram_precursor_distribution_in_library.png'
-        )
-    graphs.plot_density(
-        xi,
-        yi,
-        zi,
-        method_conf["graphs"],
-        save_at + '/input_library/Kernel_density_distribution_library.png')
-
-    # save input_parameter as .csv
-    pd.DataFrame(
-        {
-        "column name": list(method_conf["input"].keys()) +
-            list(method_conf["method_parameters"].keys()) +
-            list(method_conf["graphs"].keys()) +
-            list(method_conf["optimizer"].keys()),
-        "column value": list(method_conf["input"].values()) +
-            list(method_conf["method_parameters"].values()) +
-            list(method_conf["graphs"].values()) +
-            list(method_conf["optimizer"].values())
-        }
-    ).to_csv(save_at + '/final_method/input_parameters.csv', index=False)
-
-    # plot created method on top of kernel density estimation of library
-    graphs.plot_density_and_method(
-        df_parameters_final,
-        xi,
-        yi,
-        zi,
-        method_conf["graphs"],
-        save_at +'/final_method/Kernel_density_distribution_and_final_method.png'
-    )
-
-    # save parameters for method evaluation as .csv
-    dict_precursors_within_mz = method_evaluation.calculate_precursor_within_mz_range(
-        library,
-        method_parameters["mz"]
-    )
-    dict_precursors_coverage = method_evaluation.coverage(
-        df_parameters_final,
-        library
-    )
-    dict_evaluation_of_final_method = {
-        **dict_precursors_within_mz,
-        **dict_precursors_coverage
-    }
-    dict_evaluation_of_final_method["final A1, A2, B1, B2 values"] = str(opt_result.x)
-    pd.DataFrame({
-        "column name": list(dict_evaluation_of_final_method.keys()),
-        "column value": list(dict_evaluation_of_final_method.values())
-    }).to_csv(
-        save_at + '/final_method/parameters_to_evaluate_method.csv',
-        index=False)
+    return opt_result
 
 
 def library_plots(
@@ -354,7 +450,7 @@ def create_final_method(
         dim[0] + method_parameters["shift_of_final_method"],
         dim[1] + method_parameters["shift_of_final_method"],
         dim[2] + method_parameters["shift_of_final_method"],
-        dim[3]+method_parameters["shift_of_final_method"]
+        dim[3] + method_parameters["shift_of_final_method"]
     )
     method_creator.create_parameter_dataframe(
         df_parameters_final,
