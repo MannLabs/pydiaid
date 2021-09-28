@@ -158,7 +158,7 @@ def final_method_information(df_parameters_final, xi, yi, zi, method_conf, save_
         yi,
         zi,
         method_conf["graphs"],
-        save_at +'/final_method/Kernel_density_distribution_and_final_method.png'
+        save_at +'/final_method/Kernel_density_distribution_and_final_method.pdf'
     )
 
     # save parameters for method evaluation as .csv
@@ -180,9 +180,9 @@ def final_method_information(df_parameters_final, xi, yi, zi, method_conf, save_
     else:
         dict_evaluation_of_final_method["final A1, A2, B1, B2 values"] = str([
             opt_result.x[0] + method_parameters["shift_of_final_method"],
-            opt_result.x[1] + method_parameters["shift_of_final_method"],
-            opt_result.x[2] + method_parameters["shift_of_final_method"],
-            opt_result.x[3] + method_parameters["shift_of_final_method"]]
+            opt_result.x[0] + opt_result.x[1] + method_parameters["shift_of_final_method"],
+            opt_result.x[0] + opt_result.x[2] + method_parameters["shift_of_final_method"],
+            opt_result.x[0] + opt_result.x[3] + method_parameters["shift_of_final_method"]]
         )
     pd.DataFrame({
         "column name": list(dict_evaluation_of_final_method.keys()),
@@ -211,14 +211,14 @@ def library_information(method_conf, save_at):
     graphs.plot_precursor_distribution_as_histogram(
         library, method_conf["graphs"],
         save_at +
-        '/input_library/Histogram_precursor_distribution_in_library.png'
+        '/input_library/Histogram_precursor_distribution_in_library.pdf'
         )
     graphs.plot_density(
         xi,
         yi,
         zi,
         method_conf["graphs"],
-        save_at + '/input_library/Kernel_density_distribution_library.png')
+        save_at + '/input_library/Kernel_density_distribution_library.pdf')
 
     # save library specific information
     dict_charge_of_precursor = method_evaluation.calculate_percentage_multiple_charged_precursors(library)
@@ -251,9 +251,9 @@ def optimization(library, method_parameters, xi, yi, zi, method_conf, optimizer_
             method_conf
         ), [
             (optimizer_parameters["YA1"][0], optimizer_parameters["YA1"][1]),
-            (optimizer_parameters["YA2"][0], optimizer_parameters["YA2"][1]),
-            (optimizer_parameters["YB1"][0], optimizer_parameters["YB1"][1]),
-            (optimizer_parameters["YB2"][0], optimizer_parameters["YB2"][1])
+            (optimizer_parameters["YA2"][0]-optimizer_parameters["YA1"][0], optimizer_parameters["YA2"][1]-optimizer_parameters["YA1"][0]),
+            (optimizer_parameters["YB1"][0]-optimizer_parameters["YA1"][0], optimizer_parameters["YB1"][1]-optimizer_parameters["YA1"][0]),
+            (optimizer_parameters["YB2"][0]-optimizer_parameters["YA1"][0], optimizer_parameters["YB2"][1]-optimizer_parameters["YA1"][0])
         ],
         optimizer_parameters["n_random_starts"],
         optimizer_parameters["n_calls"],  # n to test
@@ -263,7 +263,7 @@ def optimization(library, method_parameters, xi, yi, zi, method_conf, optimizer_
 
     print("########")
     print("BEST RESULT")
-    print("INPUT: " + str(opt_result.x))
+    print("INPUT: " + str([opt_result.x[0], opt_result.x[0]+opt_result.x[1], opt_result.x[0]+opt_result.x[2], opt_result.x[0]+opt_result.x[3]]))
     print("OUTPUT: " + str(1.0 / opt_result.fun))
     print("########")
 
@@ -275,67 +275,6 @@ def optimization(library, method_parameters, xi, yi, zi, method_conf, optimizer_
 
     return opt_result
 
-
-def library_plots(
-    method_conf: dict,
-) -> None:
-    """This function carries out sub-functions that help to understand the
-        proteomics library (input) better for rational method design: loading
-        of the proteomics library, creating a folder for the output
-        information, calculation of the kernel density estimation for the
-        density plots, writing all output information regarding the proteomics
-        library in csv files, plots regarding the proteomics library
-
-    Parameters:
-    method_conf (dict): this dictionary contains all input parameters for all
-    sub-functions.
-
-    """
-    library = loader.load_library(
-        method_conf["input"]["library_name"],
-        method_conf["input"]["analysis_software"],
-        method_conf["input"]["PTM"]
-    )
-    print("library loaded")
-
-    # method_parameters = method_conf["method_parameters"]
-
-    folder_paths = [
-        method_conf["input"]["save_at"],
-        method_conf["input"]["save_at"]+'/input_library'
-    ]
-    create_folder(folder_paths)
-
-    # 1st calculate kernel density coordinates:
-    xi, yi, zi = graphs.kernel_density_calculation(
-        library,
-        method_conf["graphs"]["numbins"]
-    )
-    print("kernel density estimation calculated")
-
-    # plot important plots of libraries to understand the method creation step
-    graphs.plot_precursor_distribution_as_histogram(
-        library, method_conf["graphs"],
-        method_conf["input"]["save_at"]
-        + '/input_library/Histogram_precursor_distribution_in_library.png'
-    )
-    graphs.plot_density(
-        xi,
-        yi,
-        zi,
-        method_conf["graphs"],
-        method_conf["input"]["save_at"]
-        + '/input_library/Kernel_density_distribution_library.png'
-    )
-
-    # save library specific information
-    dict_charge_of_precursor = method_evaluation.calculate_percentage_multiple_charged_precursors(library)
-    pd.DataFrame({
-        "column name": list(dict_charge_of_precursor.keys()),
-        "column value": list(dict_charge_of_precursor.values())}
-    ).to_csv(
-        method_conf["input"]["save_at"] + '/input_library/percentage_of_multiple_charged_precursors.csv',
-        index=False)
 
 def single_optimization_run(
     library: pd.DataFrame,
@@ -383,19 +322,19 @@ def single_optimization_run(
         library["mz"],
         method_parameters,
         dim[0],
-        dim[1],
-        dim[2],
-        dim[3]
+        dim[0]+dim[1],
+        dim[0]+dim[2],
+        dim[0]+dim[3]
     )
     dict_precursors_coverage = method_evaluation.coverage(
         df_parameters_final,
         library
     )
     result = 1.0 / float(dict_precursors_coverage[evaluation_parameter])
-    print("RUN WITH: " + str(dim) + " | RESULT: " + str(1.0 / result))
+    print("RUN WITH: " + str([dim[0], dim[0]+dim[1], dim[0]+dim[2], dim[0]+dim[3]]) + " | RESULT: " + str(1.0 / result))
 
     # plot the created diaPASEF methods on top of the kernel density estimation
-    file_name_optimization_plot = method_conf["input"]["save_at"] + '/optimization_plots/Optimization_plot_A1_' + str(dim[0]) + "_A2_ " +str(dim[1]) + "_B1_ " + str(dim[2]) + "_B2_ " + str(dim[3]) + "_result_" + str(1.0 / result) + ".png"
+    file_name_optimization_plot = method_conf["input"]["save_at"] + '/optimization_plots/Optimization_plot_A1_' + str(dim[0]) + "_A2_ " +str(dim[0]+dim[1]) + "_B1_ " + str(dim[0]+dim[2]) + "_B2_ " + str(dim[0]+dim[3]) + "_result_" + str(1.0 / result) + ".png"
     graphs.plot_density_and_method(
         df_parameters_final,
         xi,
@@ -448,9 +387,9 @@ def create_final_method(
         library["mz"],
         method_parameters,
         dim[0] + method_parameters["shift_of_final_method"],
-        dim[1] + method_parameters["shift_of_final_method"],
-        dim[2] + method_parameters["shift_of_final_method"],
-        dim[3] + method_parameters["shift_of_final_method"]
+        dim[0] + dim[1] + method_parameters["shift_of_final_method"],
+        dim[0] + dim[2] + method_parameters["shift_of_final_method"],
+        dim[0] + dim[3] + method_parameters["shift_of_final_method"]
     )
     method_creator.create_parameter_dataframe(
         df_parameters_final,

@@ -78,6 +78,11 @@ def method_creation(
         x_splits
     )
 
+    #results_pd = pd.DataFrame(
+    #    results_sorted,
+    #    columns = ["MS Type", "Cycle Id", "Start IM", "End IM", "Start Mass", "End Mass"]
+    #)
+
     return enhance_diaPASEF_windows_to_edges_of_IM_ranges(
         results_sorted,
         method_parameters["ion_mobility"],
