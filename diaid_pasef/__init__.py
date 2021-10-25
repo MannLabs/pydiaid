@@ -37,6 +37,7 @@ __classifiers__ = [
 ]
 __console_scripts__ = [
     "diaid_pasef=diaid_pasef.cli:run",
+    "gui=diaid_pasef.gui:run",
 ]
 __urls__ = {
     "Mann Labs at MPIB": "https://www.biochem.mpg.de/mann",
