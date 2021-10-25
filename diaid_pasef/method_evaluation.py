@@ -102,12 +102,14 @@ def coverage(
         "No. of covered proteins": len(coverage_removed_prec_duplicates.drop_duplicates(['Proteins'])),
         "No. of covered precursors": len(coverage_removed_prec_duplicates),
         "No. of covered, doubly charged precursors": len(coverage_removed_prec_duplicates[coverage_removed_prec_duplicates['Charge'] == 2]),
-        "No. of covered, triply charged precursors": len(coverage_removed_prec_duplicates[coverage_removed_prec_duplicates['Charge'] == 3])
+        "No. of covered, triply charged precursors": len(coverage_removed_prec_duplicates[coverage_removed_prec_duplicates['Charge'] == 3]),
+        "No. of covered, quadruply charged precursors": len(coverage_removed_prec_duplicates[coverage_removed_prec_duplicates['Charge'] == 4])
     }
     dict_prec_coverage["all proteins covered"] = format(np.round(dict_prec_coverage["No. of covered proteins"]/len(library.drop_duplicates(['Proteins']))*100, 1)) + "%"
     dict_prec_coverage["all precursors covered"] = format(np.round(dict_prec_coverage["No. of covered precursors"]/len(library)*100, 1)) + "%"
     dict_prec_coverage["all doubly charged precursors covered"] = format(np.round(dict_prec_coverage["No. of covered, doubly charged precursors"] / len(library[library['Charge'] == 2]) * 100, 1)) + "%"
     dict_prec_coverage["all triply charged precursors covered"] = format(np.round(dict_prec_coverage["No. of covered, triply charged precursors"] / len(library[library['Charge'] == 3]) * 100, 1)) + "%"
+    dict_prec_coverage["all quadruply charged precursors covered"] = format(np.round(dict_prec_coverage["No. of covered, quadruply charged precursors"] / len(library[library['Charge'] == 4]) * 100, 1)) + "%"
     return dict_prec_coverage
 
 

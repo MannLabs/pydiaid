@@ -56,7 +56,20 @@ def library_plus_evaluate_method(
 
     final_method_information(df_parameters_final, xi, yi, zi, method_conf, save_at, library, method_parameters, None)
 
+    evaluate_for_multiple_charged_prec(
+        method_conf,
+        save_at,
+        library,
+        df_parameters_final
+    )
+
     print("Method evaluated")
+
+
+
+
+
+
 
 
 def library_plus_create_methods(
@@ -219,6 +232,7 @@ def library_information(method_conf, save_at):
         zi,
         method_conf["graphs"],
         save_at + '/input_library/Kernel_density_distribution_library.pdf')
+
 
     # save library specific information
     dict_charge_of_precursor = method_evaluation.calculate_percentage_multiple_charged_precursors(library)
@@ -439,3 +453,71 @@ def write_tested_parameters_into_csv(
     df_tested_parameters.to_csv(
         method_conf["input"]["save_at"] + '/optimization_plots/tested_polygon_parameters.csv',
         index=False)
+
+
+def evaluate_for_multiple_charged_prec(
+    method_conf,
+    save_at,
+    library,
+    df_parameters_final
+):
+
+    xi_2, yi_2, zi_2 = graphs.kernel_density_calculation_multiple_charge(
+        library,
+        method_conf["graphs"]["numbins"],
+        2)
+    graphs.plot_density(
+        xi_2,
+        yi_2,
+        zi_2,
+        method_conf["graphs"],
+        save_at + '/input_library/Kernel_density_distribution_library_doubly_charged_precursors.pdf')
+
+    xi_3, yi_3, zi_3 = graphs.kernel_density_calculation_multiple_charge(
+        library,
+        method_conf["graphs"]["numbins"],
+        3)
+    graphs.plot_density(
+        xi_3,
+        yi_3,
+        zi_3,
+        method_conf["graphs"],
+        save_at + '/input_library/Kernel_density_distribution_library_triply_charged_precursors.pdf')
+
+    xi_4, yi_4, zi_4 = graphs.kernel_density_calculation_multiple_charge(
+        library,
+        method_conf["graphs"]["numbins"],
+        4)
+    graphs.plot_density(
+        xi_4,
+        yi_4,
+        zi_4,
+        method_conf["graphs"],
+        save_at + '/input_library/Kernel_density_distribution_library_quadruply_charged_precursors.pdf')
+
+    graphs.plot_density_and_method(
+        df_parameters_final,
+        xi_2,
+        yi_2,
+        zi_2,
+        method_conf["graphs"],
+        save_at +'/final_method/Kernel_density_distribution_and_final_method_doubly_charged_precursors.pdf'
+    )
+
+    graphs.plot_density_and_method(
+        df_parameters_final,
+        xi_3,
+        yi_3,
+        zi_3,
+        method_conf["graphs"],
+        save_at +'/final_method/Kernel_density_distribution_and_final_method_triply_charged_precursors.pdf'
+    )
+
+    graphs.plot_density_and_method(
+        df_parameters_final,
+        xi_4,
+        yi_4,
+        zi_4,
+        method_conf["graphs"],
+        save_at +'/final_method/Kernel_density_distribution_and_final_method_quadruply_charged_precursors.pdf'
+    )

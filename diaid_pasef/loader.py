@@ -154,24 +154,24 @@ def __parse_ms_fragger(
     Returns:
     pd.DataFrame: returns a pre-filtered data frame with unified column names.
     """
-    dataframe["ModifiedPeptideSequence"] = dataframe.apply(
-        lambda x: combine_columns(x, dataframe),
-        axis=1
-    )
+    #dataframe["ModifiedPeptideSequence"] = dataframe.apply(
+    #    lambda x: combine_columns(x, dataframe),
+    #    axis=1
+    #)
 
     library_subset = library_loader(
         dataframe,
         ptm,
-        'Calibrated Observed M/Z',
-        'Ion Mobility',
-        'Charge',
-        'Protein ID',
-        "ModifiedPeptideSequence"
-        # 'PrecursorMz',
-        # 'PrecursorIonMobility',
-        # 'PrecursorCharge',
-        # 'ProteinId',
-        # 'ModifiedPeptideSequence'
+        #'Calibrated Observed M/Z',
+        #'Ion Mobility',
+        #'Charge',
+        #'Protein ID',
+        #"ModifiedPeptideSequence"
+         'PrecursorMz',
+         'PrecursorIonMobility',
+         'PrecursorCharge',
+         'ProteinId',
+         'ModifiedPeptideSequence'
     )
     return library_subset
 

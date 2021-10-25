@@ -301,7 +301,7 @@ def create_parameter_dataframe(
     results_input = df_parameters_final.astype(str)
     results = results_input.values.tolist()
 
-    with open("./diaid_pasef/static/DIAParameterspy3TC.txt") as f:
+    with open("D:\diaid_pasef\diaid_pasef\static\DIAParameterspy3TC.txt") as f:
         content = f.readlines()
 
     ref_line = [

@@ -182,3 +182,31 @@ def plot_density_and_method(
     plt.colorbar().set_label('Density', labelpad=-28, y=1.14, rotation=0)
     plt.savefig(file_name, bbox_inches='tight', pad_inches=0, dpi=300)
     plt.clf()
+
+
+def kernel_density_calculation_multiple_charge(
+    library_subset: pd.DataFrame,
+    nbins: int,
+    charge_setting: int,
+) -> np.ndarray:  # todo: how to describe multiple values?
+    """Calculates the kernel density estimation of a data frame representing a
+        filtered proteomics library or
+        single-shot measurement.
+
+    Parameters:
+    library_subset (pd.DataFrame): pre-filtered data frame with unified column
+        names.
+    nbins (int): number of bins for the kernel density estimation.
+
+    Returns:
+    xi, yi, zi (numpy.ndarray): coordinates of the kernel density estimation
+        where zi indicates the density.
+    """
+    x = library_subset['mz'][library_subset['Charge'] == charge_setting]
+    y = library_subset['IM'][library_subset['Charge'] == charge_setting]
+
+    k = kde.gaussian_kde([x,y])
+    xi, yi = np.mgrid[x.min():x.max():nbins*1j, y.min():y.max():nbins*1j]
+    zi = k(np.vstack([xi.flatten(), yi.flatten()]))
+
+    return xi, yi, zi
