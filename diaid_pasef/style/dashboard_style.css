@@ -135,16 +135,5 @@ progress.light::-moz-progress-bar {
     background-color: white;
 }
 
-.tabulator .tabulator-header .tabulator-col {
-    background-color: #444;
-}
-
-.tabulator .tabulator-header {
-    background-color: #444;
-    color: white;
-    border-bottom: 3px solid #045082;
-}
-
-/* .tabulator-row.tabulator-selected {
-    background-color: #fff;
-} */
+.slider-edit .bk-input-group .bk-input {
+    background: #f5f5f5;
