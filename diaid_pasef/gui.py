@@ -191,22 +191,7 @@ class LoadLibraryCard(object):
             value='/Users/eugeniavoytik/Projects/diaid_pasef/diaid_pasef/static/AlphaPept_results.csv',
             width=900,
             sizing_mode='stretch_width',
-            margin=(5, 15, 0, 15)
-        )
-        self.analysis_software = pn.widgets.Select(
-            name='Analysis software',
-            value='AlphaPept',
-            options=['AlphaPept', 'MaxQuant', 'MS_Fragger', 'Spectronaut_single-shot', 'Spectronaut_library'],
-            width=180,
-            margin=(20, 20, 20, 20),
-        )
-        self.ptm = pn.widgets.TextInput(
-            name='Specify the PTM:',
-            value='None',
-            placeholder='Phospho',
-            width=900,
-            sizing_mode='stretch_width',
-            margin=(5, 15, 0, 15)
+            margin=(15, 15, 0, 15)
         )
         self.path_save_folder = pn.widgets.TextInput(
             name='Save the output to the following folder:',
@@ -216,13 +201,21 @@ class LoadLibraryCard(object):
             sizing_mode='stretch_width',
             margin=(15, 15, 0, 15)
         )
-        # self.path_method = pn.widgets.TextInput(
-        #     name='Specify the path to the method file:',
-        #     placeholder=method_path_placeholder,
-        #     width=900,
-        #     sizing_mode='stretch_width',
-        #     margin=(15, 15, 0, 15)
-        # )
+        self.ptm = pn.widgets.TextInput(
+            name='Specify the PTM:',
+            value='None',
+            placeholder='Phospho',
+            width=900,
+            sizing_mode='stretch_width',
+            margin=(15, 15, 15, 15)
+        )
+        self.analysis_software = pn.widgets.Select(
+            name='Analysis software',
+            value='AlphaPept',
+            options=['AlphaPept', 'MaxQuant', 'MS_Fragger', 'Spectronaut_single-shot', 'Spectronaut_library'],
+            width=200,
+            margin=(15, 15, 15, 15)
+        )
         # UPLOAD DATA
         self.upload_button = pn.widgets.Button(
             name='Upload library',
@@ -254,8 +247,10 @@ class LoadLibraryCard(object):
                 pn.Column(
                     self.path_library,
                     self.path_save_folder,
-                    self.ptm,
-                    self.analysis_software,
+                    pn.Row(
+                        self.ptm,
+                        self.analysis_software,
+                    ),
                     margin=(10, 30, 10, 10),
                 ),
                 pn.Spacer(sizing_mode='stretch_width'),
@@ -267,12 +262,15 @@ class LoadLibraryCard(object):
                     margin=(100, 40, 0, 0),
                 )
             ),
-            pn.layout.Divider(sizing_mode='stretch_width'),
+            pn.layout.Divider(
+                sizing_mode='stretch_width',
+                margin=(0, 10, -20, 10),
+            ),
             pn.Row(
                 None, None, None
             ),
             title='Load Library',
-            collapsed=False,
+            collapsed=True,
             collapsible=True,
             header_background='#eaeaea',
             background ='white',
@@ -377,8 +375,154 @@ class LoadLibraryCard(object):
         )
         self.upload_progress.active = False
 
-class CalculateMzIMCard(object):
-    pass
+
+class EvaluateMethodCard(object):
+    def __init__(self):
+        self.path_method = pn.widgets.TextInput(
+            name='Specify the path to the method file:',
+            placeholder=method_path_placeholder,
+            value='/Users/diaid_pasef/static/DIAParameterspy3TC.txt',
+            width=900,
+            sizing_mode='stretch_width',
+            margin=(15, 15, 0, 15)
+        )
+        self.mz = pn.widgets.EditableRangeSlider(
+            name='M/z range',
+            start=100,
+            end=2000,
+            value=(300, 1250),
+            step=50,
+            margin=(15, 15, 0, 15),
+            width=430,
+        )
+        self.ion_mobility = pn.widgets.EditableRangeSlider(
+            name='IM range',
+            start=0.5,
+            end=2.0,
+            value=(0.6, 1.6),
+            step=0.1,
+            margin=(15, 15, 0, 15),
+            width=430,
+        )
+        self.num_dia_pasef_scans = pn.widgets.IntInput(
+            name='Number of DIA PASEF scans',
+            start=1,
+            end=20,
+            value=12,
+            step=1,
+            margin=(15, 15, 0, 15),
+            width=430,
+        )
+        self.im_steps = pn.widgets.IntInput(
+            name='Number of IM steps',
+            start=1,
+            end=10,
+            value=2,
+            step=1,
+            margin=(15, 15, 0, 15),
+            width=430,
+        )
+        self.overlap = pn.widgets.IntInput(
+            name='Overlap',
+            start=0,
+            end=10,
+            value=0,
+            step=1,
+            margin=(15, 15, 0, 15),
+            width=430,
+        )
+        self.shift_of_final_method = pn.widgets.FloatInput(
+            name='Shift of final method',
+            start=0.0,
+            end=1.0,
+            value=0.22,
+            step=0.01,
+            margin=(15, 15, 0, 15),
+            width=430,
+        )
+        self.scan_area_A1_A2_B1_B2_only_used_for_specific_diaPASEF = pn.widgets.LiteralInput(
+            name='Scan area A1/A2/B1/B2 (only used for specific diaPASEF)',
+            value=[0.6571764377175343, 0.6571764377175343, 0.9571764377175344, 1.4083475027255425],
+            type=list,
+            margin=(15, 15, 0, 15),
+        )
+        self.calculate_button = pn.widgets.Button(
+            name='Calculate',
+            button_type='primary',
+            height=31,
+            width=250,
+            align='center',
+            margin=(0, 0, 0, 0)
+        )
+
+    def create(self):
+        self.layout = pn.Card(
+            pn.Row(
+                pn.Column(
+                    self.path_method,
+                    pn.WidgetBox(
+                        pn.Row(
+                            self.mz,
+                            self.ion_mobility,
+                            sizing_mode='stretch_width',
+                        ),
+                        pn.Row(
+                            self.num_dia_pasef_scans,
+                            self.im_steps,
+                            sizing_mode='stretch_width'
+                        ),
+                        pn.Row(
+                            self.overlap,
+                            self.shift_of_final_method,
+                            sizing_mode='stretch_width'
+                        ),
+                        self.scan_area_A1_A2_B1_B2_only_used_for_specific_diaPASEF,
+                        sizing_mode='stretch_width',
+                        margin=(30, 10, 30, 10),
+                        height=270
+                    ),
+                    # self.scan_area_A1_A2_B1_B2_only_used_for_specific_diaPASEF,
+                    margin=(10, 30, 10, 10),
+                ),
+                pn.Spacer(sizing_mode='stretch_width'),
+                pn.Column(
+                    self.calculate_button,
+                    # self.upload_progress,
+                    # self.import_error,
+                    align='center',
+                    margin=(100, 130, 0, 0),
+                )
+            ),
+            pn.layout.Divider(
+                sizing_mode='stretch_width',
+                margin=(-20, 10, -20, 10),
+            ),
+            pn.Row(
+                None
+            ),
+            title='Load & Evaluate Method',
+            collapsed=False,
+            collapsible=True,
+            header_background='#eaeaea',
+            background ='white',
+            header_color='#333',
+            align='center',
+            sizing_mode='stretch_width',
+            # height=470,
+            margin=(5, 8, 10, 8),
+            css_classes=['background']
+        )
+
+        # self.path_raw_folder.param.watch(
+        #     self.update_file_names,
+        #     'value'
+        # )
+        # self.upload_button.param.watch(
+        #     self.upload_data,
+        #     'clicks'
+        # )
+
+        return self.layout
 
 
 class OptimizationCard(object):
@@ -495,9 +639,11 @@ class DiAIDPasefGUI(GUI):
         self.error_message_upload = "The selected file can't be uploaded. Please check the instructions for data uploading."
 
         self.data = LoadLibraryCard()
+        self.method = EvaluateMethodCard()
         self.layout += [
             self.main_widget.create(),
             self.data.create(),
+            self.method.create()
         ]
         if start_server:
             self.start_server()
