@@ -83,7 +83,7 @@ def __parse_alpha_pept(
 
     filtered_dataframe = dataframe[
         (dataframe["q_value"] <= 0.01) &
-        (dataframe["decoy"] is False)
+        (dataframe["decoy"] == False)
     ]
     library_subset = library_loader(
         filtered_dataframe,
@@ -271,7 +271,6 @@ def library_loader(
     Returns:
     pd.DataFrame: returns a pre-filtered data frame with unified column names.
     """
-
     if ptm != 'None':
         library[ptm] = library[modified_peptide].apply(
             lambda x: find_PTM(x, ptm)
@@ -291,7 +290,6 @@ def library_loader(
     library_small['Charge'] = library_subset[charge]
     library_small['Proteins'] = library_subset[protein]
     library_small['Peptide'] = library_subset[modified_peptide]
-
     return library_small
 
 
