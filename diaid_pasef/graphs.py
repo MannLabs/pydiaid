@@ -57,6 +57,7 @@ def plot_density(
     zi: np.ndarray,
     plot_parameters: dict,
     file_name: str,
+    gui: bool = False
 ) -> None:
     """Creates a density plot from a data frame representing a filtered
         proteomics library or single-shot measurement.
@@ -66,7 +67,8 @@ def plot_density(
         where zi indicates the density
     plot_parameters (dict): dictionary, which contains all input parameters for
         creating plots (e.g., displayed m/z-range, ion mobility-range)
-    file_name: file path and file name where the plot should be saved.
+    file_name: file path and file name where the plot should be saved
+    gui (bool): whether to use in the GUI or not. Defaults is False.
     """
     fig, ax = plt.subplots()
     plt.pcolormesh(
@@ -81,13 +83,17 @@ def plot_density(
     plt.ylabel('$\mathregular{1/K_0}$ [Vs $\mathregular{cm^{-2}}$]')
     plt.colorbar().set_label('Density', labelpad=-28, y=1.14, rotation=0)
     plt.savefig(file_name, bbox_inches='tight', pad_inches=0, dpi=300)
-    plt.clf()
+    if gui:
+        return fig
+    else:
+        plt.clf()
 
 
 def plot_precursor_distribution_as_histogram(
     library_subset: pd.DataFrame,
     plot_parameters: dict,
     file_name: str,
+    gui: bool = False
 ) -> None:
     """Plot histogram with the precursor distribution in the m/z dimension
         sorted by charge state.
@@ -97,11 +103,12 @@ def plot_precursor_distribution_as_histogram(
         names.
     plot_parameters (dict): dictionary, which contains all input parameters for
         creating plots (e.g., displayed m/z-range, ion mobility-range)
-    file_name: file path and file name where the plot should be saved.
+    file_name: file path and file name where the plot should be saved
+    gui (bool): whether to use in the GUI or not. Defaults is False.
     """
-
+    fig = plt.figure()
     colors = ['#7AC7C9', '#4EA7BB', '#267FA5']
-    hist = sns.distplot(
+    sns.distplot(
         library_subset['mz'],
         hist=True,
         kde=False,
@@ -109,7 +116,7 @@ def plot_precursor_distribution_as_histogram(
         color=colors[0],
         label='all precursors'
     )
-    hist = sns.distplot(
+    sns.distplot(
         library_subset['mz'][library_subset['Charge'] == 2],
         hist=True,
         kde=False,
@@ -117,7 +124,7 @@ def plot_precursor_distribution_as_histogram(
         color=colors[1],
         label='doubly charged precursors'
     )
-    hist = sns.distplot(
+    sns.distplot(
         library_subset['mz'][library_subset['Charge'] == 3],
         hist=True,
         kde=False,
@@ -125,15 +132,19 @@ def plot_precursor_distribution_as_histogram(
         color=colors[2],
         label='triply charged precursors'
     )
-    hist.set(
-        xlim=(plot_parameters["plot_mz"][0],
-        plot_parameters["plot_mz"][1])
-    )
+    plt.xlim([plot_parameters["plot_mz"][0], plot_parameters["plot_mz"][1]])
     plt.ylabel('No. of precursors')
     plt.legend(bbox_to_anchor=(0.8, 1.42))
-    plt.xlabel('$\mathregular{\it{m/z}}$')
-    hist.figure.savefig(file_name, bbox_inches='tight', pad_inches=0, dpi=300)
-    plt.clf()
+    plt.xlabel('$\mathregular{\it{m/z}}$') # comment
+    fig.savefig(file_name, bbox_inches='tight', pad_inches=0, dpi=300)
+    if gui:
+        plt.legend(
+            loc='upper right',
+            fontsize='x-small'
+        )
+        return fig
+    else:
+        plt.clf()
 
 
 def plot_density_and_method(
