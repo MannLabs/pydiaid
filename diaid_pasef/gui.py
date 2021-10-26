@@ -2,7 +2,11 @@
 import sys
 import os
 import time
+import json
 import logging
+import platform
+import pandas as pd
+import numpy as np
 
 # visualization
 import panel as pn
@@ -10,12 +14,35 @@ import bokeh.server.views.ws
 
 # modules
 import diaid_pasef
+import diaid_pasef.loader
+import diaid_pasef.main
+import diaid_pasef.graphs
 
+import warnings
+warnings.filterwarnings("ignore")
+
+# paths
 BASE_PATH = os.path.dirname(__file__)
 IMG_PATH = os.path.join(BASE_PATH, "img")
 STYLE_PATH = os.path.join(BASE_PATH, "style")
 DOCS_PATH = os.path.join(BASE_PATH, "docs")
+DEFAULT_FILE = os.path.join(
+    BASE_PATH,
+    'lib',
+    "default_parameters.json"
+)
 
+with open(DEFAULT_FILE, "r") as infile:
+    method_conf = json.load(infile)
+
+if platform.system() == 'Windows':
+    method_path_placeholder = 'D:\diaid_pasef\static\DIAParameterspy3TC.txt'
+    library_path_placeholder = 'D:\diaid_pasef\static\AlphaPept_results.csv'
+    save_folder_placeholder = 'D:\diaid_pasef\static'
+else:
+    method_path_placeholder = '/Users/diaid_pasef/static/DIAParameterspy3TC.txt'
+    library_path_placeholder = '/Users/diaid_pasef/static/AlphaPept_results.csv'
+    save_folder_placeholder = '/Users/diaid_pasef/static'
 
 class HeaderWidget(object):
     """This class creates a layout for the header of the dashboard with the name of the tool and all links to the MPI website, the MPI Mann Lab page and the GitHub repo.
@@ -153,8 +180,202 @@ class MainWidget(object):
 
 
 class LoadLibraryCard(object):
-    pass
+    # TODO: docstring
+    def __init__(self):
+        self.library = None
+        self.layout = None
+        # SPECIFY PATHS
+        self.path_library = pn.widgets.TextInput(
+            name='Specify the path to the library:',
+            placeholder=library_path_placeholder,
+            value='/Users/eugeniavoytik/Projects/diaid_pasef/diaid_pasef/static/AlphaPept_results.csv',
+            width=900,
+            sizing_mode='stretch_width',
+            margin=(5, 15, 0, 15)
+        )
+        self.analysis_software = pn.widgets.Select(
+            name='Analysis software',
+            value='AlphaPept',
+            options=['AlphaPept', 'MaxQuant', 'MS_Fragger', 'Spectronaut_single-shot', 'Spectronaut_library'],
+            width=180,
+            margin=(20, 20, 20, 20),
+        )
+        self.ptm = pn.widgets.TextInput(
+            name='Specify the PTM:',
+            value='None',
+            placeholder='Phospho',
+            width=900,
+            sizing_mode='stretch_width',
+            margin=(5, 15, 0, 15)
+        )
+        self.path_save_folder = pn.widgets.TextInput(
+            name='Save the output to the following folder:',
+            value='/Users/eugeniavoytik/Projects/diaid_pasef/diaid_pasef/static',
+            placeholder=save_folder_placeholder,
+            width=900,
+            sizing_mode='stretch_width',
+            margin=(15, 15, 0, 15)
+        )
+        # self.path_method = pn.widgets.TextInput(
+        #     name='Specify the path to the method file:',
+        #     placeholder=method_path_placeholder,
+        #     width=900,
+        #     sizing_mode='stretch_width',
+        #     margin=(15, 15, 0, 15)
+        # )
+        # UPLOAD DATA
+        self.upload_button = pn.widgets.Button(
+            name='Upload library',
+            button_type='primary',
+            height=31,
+            width=250,
+            align='center',
+            margin=(0, 0, 0, 0)
+        )
+        self.upload_progress = pn.indicators.Progress(
+            # max=1,
+            # value=1,
+            active=False,
+            bar_color='light',
+            width=250,
+            align='center',
+            margin=(-10, 0, 30, 0)
+        )
+        self.import_error = pn.pane.Alert(
+            alert_type="danger",
+            sizing_mode='stretch_width',
+            # object='test warning message',
+            margin=(30, 15, 5, 15),
+        )
 
+    def create(self):
+        self.layout = pn.Card(
+            pn.Row(
+                pn.Column(
+                    self.path_library,
+                    self.path_save_folder,
+                    self.ptm,
+                    self.analysis_software,
+                    margin=(10, 30, 10, 10),
+                ),
+                pn.Spacer(sizing_mode='stretch_width'),
+                pn.Column(
+                    self.upload_button,
+                    self.upload_progress,
+                    self.import_error,
+                    align='center',
+                    margin=(100, 40, 0, 0),
+                )
+            ),
+            pn.layout.Divider(sizing_mode='stretch_width'),
+            pn.Row(
+                None, None, None
+            ),
+            title='Load Library',
+            collapsed=False,
+            collapsible=True,
+            header_background='#eaeaea',
+            background ='white',
+            header_color='#333',
+            align='center',
+            sizing_mode='stretch_width',
+            # height=470,
+            margin=(5, 8, 10, 8),
+            css_classes=['background']
+        )
+
+        # self.path_raw_folder.param.watch(
+        #     self.update_file_names,
+        #     'value'
+        # )
+        self.upload_button.param.watch(
+            self.upload_data,
+            'clicks'
+        )
+
+        return self.layout
+
+    def upload_data(self, *args):
+        self.upload_progress.active = True
+        self.library = diaid_pasef.loader.load_library(
+            self.path_library.value,
+            "AlphaPept",
+            method_conf["input"]["PTM"]
+        )
+        self.upload_progress.active = False
+        folder_paths = [
+            self.path_save_folder.value,
+            os.path.join(
+                self.path_save_folder.value,
+                'input_library'
+            ),
+            os.path.join(
+                self.path_save_folder.value,
+                'final_method'
+            ),
+        ]
+        diaid_pasef.main.create_folder(folder_paths)
+
+        xi, yi, zi = diaid_pasef.graphs.kernel_density_calculation(
+            self.library,
+            method_conf["graphs"]["numbins"]
+        )
+        self.layout[2][0] = pn.pane.Matplotlib(
+            diaid_pasef.graphs.plot_precursor_distribution_as_histogram(
+                self.library,
+                method_conf["graphs"],
+                os.path.join(
+                    self.path_save_folder.value,
+                    'input_library',
+                    'Histogram_precursor_distribution_in_library.png'
+                ),
+                gui=True
+            ),
+            tight=True
+        )
+        self.layout[2][1] = pn.pane.Matplotlib(
+            diaid_pasef.graphs.plot_density(
+                xi,
+                yi,
+                zi,
+                method_conf["graphs"],
+                os.path.join(
+                    self.path_save_folder.value,
+                    'input_library',
+                    'Kernel_density_distribution_library.png'
+                ),
+                gui=True
+            ),
+            tight=True
+        )
+        dict_charge_of_precursor = diaid_pasef.method_evaluation.calculate_percentage_multiple_charged_precursors(self.library)
+        mult_charged_precursor_info = pd.DataFrame(
+            {
+                "column name": list(dict_charge_of_precursor.keys()),
+                "column value": list(dict_charge_of_precursor.values())
+            }
+        )
+        mult_charged_precursor_info.to_csv(
+            os.path.join(
+                self.path_save_folder.value,
+                'input_library',
+                'percentage_of_multiple_charged_precursors.csv'
+            ),
+            index=False
+        )
+
+        self.layout[2][2] = pn.Column(
+            pn.pane.Markdown(
+                '### Percentage of multiple charged precursors',
+                 align='center'
+            ),
+            pn.pane.DataFrame(
+                mult_charged_precursor_info
+            ),
+            margin=(0, 20),
+            sizing_mode='stretch_width',
+        )
+        self.upload_progress.active = False
 
 class CalculateMzIMCard(object):
     pass
@@ -273,10 +494,10 @@ class DiAIDPasefGUI(GUI):
         # ERROR/WARNING MESSAGES
         self.error_message_upload = "The selected file can't be uploaded. Please check the instructions for data uploading."
 
-        # self.library = LoadLibraryCard()
+        self.data = LoadLibraryCard()
         self.layout += [
             self.main_widget.create(),
-            # self.LoadLibraryCard.create(),
+            self.data.create(),
         ]
         if start_server:
             self.start_server()
