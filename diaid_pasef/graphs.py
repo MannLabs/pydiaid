@@ -135,7 +135,7 @@ def plot_precursor_distribution_as_histogram(
     plt.xlim([plot_parameters["plot_mz"][0], plot_parameters["plot_mz"][1]])
     plt.ylabel('No. of precursors')
     plt.legend(bbox_to_anchor=(0.8, 1.42))
-    plt.xlabel('$\mathregular{\it{m/z}}$') # comment
+    plt.xlabel('$m/z$') # can be used as $some_text$ to make some_text italic
     fig.savefig(file_name, bbox_inches='tight', pad_inches=0, dpi=300)
     if gui:
         plt.legend(
