@@ -19,6 +19,7 @@ from diaid_pasef.method_evaluation import boxes
 # importing components for visualization
 mpl.rcParams['font.family'] = 'Arial'
 plt.rcParams.update({'font.size': 16.5})
+mpl.rcParams['pdf.fonttype'] = 42
 
 # for suppressing warnings
 warnings.filterwarnings('ignore')
