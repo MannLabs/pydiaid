@@ -684,6 +684,76 @@ class OptimizationCard(object):
 
         return self.layout
 
+class CreateMethodCard(object):
+    def __init__(self):
+        self.scan_area_A1_A2_B1_B2_only_used_for_specific_diaPASEF = pn.widgets.LiteralInput(
+            name='Scan area A1/A2/B1/B2 (only used for specific diaPASEF)',
+            value=[0, 0, 0, 0],
+            type=list,
+            margin=(15, 15, 0, 15),
+            width=900
+        )
+        self.create_button = pn.widgets.Button(
+            name='Create',
+            button_type='primary',
+            height=31,
+            width=250,
+            align='center',
+            margin=(0, 0, 0, 0)
+        )
+    def create(self):
+        self.layout = pn.Card(
+            pn.Row(
+                pn.Column(
+                    pn.WidgetBox(
+                        pn.Row(
+                            self.scan_area_A1_A2_B1_B2_only_used_for_specific_diaPASEF,
+                            sizing_mode='stretch_width'
+                        ),
+                        sizing_mode='stretch_width',
+                        margin=(20, 10, 30, 10),
+                        height=90
+                    ),
+                    margin=(10, 30, 10, 10),
+                ),
+                pn.Spacer(sizing_mode='stretch_width'),
+                pn.Row(
+                    self.create_button,
+                    # self.import_error,
+                    align='center',
+                    margin=(100, 130, 0, 0),
+                )
+            ),
+            pn.layout.Divider(
+                sizing_mode='stretch_width',
+                margin=(-20, 10, -20, 10),
+            ),
+            pn.Row(
+                None
+            ),
+            title='Create Method',
+            collapsed=False,
+            collapsible=True,
+            header_background='#eaeaea',
+            background ='white',
+            header_color='#333',
+            align='center',
+            sizing_mode='stretch_width',
+            # height=470,
+            margin=(5, 8, 10, 8),
+            css_classes=['background']
+        )
+
+        # self.path_raw_folder.param.watch(
+        #     self.update_file_names,
+        #     'value'
+        # )
+        # self.upload_button.param.watch(
+        #     self.upload_data,
+        #     'clicks'
+        # )
+
+        return self.layout
 
 def get_css_style(
     file_name="dashboard_style.css",
@@ -791,13 +861,15 @@ class DiAIDPasefGUI(GUI):
         self.error_message_upload = "The selected file can't be uploaded. Please check the instructions for data uploading."
 
         self.data = LoadLibraryCard()
-        self.method = EvaluateMethodCard()
+        self.method_evaluation = EvaluateMethodCard()
         self.optimization = OptimizationCard()
+        self.method_creation = CreateMethodCard()
         self.layout += [
             self.main_widget.create(),
             self.data.create(),
-            self.method.create(),
-            self.optimization.create()
+            self.method_evaluation.create(),
+            self.optimization.create(),
+            self.method_creation.create(),
         ]
         if start_server:
             self.start_server()
