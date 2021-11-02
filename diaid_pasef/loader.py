@@ -292,7 +292,7 @@ def library_loader(
         library[ptm] = library[modified_peptide].apply(
             lambda x: find_PTM(x, ptm)
         )
-        library_filtered = library[library[ptm] is True]
+        library_filtered = library[library[ptm] == True]
         library_subset = library_filtered.drop_duplicates(
             [modified_peptide, charge]
         )
