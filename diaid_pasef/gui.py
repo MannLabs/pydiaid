@@ -376,7 +376,7 @@ class LoadLibraryCard(object):
         self.upload_progress.active = False
 
 
-class EvaluateMethodCard(object):
+class SpecifyParametersCard(object):
     def __init__(self):
         self.path_method = pn.widgets.TextInput(
             name='Specify the path to the method file:',
@@ -650,7 +650,7 @@ class OptimizationCard(object):
                     self.optimize_spinner,
                     # self.import_error,
                     align='center',
-                    margin=(100, 130, 0, 0),
+                    margin=(100, 10, 0, 0),
                 )
             ),
             pn.layout.Divider(
@@ -732,6 +732,72 @@ class CreateMethodCard(object):
                 None
             ),
             title='Create Method',
+            collapsed=False,
+            collapsible=True,
+            header_background='#eaeaea',
+            background ='white',
+            header_color='#333',
+            align='center',
+            sizing_mode='stretch_width',
+            # height=470,
+            margin=(5, 8, 10, 8),
+            css_classes=['background']
+        )
+
+        # self.path_raw_folder.param.watch(
+        #     self.update_file_names,
+        #     'value'
+        # )
+        # self.upload_button.param.watch(
+        #     self.upload_data,
+        #     'clicks'
+        # )
+
+        return self.layout
+
+
+class EvaluateMethodCard(object):
+    def __init__(self):
+        self.path_method = pn.widgets.TextInput(
+            name='Specify the path to the method file:',
+            placeholder=method_path_placeholder,
+            value='/Users/diaid_pasef/static/DIAParameterspy3TC.txt',
+            width=900,
+            sizing_mode='stretch_width',
+            margin=(15, 15, 0, 15)
+        )
+        self.evaluate_button = pn.widgets.Button(
+            name='Evaluate',
+            button_type='primary',
+            height=31,
+            width=250,
+            align='center',
+            margin=(0, 0, 0, 0)
+        )
+
+    def create(self):
+        self.layout = pn.Card(
+            pn.Row(
+                pn.Column(
+                    self.path_method,
+                    sizing_mode='stretch_width',
+                    margin=(20, 10, 30, 10),
+                ),
+                pn.Spacer(sizing_mode='stretch_width'),
+                pn.Row(
+                    self.evaluate_button,
+                    align='center',
+                    margin=(100, 130, 0, 0),
+                )
+            ),
+            pn.layout.Divider(
+                sizing_mode='stretch_width',
+                margin=(-20, 10, -20, 10),
+            ),
+            pn.Row(
+                None
+            ),
+            title='Method Evaluation',
             collapsed=False,
             collapsible=True,
             header_background='#eaeaea',
@@ -861,15 +927,17 @@ class DiAIDPasefGUI(GUI):
         self.error_message_upload = "The selected file can't be uploaded. Please check the instructions for data uploading."
 
         self.data = LoadLibraryCard()
-        self.method_evaluation = EvaluateMethodCard()
+        self.method_parameters = SpecifyParametersCard()
         self.optimization = OptimizationCard()
         self.method_creation = CreateMethodCard()
+        self.method_evaluation = EvaluateMethodCard()
         self.layout += [
             self.main_widget.create(),
             self.data.create(),
-            self.method_evaluation.create(),
+            self.method_parameters.create(),
             self.optimization.create(),
             self.method_creation.create(),
+            self.method_evaluation.create(),
         ]
         if start_server:
             self.start_server()
