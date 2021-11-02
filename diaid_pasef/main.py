@@ -56,12 +56,12 @@ def library_plus_evaluate_method(
 
     final_method_information(df_parameters_final, xi, yi, zi, method_conf, save_at, library, method_parameters, None)
 
-    evaluate_for_multiple_charged_prec(
-        method_conf,
-        save_at,
-        library,
-        df_parameters_final
-    )
+    #evaluate_for_multiple_charged_prec(
+    #    method_conf,
+    #    save_at,
+    #    library,
+    #    df_parameters_final
+    #)
 
     print("Method evaluated")
 
@@ -88,12 +88,31 @@ def library_plus_create_methods(
 
     xi, yi, zi, library = library_information(method_conf, save_at)
 
-    df_parameters_final = create_final_method(
-        library,
+    file_name_method = method_conf["input"]["save_at"] + '/final_method/diaPASEF_method.txt'
+    # create the diaPASEF method scheme; dim[0],dim[1],dim[2],dim[3] == A1, A2,
+    # B1, B2.
+    df_parameters_final = method_creator.method_creation(
+        library["mz"],
         method_parameters,
-        dim,
-        method_conf
-        )
+        dim[0],
+        dim[1],
+        dim[2],
+        dim[3]
+    )
+    method_creator.create_parameter_dataframe(
+        df_parameters_final,
+        file_name_method
+    )
+
+    # plot created method on top of kernel density estimation of library
+    graphs.plot_density_and_method(
+        df_parameters_final,
+        xi,
+        yi,
+        zi,
+        method_conf["graphs"],
+        save_at +'/final_method/Kernel_density_distribution_and_final_method.pdf'
+    )
 
     # save input_parameter as .csv
     pd.DataFrame(
