@@ -459,7 +459,6 @@ class EvaluateMethodCard(object):
         self.layout = pn.Card(
             pn.Row(
                 pn.Column(
-                    self.path_method,
                     pn.WidgetBox(
                         pn.Row(
                             self.mz,
@@ -476,12 +475,10 @@ class EvaluateMethodCard(object):
                             self.shift_of_final_method,
                             sizing_mode='stretch_width'
                         ),
-                        self.scan_area_A1_A2_B1_B2_only_used_for_specific_diaPASEF,
                         sizing_mode='stretch_width',
-                        margin=(30, 10, 30, 10),
-                        height=270
+                        margin=(20, 10, 30, 10),
+                        height=220
                     ),
-                    # self.scan_area_A1_A2_B1_B2_only_used_for_specific_diaPASEF,
                     margin=(10, 30, 10, 10),
                 ),
                 pn.Spacer(sizing_mode='stretch_width'),
@@ -500,7 +497,7 @@ class EvaluateMethodCard(object):
             pn.Row(
                 None
             ),
-            title='Load & Evaluate Method',
+            title='Specify Method Parameters',
             collapsed=False,
             collapsible=True,
             header_background='#eaeaea',
