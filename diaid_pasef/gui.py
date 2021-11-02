@@ -455,6 +455,7 @@ class EvaluateMethodCard(object):
             margin=(0, 0, 0, 0)
         )
 
+
     def create(self):
         self.layout = pn.Card(
             pn.Row(
@@ -498,7 +499,7 @@ class EvaluateMethodCard(object):
                 None
             ),
             title='Specify Method Parameters',
-            collapsed=False,
+            collapsed=True,
             collapsible=True,
             header_background='#eaeaea',
             background ='white',
@@ -523,11 +524,165 @@ class EvaluateMethodCard(object):
 
 
 class OptimizationCard(object):
-    pass
+    def __init__(self):
+        self.n_calls = pn.widgets.IntInput(
+            name='Number of calls',
+            start=5,
+            end=10,
+            value=1,
+            step=1,
+            margin=(15, 15, 0, 15),
+            width=430,
+        )
+        self.n_start = pn.widgets.IntInput(
+            name='n_start',
+            start=1,
+            end=10,
+            value=1,
+            step=1,
+            margin=(15, 15, 0, 15),
+            width=430,
+        )
+        self.initial_points = pn.widgets.IntInput(
+            name='initial_points',
+            start=1,
+            end=10,
+            value=1,
+            step=1,
+            margin=(15, 15, 0, 15),
+            width=430,
+        )
+        self.YA1 = pn.widgets.EditableRangeSlider(
+            name='YA1 range',
+            start=0.4,
+            end=0.6,
+            value=(0.2, 1.0),
+            step=0.1,
+            margin=(15, 15, 0, 15),
+            width=430,
+        )
+        self.YA2 = pn.widgets.EditableRangeSlider(
+            name='YA2 range',
+            start=0.8,
+            end=0.95,
+            value=(0.6, 1.2),
+            step=0.05,
+            margin=(15, 15, 0, 15),
+            width=430,
+        )
+        self.YB1 = pn.widgets.EditableRangeSlider(
+            name='YB1 range',
+            start=0.96,
+            end=1.2,
+            value=(0.6, 1.5),
+            step=0.1,
+            margin=(15, 15, 0, 15),
+            width=430,
+        )
+        self.YB2 = pn.widgets.EditableRangeSlider(
+            name='YB2 range',
+            start=1.25,
+            end=1.5,
+            value=(1.0, 1.8),
+            step=0.05,
+            margin=(15, 15, 0, 15),
+            width=430,
+        )
+        self.evaluation_parameter = pn.widgets.Select(
+            name='Evaluation parameter',
+            value='No. of covered precursors',
+            options=['No. of covered precursors'],
+            width=430,
+            margin=(15, 15, 0, 15)
+        )
+        self.optimize_button = pn.widgets.Button(
+            name='Optimize',
+            button_type='primary',
+            height=31,
+            width=250,
+            align='center',
+            margin=(0, 0, 0, 0)
+        )
+        self.optimize_spinner = pn.indicators.LoadingSpinner(
+            value=False,
+            bgcolor='light',
+            color='secondary',
+            align='center',
+            margin=(0, 0, 0, 20),
+            width=35,
+            height=35
+        )
 
+    def create(self):
+        self.layout = pn.Card(
+            pn.Row(
+                pn.Column(
+                    pn.WidgetBox(
+                        pn.Row(
+                            self.n_calls,
+                            self.n_start,
+                            sizing_mode='stretch_width',
+                        ),
+                        pn.Row(
+                            self.initial_points,
+                            self.evaluation_parameter,
+                            sizing_mode='stretch_width'
+                        ),
+                        pn.Row(
+                            self.YA1,
+                            self.YA2,
+                            sizing_mode='stretch_width'
+                        ),
+                        pn.Row(
+                            self.YB1,
+                            self.YB2,
+                            sizing_mode='stretch_width'
+                        ),
+                        sizing_mode='stretch_width',
+                        margin=(20, 10, 30, 10),
+                        height=270
+                    ),
+                    margin=(10, 30, 10, 10),
+                ),
+                pn.Spacer(sizing_mode='stretch_width'),
+                pn.Row(
+                    self.optimize_button,
+                    self.optimize_spinner,
+                    # self.import_error,
+                    align='center',
+                    margin=(100, 130, 0, 0),
+                )
+            ),
+            pn.layout.Divider(
+                sizing_mode='stretch_width',
+                margin=(-20, 10, -20, 10),
+            ),
+            pn.Row(
+                None
+            ),
+            title='Optimization',
+            collapsed=False,
+            collapsible=True,
+            header_background='#eaeaea',
+            background ='white',
+            header_color='#333',
+            align='center',
+            sizing_mode='stretch_width',
+            # height=470,
+            margin=(5, 8, 10, 8),
+            css_classes=['background']
+        )
 
-class FinalMethodCard(object):
-    pass
+        # self.path_raw_folder.param.watch(
+        #     self.update_file_names,
+        #     'value'
+        # )
+        # self.upload_button.param.watch(
+        #     self.upload_data,
+        #     'clicks'
+        # )
+
+        return self.layout
 
 
 def get_css_style(
@@ -637,10 +792,12 @@ class DiAIDPasefGUI(GUI):
 
         self.data = LoadLibraryCard()
         self.method = EvaluateMethodCard()
+        self.optimization = OptimizationCard()
         self.layout += [
             self.main_widget.create(),
             self.data.create(),
-            self.method.create()
+            self.method.create(),
+            self.optimization.create()
         ]
         if start_server:
             self.start_server()
