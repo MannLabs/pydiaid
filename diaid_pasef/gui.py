@@ -44,6 +44,22 @@ else:
     library_path_placeholder = '/Users/diaid_pasef/static/AlphaPept_results.csv'
     save_folder_placeholder = '/Users/diaid_pasef/static'
 
+
+class BaseWidget(object):
+    # TODO: docstring
+    def __init__(self, name):
+        self.name = name
+        self.__update_event = pn.widgets.IntInput(value=0)
+        self.depends = pn.depends(self.__update_event.param.value)
+        self.active_depends = pn.depends(
+            self.__update_event.param.value,
+            watch=True
+        )
+
+    def trigger_dependancy(self):
+        self.__update_event.value += 1
+
+
 class HeaderWidget(object):
     """This class creates a layout for the header of the dashboard with the name of the tool and all links to the MPI website, the MPI Mann Lab page and the GitHub repo.
 
@@ -141,6 +157,7 @@ class MainWidget(object):
     manual : pn.widgets.FileDownload
         A Panel FileDownload widget that allows to download the GUI manual of the tool.
     """
+
     def __init__(
         self,
         description,
@@ -179,12 +196,12 @@ class MainWidget(object):
         return layout
 
 
-class LoadLibraryCard(object):
+class LoadLibraryCard(BaseWidget):
     # TODO: docstring
     def __init__(self):
+        super().__init__(name="Data")
         self.library = None
         self.layout = None
-        # SPECIFY PATHS
         self.path_library = pn.widgets.TextInput(
             name='Specify the path to the library:',
             placeholder=library_path_placeholder,
@@ -329,7 +346,6 @@ class LoadLibraryCard(object):
             ),
         ]
         diaid_pasef.main.create_folder(folder_paths)
-
         xi, yi, zi = diaid_pasef.graphs.kernel_density_calculation(
             self.library,
             method_conf["graphs"]["numbins"]
@@ -377,7 +393,6 @@ class LoadLibraryCard(object):
             ),
             index=False
         )
-
         self.layout[2][2] = pn.Column(
             pn.pane.Markdown(
                 '### Percentage of multiple charged precursors',
@@ -389,10 +404,12 @@ class LoadLibraryCard(object):
             margin=(0, 20),
             sizing_mode='stretch_width',
         )
+        self.trigger_dependancy()
         self.upload_progress.active = False
 
 
 class SpecifyParametersCard(object):
+    # TODO: docstring
     def __init__(self):
         self.mz = pn.widgets.EditableRangeSlider(
             name='M/z range',
@@ -512,7 +529,6 @@ class SpecifyParametersCard(object):
             margin=(5, 8, 10, 8),
             css_classes=['background']
         )
-
         dependances = {
             self.mz: [self.update_parameters, 'value'],
             self.ion_mobility: [self.update_parameters, 'value'],
@@ -529,7 +545,6 @@ class SpecifyParametersCard(object):
                 onlychanged=True
             )
         return self.layout
-
 
     def update_parameters(self, event):
         convertion_dict = {
@@ -549,8 +564,11 @@ class SpecifyParametersCard(object):
         pass
 
 
+
 class OptimizationCard(object):
-    def __init__(self):
+    # TODO: docstring
+    def __init__(self, data):
+        self.data = data
         self.n_calls = pn.widgets.IntInput(
             name='Number of calls',
             start=5,
@@ -735,10 +753,11 @@ class OptimizationCard(object):
             method_conf['optimizer'][convertion_dict[event.obj.name]] = event.new
 
     def run_optimization(self, *args):
-        pass
+        print(self.data.library)
 
 
 class CreateMethodCard(object):
+    # TODO: docstring
     def __init__(self):
         self.scan_area_A1_A2_B1_B2_only_used_for_specific_diaPASEF = pn.widgets.LiteralInput(
             name='Scan area A1/A2/B1/B2 (only used for specific diaPASEF)',
@@ -799,7 +818,7 @@ class CreateMethodCard(object):
         )
 
         dependances = {
-            self.self.scan_area_A1_A2_B1_B2_only_used_for_specific_diaPASEF: [self.update_parameters, 'value'],
+            self.scan_area_A1_A2_B1_B2_only_used_for_specific_diaPASEF: [self.update_parameters, 'value'],
             # self.create_button: [, 'clicks'],
         }
         for k in dependances.keys():
@@ -818,6 +837,7 @@ class CreateMethodCard(object):
 
 
 class EvaluateMethodCard(object):
+    # TODO: docstring
     def __init__(self):
         self.path_method = pn.widgets.TextInput(
             name='Specify the path to the method file:',
@@ -997,7 +1017,7 @@ class DiAIDPasefGUI(GUI):
 
         self.data = LoadLibraryCard()
         self.method_parameters = SpecifyParametersCard()
-        self.optimization = OptimizationCard()
+        self.optimization = OptimizationCard(self.data)
         self.method_creation = CreateMethodCard()
         self.method_evaluation = EvaluateMethodCard()
         self.layout += [
