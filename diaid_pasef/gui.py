@@ -205,7 +205,7 @@ class LoadLibraryCard(object):
             name='Specify the PTM:',
             value='None',
             placeholder='Phospho',
-            width=900,
+            width=680,
             sizing_mode='stretch_width',
             margin=(15, 15, 15, 15)
         )
@@ -257,7 +257,7 @@ class LoadLibraryCard(object):
                 pn.Column(
                     self.upload_button,
                     self.upload_progress,
-                    self.import_error,
+                    # self.import_error,
                     align='center',
                     margin=(100, 40, 0, 0),
                 )
@@ -282,16 +282,32 @@ class LoadLibraryCard(object):
             css_classes=['background']
         )
 
-        # self.path_raw_folder.param.watch(
-        #     self.update_file_names,
-        #     'value'
-        # )
-        self.upload_button.param.watch(
-            self.upload_data,
-            'clicks'
-        )
+        dependances = {
+            self.path_library: [self.update_parameters, 'value'],
+            self.path_save_folder: [self.update_parameters, 'value'],
+            self.ptm: [self.update_parameters, 'value'],
+            self.analysis_software: [self.update_parameters, 'value'],
+            self.upload_button: [self.upload_data, 'clicks'],
 
+        }
+        for k in dependances.keys():
+            k.param.watch(
+                dependances[k][0],
+                dependances[k][1],
+                onlychanged=True
+            )
         return self.layout
+
+
+    def update_parameters(self, event):
+        convertion_dict = {
+            self.path_library.name: "save_at",
+            self.path_save_folder.name: "PTM",
+            self.ptm.name: "library_name",
+            self.analysis_software.name: "analysis_software",
+        }
+        method_conf['input'][convertion_dict[event.obj.name]] = event.new
+
 
     def upload_data(self, *args):
         self.upload_progress.active = True
@@ -378,14 +394,6 @@ class LoadLibraryCard(object):
 
 class SpecifyParametersCard(object):
     def __init__(self):
-        self.path_method = pn.widgets.TextInput(
-            name='Specify the path to the method file:',
-            placeholder=method_path_placeholder,
-            value='/Users/diaid_pasef/static/DIAParameterspy3TC.txt',
-            width=900,
-            sizing_mode='stretch_width',
-            margin=(15, 15, 0, 15)
-        )
         self.mz = pn.widgets.EditableRangeSlider(
             name='M/z range',
             start=100,
@@ -439,12 +447,6 @@ class SpecifyParametersCard(object):
             step=0.01,
             margin=(15, 15, 0, 15),
             width=430,
-        )
-        self.scan_area_A1_A2_B1_B2_only_used_for_specific_diaPASEF = pn.widgets.LiteralInput(
-            name='Scan area A1/A2/B1/B2 (only used for specific diaPASEF)',
-            value=[0.6571764377175343, 0.6571764377175343, 0.9571764377175344, 1.4083475027255425],
-            type=list,
-            margin=(15, 15, 0, 15),
         )
         self.calculate_button = pn.widgets.Button(
             name='Calculate',
@@ -511,16 +513,40 @@ class SpecifyParametersCard(object):
             css_classes=['background']
         )
 
-        # self.path_raw_folder.param.watch(
-        #     self.update_file_names,
-        #     'value'
-        # )
-        # self.upload_button.param.watch(
-        #     self.upload_data,
-        #     'clicks'
-        # )
-
+        dependances = {
+            self.mz: [self.update_parameters, 'value'],
+            self.ion_mobility: [self.update_parameters, 'value'],
+            self.num_dia_pasef_scans: [self.update_parameters, 'value'],
+            self.im_steps: [self.update_parameters, 'value'],
+            self.overlap: [self.update_parameters, 'value'],
+            self.shift_of_final_method: [self.update_parameters, 'value'],
+            self.calculate_button: [self.run_calculation, 'clicks'],
+        }
+        for k in dependances.keys():
+            k.param.watch(
+                dependances[k][0],
+                dependances[k][1],
+                onlychanged=True
+            )
         return self.layout
+
+
+    def update_parameters(self, event):
+        convertion_dict = {
+            self.mz.name: "mz",
+            self.ion_mobility.name: "ion_mobility",
+            self.num_dia_pasef_scans.name: "num_dia_pasef_scans",
+            self.im_steps.name: "im_steps",
+            self.overlap.name: "overlap",
+            self.shift_of_final_method.name: "shift_of_final_method",
+        }
+        if isinstance(event.new, tuple):
+            method_conf['method_parameters'][convertion_dict[event.obj.name]] = list(event.new)
+        else:
+            method_conf['method_parameters'][convertion_dict[event.obj.name]] = event.new
+
+    def run_calculation(self, *args):
+        pass
 
 
 class OptimizationCard(object):
@@ -673,16 +699,44 @@ class OptimizationCard(object):
             css_classes=['background']
         )
 
-        # self.path_raw_folder.param.watch(
-        #     self.update_file_names,
-        #     'value'
-        # )
-        # self.upload_button.param.watch(
-        #     self.upload_data,
-        #     'clicks'
-        # )
-
+        dependances = {
+            self.n_calls: [self.update_parameters, 'value'],
+            self.n_start: [self.update_parameters, 'value'],
+            self.initial_points: [self.update_parameters, 'value'],
+            self.evaluation_parameter: [self.update_parameters, 'value'],
+            self.YA1: [self.update_parameters, 'value'],
+            self.YA2: [self.update_parameters, 'value'],
+            self.YB1: [self.update_parameters, 'value'],
+            self.YB2: [self.update_parameters, 'value'],
+            self.optimize_button: [self.run_optimization, 'clicks'],
+        }
+        for k in dependances.keys():
+            k.param.watch(
+                dependances[k][0],
+                dependances[k][1],
+                onlychanged=True
+            )
         return self.layout
+
+    def update_parameters(self, event):
+        convertion_dict = {
+            self.n_calls.name: "n_calls",
+            self.n_start.name: "n_start",
+            self.initial_points: "initial_points",
+            self.evaluation_parameter.name: "evaluation_parameter",
+            self.YA1.name: "YA1",
+            self.YA2.name: "YA2",
+            self.YB1.name: "YB1",
+            self.YB2.name: "YB2",
+        }
+        if isinstance(event.new, tuple):
+            method_conf['optimizer'][convertion_dict[event.obj.name]] = list(event.new)
+        else:
+            method_conf['optimizer'][convertion_dict[event.obj.name]] = event.new
+
+    def run_optimization(self, *args):
+        pass
+
 
 class CreateMethodCard(object):
     def __init__(self):
@@ -744,16 +798,23 @@ class CreateMethodCard(object):
             css_classes=['background']
         )
 
-        # self.path_raw_folder.param.watch(
-        #     self.update_file_names,
-        #     'value'
-        # )
-        # self.upload_button.param.watch(
-        #     self.upload_data,
-        #     'clicks'
-        # )
-
+        dependances = {
+            self.self.scan_area_A1_A2_B1_B2_only_used_for_specific_diaPASEF: [self.update_parameters, 'value'],
+            # self.create_button: [, 'clicks'],
+        }
+        for k in dependances.keys():
+            k.param.watch(
+                dependances[k][0],
+                dependances[k][1],
+                onlychanged=True
+            )
         return self.layout
+
+    def update_parameters(self, event):
+        convertion_dict = {
+            self.self.scan_area_A1_A2_B1_B2_only_used_for_specific_diaPASEF.name: "scan_area_A1_A2_B1_B2_only_used_for_specific_diaPASEF",
+        }
+        method_conf['method_parameters'][convertion_dict[event.obj.name]] = event.new
 
 
 class EvaluateMethodCard(object):
@@ -810,16 +871,24 @@ class EvaluateMethodCard(object):
             css_classes=['background']
         )
 
-        # self.path_raw_folder.param.watch(
-        #     self.update_file_names,
-        #     'value'
-        # )
-        # self.upload_button.param.watch(
-        #     self.upload_data,
-        #     'clicks'
-        # )
-
+        dependances = {
+            self.path_method: [self.update_parameters, 'value'],
+            # self.evaluate_button: [, 'clicks'],
+        }
+        for k in dependances.keys():
+            k.param.watch(
+                dependances[k][0],
+                dependances[k][1],
+                onlychanged=True
+            )
         return self.layout
+
+    def update_parameters(self, event):
+        convertion_dict = {
+            self.path_method.name: "diaPASEF_method_only_used_for_method_evaluation",
+        }
+        method_conf['input'][convertion_dict[event.obj.name]] = event.new
+
 
 def get_css_style(
     file_name="dashboard_style.css",
