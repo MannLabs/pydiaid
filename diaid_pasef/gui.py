@@ -571,9 +571,9 @@ class OptimizationCard(object):
         self.data = data
         self.n_calls = pn.widgets.IntInput(
             name='Number of calls',
-            start=5,
+            start=1,
             end=10,
-            value=1,
+            value=5,
             step=1,
             margin=(15, 15, 0, 15),
             width=430,
@@ -598,36 +598,36 @@ class OptimizationCard(object):
         )
         self.YA1 = pn.widgets.EditableRangeSlider(
             name='YA1 range',
-            start=0.4,
-            end=0.6,
-            value=(0.2, 1.0),
+            start=0.2,
+            end=1.0,
+            value=(0.4, 0.6),
             step=0.1,
             margin=(15, 15, 0, 15),
             width=430,
         )
         self.YA2 = pn.widgets.EditableRangeSlider(
             name='YA2 range',
-            start=0.8,
-            end=0.95,
-            value=(0.6, 1.2),
+            start=0.6,
+            end=1.2,
+            value=(0.8, 0.95),
             step=0.05,
             margin=(15, 15, 0, 15),
             width=430,
         )
         self.YB1 = pn.widgets.EditableRangeSlider(
             name='YB1 range',
-            start=0.96,
-            end=1.2,
-            value=(0.6, 1.5),
+            start=0.6,
+            end=1.5,
+            value=(0.96, 1.2),
             step=0.1,
             margin=(15, 15, 0, 15),
             width=430,
         )
         self.YB2 = pn.widgets.EditableRangeSlider(
             name='YB2 range',
-            start=1.25,
-            end=1.5,
-            value=(1.0, 1.8),
+            start=1.0,
+            end=1.8,
+            value=(1.25, 1.5),
             step=0.05,
             margin=(15, 15, 0, 15),
             width=430,
