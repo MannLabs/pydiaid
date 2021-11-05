@@ -244,8 +244,6 @@ class LoadLibraryCard(BaseWidget):
             margin=(0, 0, 0, 0)
         )
         self.upload_progress = pn.indicators.Progress(
-            # max=1,
-            # value=1,
             active=False,
             bar_color='light',
             width=250,
@@ -277,7 +275,7 @@ class LoadLibraryCard(BaseWidget):
                     self.upload_progress,
                     # self.import_error,
                     align='center',
-                    margin=(100, 40, 0, 0),
+                    margin=(0, 130, 0, 0),
                 )
             ),
             pn.layout.Divider(
@@ -514,10 +512,8 @@ class SpecifyParametersCard(object):
                 pn.Spacer(sizing_mode='stretch_width'),
                 pn.Column(
                     self.calculate_button,
-                    # self.upload_progress,
-                    # self.import_error,
                     align='center',
-                    margin=(100, 130, 0, 0),
+                    margin=(0, 130, 0, 0),
                 )
             ),
             pn.layout.Divider(
@@ -712,9 +708,8 @@ class OptimizationCard(BaseWidget):
                 pn.Row(
                     self.optimize_button,
                     self.optimize_spinner,
-                    # self.import_error,
                     align='start',
-                    margin=(100, 10, 0, 0),
+                    margin=(150, 10, 0, 0),
                 )
             ),
             pn.layout.Divider(
@@ -900,9 +895,8 @@ class CreateMethodCard(BaseWidget):
                 pn.Spacer(sizing_mode='stretch_width'),
                 pn.Row(
                     self.create_button,
-                    # self.import_error,
                     align='center',
-                    margin=(100, 130, 0, 0),
+                    margin=(0, 130, 0, 0),
                 )
             ),
             pn.layout.Divider(
@@ -1043,7 +1037,7 @@ class EvaluateMethodCard(object):
                 pn.Row(
                     self.evaluate_button,
                     align='center',
-                    margin=(100, 130, 0, 0),
+                    margin=(0, 130, 0, 0),
                 )
             ),
             pn.layout.Divider(
