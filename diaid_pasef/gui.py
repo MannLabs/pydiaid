@@ -1019,7 +1019,8 @@ class CreateMethodCard(BaseWidget):
 
 class EvaluateMethodCard(object):
     # TODO: docstring
-    def __init__(self, method_creation):
+    def __init__(self, data, method_creation):
+        self.data = data
         self.method_creation = method_creation
         self.evaluate_button = pn.widgets.Button(
             name='Evaluate',
@@ -1067,7 +1068,7 @@ class EvaluateMethodCard(object):
 
         dependances = {
             self.method_creation.path_method: [self.update_parameters, 'value'],
-            # self.evaluate_button: [, 'clicks'],
+            self.evaluate_button: [self.evaluate_method, 'clicks'],
         }
         for k in dependances.keys():
             k.param.watch(
@@ -1084,6 +1085,63 @@ class EvaluateMethodCard(object):
         }
         method_conf['input'][convertion_dict[event.obj.name]] = event.new
 
+    def evaluate_method(self, event):
+        method_eval_table = pn.widgets.DataFrame(
+            autosize_mode='fit_viewport',
+            # margin=(0, 0, 0, 100),
+            align='center',
+            auto_edit=False,
+        )
+
+        method_eval_dir = os.path.dirname(self.method_creation.path_method.value)
+        if method_conf["input"]["save_at"] in method_eval_dir:
+            method_eval_table.value = pd.read_csv(
+                os.path.join(
+                    method_eval_dir,
+                    'parameters_to_evaluate_method.csv'
+                )
+            )
+        else:
+            df_parameters_final = pd.read_csv(
+                method_conf["input"]["diaPASEF_method_only_used_for_method_evaluation"],
+                skiprows=4,
+                names=["MS Type", "Cycle Id", "Start IM", "End IM", "Start Mass", "End Mass", "CE"]
+            )
+            # save parameters for method evaluation as .csv
+            dict_precursors_within_mz = diaid_pasef.method_evaluation.calculate_precursor_within_mz_range(
+                self.data.library,
+                method_conf["method_parameters"]["mz"]
+            )
+            dict_precursors_coverage = diaid_pasef.method_evaluation.coverage(
+                df_parameters_final,
+                self.data.library,
+            )
+            dict_evaluation_of_final_method = {
+                **dict_precursors_within_mz,
+                **dict_precursors_coverage
+            }
+
+            dict_evaluation_of_final_method["final A1, A2, B1, B2 values"] = str([
+                method_conf["method_parameters"]["scan_area_A1_A2_B1_B2_only_used_for_specific_diaPASEF"][0] + method_parameters["shift_of_final_method"],
+                method_conf["method_parameters"]["scan_area_A1_A2_B1_B2_only_used_for_specific_diaPASEF"][1] + method_parameters["shift_of_final_method"],
+                method_conf["method_parameters"]["scan_area_A1_A2_B1_B2_only_used_for_specific_diaPASEF"][2] + method_parameters["shift_of_final_method"],
+                method_conf["method_parameters"]["scan_area_A1_A2_B1_B2_only_used_for_specific_diaPASEF"][3] + method_parameters["shift_of_final_method"]]
+            )
+            final_df = pd.DataFrame({
+                "column name": list(dict_evaluation_of_final_method.keys()),
+                "column value": list(dict_evaluation_of_final_method.values())
+            })
+            final_df.to_csv(
+                os.path.join(
+                    method_conf["input"]["save_at"],
+                    'final_method',
+                    'parameters_to_evaluate_method.csv'
+                ),
+                index=False
+            )
+            method_eval_table.value = final_df
+
+        self.layout[2][0] = method_eval_table
 
 def get_css_style(
     file_name="dashboard_style.css",
@@ -1192,9 +1250,17 @@ class DiAIDPasefGUI(GUI):
 
         self.data = LoadLibraryCard()
         self.method_parameters = SpecifyParametersCard()
-        self.optimization = OptimizationCard(self.data)
-        self.method_creation = CreateMethodCard(self.data, self.optimization)
-        self.method_evaluation = EvaluateMethodCard(self.method_creation)
+        self.optimization = OptimizationCard(
+            self.data
+        )
+        self.method_creation = CreateMethodCard(
+            self.data,
+            self.optimization
+        )
+        self.method_evaluation = EvaluateMethodCard(
+            self.data,
+            self.method_creation
+        )
         self.layout += [
             self.main_widget.create(),
             self.data.create(),
