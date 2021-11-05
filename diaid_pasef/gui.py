@@ -718,9 +718,12 @@ class OptimizationCard(BaseWidget):
                 sizing_mode='stretch_width',
                 margin=(-20, 10, -20, 10),
             ),
-            pn.Row(
+            pn.Column(
                 None,
-                None,
+                pn.Row(
+                    None,
+                    None,
+                ),
                 align='center',
             ),
             title='Optimization',
@@ -775,13 +778,13 @@ class OptimizationCard(BaseWidget):
     def run_optimization(self, *args):
         self.optimize_spinner.value = True
 
-        folder_path = [
+        self.folder_path = [
             os.path.join(
                 method_conf["input"]["save_at"],
                 'optimization_plots'
             )
         ]
-        diaid_pasef.main.create_folder(folder_path)
+        diaid_pasef.main.create_folder(self.folder_path)
 
         opt_result = diaid_pasef.main.optimization(
             self.data.library,
@@ -794,31 +797,64 @@ class OptimizationCard(BaseWidget):
         )
         self.scan_area_A1_A2_B1_B2_only_used_for_specific_diaPASEF.value = opt_result.x
 
-        filenames_plots =  diaid_pasef.loader.get_file_names_from_directory(
-            folder_path[0],
+        self.filenames_plots =  diaid_pasef.loader.get_file_names_from_directory(
+            self.folder_path[0],
             'png'
         )
 
-        self.layout[2][0] = pn.pane.PNG(
-            os.path.join(
-                folder_path[0],
-                filenames_plots[0]
+        self.player = pn.widgets.Player(
+            start=0,
+            end=len(self.filenames_plots)-1,
+            value=0,
+            loop_policy='loop',
+            align='center',
+            margin=(0, 0, 50, 0)
+        )
+
+        opt_plot_df = diaid_pasef.loader.create_opt_plot_df(
+            self.filenames_plots[self.player.value]
+        )
+
+        self.kde_plot = pn.pane.PNG(
+            object=os.path.join(
+                self.folder_path[0],
+                self.filenames_plots[self.player.value]
             ),
             height=345,
             width=460,
             align='center',
         )
-
-        self.layout[2][1] = pn.widgets.DataFrame(
-            diaid_pasef.loader.create_opt_plot_df(filenames_plots[0]),
+        self.kde_plot_table = pn.widgets.DataFrame(
+            opt_plot_df,
             autosize_mode='none',
             widths={'index': 80, 'parameters': 110, 'values': 180},
             margin=(0, 0, 0, 100),
+            width=370,
             align='center'
+        )
+
+        self.layout[2][0] = self.player
+        self.layout[2][1][0] = self.kde_plot
+        self.layout[2][1][1] = self.kde_plot_table
+
+        self.player.param.watch(
+            self.update_kde_plot_df,
+            'value'
         )
 
         self.trigger_dependancy()
         self.optimize_spinner.value = False
+
+    def update_kde_plot_df(self, event):
+        self.kde_plot_table.value = diaid_pasef.loader.create_opt_plot_df(
+            self.filenames_plots[event.new]
+        )
+        self.kde_plot.object = os.path.join(
+            self.folder_path[0],
+            self.filenames_plots[event.new]
+        )
+        self.layout[2][1][0] = self.kde_plot
+        self.layout[2][1][1] = self.kde_plot_table
 
 
 class CreateMethodCard(object):
