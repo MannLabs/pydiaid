@@ -1,6 +1,7 @@
 # for data manipulation:
 import pandas as pd
-
+import os
+import re
 
 def load_library(
     library_name: str,
@@ -310,3 +311,54 @@ def find_PTM(column_value, ptm):
         return True
     else:
         next
+
+
+def get_file_names_from_directory(
+    directory: str,
+    extensions_list: list
+)-> list:
+    """Search for files with the specified extension in the repository and return a list of all file names with that extention.
+
+    Parameters
+    ----------
+    directory : str
+        Path to the repository to search in.
+    extensions_list : list
+        A list of extensions, e.g. ['d', 'hdf'].
+
+    Returns
+    -------
+    list
+        The list of filtered file names based on their extensions.
+    """
+    file_names = [file for file in os.listdir(directory) if file.split('.')[-1] in extensions_list]
+    return file_names
+
+
+def create_opt_plot_df(
+    filename: str
+)-> pd.DataFrame:
+    """Return the dataframe containing information about the optimized scan area coordinates and coverage based on the filename of the .png file.
+
+    Parameters
+    ----------
+    filename : str
+        The name of the .png file showing the kernel density estimation.
+
+    Returns
+    -------
+    pd.DataFrame
+        The data frame contains several columns:
+            - parameters: ['A1', 'A2', 'B1', 'B2', 'coverage'];
+            - values: showing the values for each parameter extracted from the filename.
+
+    """
+
+    values = re.findall(r'(\d+\.\d+)', filename)
+    df = pd.DataFrame(
+        {
+            'parameters': ['A1', 'A2', 'B1', 'B2', 'coverage'],
+            'values': values
+        }
+    )
+    return df
