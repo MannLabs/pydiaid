@@ -137,3 +137,8 @@ progress.light::-moz-progress-bar {
 
 .slider-edit .bk-input-group .bk-input {
     background: #f5f5f5;
+}
+
+.bk-root .bk-data-table {
+    font-size: 14px;
+}
