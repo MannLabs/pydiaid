@@ -408,6 +408,7 @@ class LoadLibraryCard(BaseWidget):
             pn.widgets.DataFrame(
                 mult_charged_precursor_info,
                 autosize_mode='fit_viewport',
+                auto_edit=False
             ),
             margin=(0, 50),
             sizing_mode='stretch_width',
@@ -788,7 +789,7 @@ class OptimizationCard(BaseWidget):
         ]
         diaid_pasef.main.create_folder(self.folder_path)
 
-        opt_result = diaid_pasef.main.optimization(
+        self.opt_result = diaid_pasef.main.optimization(
             self.data.library,
             method_conf["method_parameters"],
             self.data.xi,
@@ -797,7 +798,7 @@ class OptimizationCard(BaseWidget):
             method_conf,
             method_conf["optimizer"]
         )
-        self.scan_area_A1_A2_B1_B2_only_used_for_specific_diaPASEF.value = opt_result.x
+        self.scan_area_A1_A2_B1_B2_only_used_for_specific_diaPASEF.value = self.opt_result.x
 
         self.filenames_plots =  diaid_pasef.loader.get_file_names_from_directory(
             self.folder_path[0],
@@ -830,7 +831,8 @@ class OptimizationCard(BaseWidget):
             opt_plot_df,
             autosize_mode='fit_viewport',
             margin=(0, 0, 0, 100),
-            align='center'
+            align='center',
+            auto_edit=False
         )
 
         self.layout[2][0] = self.player
@@ -857,17 +859,12 @@ class OptimizationCard(BaseWidget):
         self.layout[2][1][1] = self.kde_plot_table
 
 
-class CreateMethodCard(object):
+class CreateMethodCard(BaseWidget):
     # TODO: docstring
-    def __init__(self, opt_widget):
+    def __init__(self, data, opt_widget):
+        super().__init__(name="Method_creation")
+        self.data = data
         self.opt_widget = opt_widget
-        # self.scan_area_A1_A2_B1_B2_only_used_for_specific_diaPASEF = pn.widgets.LiteralInput(
-        #     name='Scan area A1/A2/B1/B2 (only used for specific diaPASEF)',
-        #     value=[0,0,0,0],
-        #     type=list,
-        #     margin=(15, 15, 0, 15),
-        #     width=900
-        # )
         self.create_button = pn.widgets.Button(
             name='Create',
             button_type='primary',
@@ -876,6 +873,15 @@ class CreateMethodCard(object):
             align='center',
             margin=(0, 0, 0, 0)
         )
+        self.path_method = pn.widgets.TextInput(
+            name='Specify the path to the method file:',
+            placeholder=method_path_placeholder,
+            value='/Users/diaid_pasef/static/DIAParameterspy3TC.txt',
+            width=900,
+            sizing_mode='stretch_width',
+            margin=(15, 15, 0, 15)
+        )
+
     def create(self):
         self.layout = pn.Card(
             pn.Row(
@@ -904,7 +910,9 @@ class CreateMethodCard(object):
                 margin=(-20, 10, -20, 10),
             ),
             pn.Row(
-                None
+                None,
+                None,
+                align='center'
             ),
             title='Create Method',
             collapsed=False,
@@ -921,7 +929,7 @@ class CreateMethodCard(object):
 
         dependances = {
             self.opt_widget.scan_area_A1_A2_B1_B2_only_used_for_specific_diaPASEF: [self.update_parameters, 'value'],
-            # self.create_button: [, 'clicks'],
+            self.create_button: [self.create_method, 'clicks'],
         }
         for k in dependances.keys():
             k.param.watch(
@@ -938,18 +946,81 @@ class CreateMethodCard(object):
         }
         method_conf['method_parameters'][convertion_dict[event.obj.name]] = event.new
 
+    def create_method(self, event):
+        df_parameters_final = diaid_pasef.main.create_final_method(
+            self.data.library,
+            method_conf["method_parameters"],
+            self.opt_widget.scan_area_A1_A2_B1_B2_only_used_for_specific_diaPASEF.value,
+            method_conf
+        )
+
+        # save input_parameter as .csv
+        pd.DataFrame(
+            {
+            "column name": list(method_conf["input"].keys()) +
+                list(method_conf["method_parameters"].keys()) +
+                list(method_conf["graphs"].keys()) +
+                list(method_conf["optimizer"].keys()),
+            "column value": list(method_conf["input"].values()) +
+                list(method_conf["method_parameters"].values()) +
+                list(method_conf["graphs"].values()) +
+                list(method_conf["optimizer"].values())
+            }
+        ).to_csv(
+            os.path.join(
+                method_conf["input"]["save_at"],
+                'final_method',
+                'input_parameters.csv'
+            ),
+            index=False
+        )
+
+        diaid_pasef.main.final_method_information(
+            df_parameters_final,
+            self.data.xi,
+            self.data.yi,
+            self.data.zi,
+            method_conf,
+            method_conf["input"]["save_at"],
+            self.data.library,
+            method_conf["method_parameters"],
+            self.opt_widget.opt_result
+        )
+        final_method_path = os.path.join(
+            method_conf["input"]["save_at"],
+            'final_method',
+            'diaPASEF_method.txt'
+        )
+        self.path_method.value = final_method_path
+        self.layout[2][0] = pn.pane.PNG(
+            object=os.path.join(
+                method_conf["input"]["save_at"],
+                'final_method',
+                'Kernel_density_distribution_and_final_method.png'
+            ),
+            height=345,
+            width=460,
+            align='center',
+        )
+        self.layout[2][1] = pn.widgets.DataFrame(
+            pd.read_csv(
+                final_method_path,
+                header=None,
+                skiprows=3,
+                names=["MS Type", "Cycle Id", "Start IM", "End IM", "Start Mass", "End Mass"]
+            ),
+            autosize_mode='fit_viewport',
+            margin=(0, 0, 0, 100),
+            align='center',
+            auto_edit=False,
+            height=240,
+        )
+        self.trigger_dependancy()
 
 class EvaluateMethodCard(object):
     # TODO: docstring
-    def __init__(self):
-        self.path_method = pn.widgets.TextInput(
-            name='Specify the path to the method file:',
-            placeholder=method_path_placeholder,
-            value='/Users/diaid_pasef/static/DIAParameterspy3TC.txt',
-            width=900,
-            sizing_mode='stretch_width',
-            margin=(15, 15, 0, 15)
-        )
+    def __init__(self, method_creation):
+        self.method_creation = method_creation
         self.evaluate_button = pn.widgets.Button(
             name='Evaluate',
             button_type='primary',
@@ -963,7 +1034,7 @@ class EvaluateMethodCard(object):
         self.layout = pn.Card(
             pn.Row(
                 pn.Column(
-                    self.path_method,
+                    self.method_creation.path_method,
                     sizing_mode='stretch_width',
                     margin=(20, 10, 30, 10),
                 ),
@@ -995,7 +1066,7 @@ class EvaluateMethodCard(object):
         )
 
         dependances = {
-            self.path_method: [self.update_parameters, 'value'],
+            self.method_creation.path_method: [self.update_parameters, 'value'],
             # self.evaluate_button: [, 'clicks'],
         }
         for k in dependances.keys():
@@ -1009,7 +1080,7 @@ class EvaluateMethodCard(object):
     def update_parameters(self, event):
         global method_conf
         convertion_dict = {
-            self.path_method.name: "diaPASEF_method_only_used_for_method_evaluation",
+            self.method_creation.path_method.name: "diaPASEF_method_only_used_for_method_evaluation",
         }
         method_conf['input'][convertion_dict[event.obj.name]] = event.new
 
@@ -1122,8 +1193,8 @@ class DiAIDPasefGUI(GUI):
         self.data = LoadLibraryCard()
         self.method_parameters = SpecifyParametersCard()
         self.optimization = OptimizationCard(self.data)
-        self.method_creation = CreateMethodCard(self.optimization)
-        self.method_evaluation = EvaluateMethodCard()
+        self.method_creation = CreateMethodCard(self.data, self.optimization)
+        self.method_evaluation = EvaluateMethodCard(self.method_creation)
         self.layout += [
             self.main_widget.create(),
             self.data.create(),
