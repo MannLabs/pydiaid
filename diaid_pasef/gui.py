@@ -405,11 +405,13 @@ class LoadLibraryCard(BaseWidget):
                 '### Percentage of multiple charged precursors',
                  align='center'
             ),
-            pn.pane.DataFrame(
-                mult_charged_precursor_info
+            pn.widgets.DataFrame(
+                mult_charged_precursor_info,
+                autosize_mode='fit_viewport',
             ),
-            margin=(0, 20),
+            margin=(0, 50),
             sizing_mode='stretch_width',
+            align='center'
         )
         self.trigger_dependancy()
         self.upload_progress.active = False
@@ -826,10 +828,8 @@ class OptimizationCard(BaseWidget):
         )
         self.kde_plot_table = pn.widgets.DataFrame(
             opt_plot_df,
-            autosize_mode='none',
-            widths={'index': 80, 'parameters': 110, 'values': 180},
+            autosize_mode='fit_viewport',
             margin=(0, 0, 0, 100),
-            width=370,
             align='center'
         )
 
