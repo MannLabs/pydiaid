@@ -1,6 +1,7 @@
 #!python
 import sys
 import os
+import re
 import time
 import json
 import logging
@@ -205,14 +206,14 @@ class LoadLibraryCard(BaseWidget):
         self.path_library = pn.widgets.TextInput(
             name='Specify the path to the library:',
             placeholder=library_path_placeholder,
-            value='/Users/eugeniavoytik/Projects/diaid_pasef/diaid_pasef/static/AlphaPept_results.csv',
+            value='/Users/eugeniavoytik/Projects/diaid_pasef/diaid_pasef/static/AlphaPept_results.csv/',
             width=900,
             sizing_mode='stretch_width',
             margin=(15, 15, 0, 15)
         )
         self.path_save_folder = pn.widgets.TextInput(
             name='Save the output to the following folder:',
-            value='/Users/eugeniavoytik/Projects/diaid_pasef/diaid_pasef/static',
+            value='/Users/eugeniavoytik/Projects/diaid_pasef/diaid_pasef/static/',
             placeholder=save_folder_placeholder,
             width=900,
             sizing_mode='stretch_width',
@@ -228,7 +229,7 @@ class LoadLibraryCard(BaseWidget):
         )
         self.analysis_software = pn.widgets.Select(
             name='Analysis software',
-            value='AlphaPept',
+            value='MaxQuant',
             options=['AlphaPept', 'MaxQuant', 'MS_Fragger', 'Spectronaut_single-shot', 'Spectronaut_library'],
             width=200,
             margin=(15, 15, 15, 15)
@@ -304,23 +305,29 @@ class LoadLibraryCard(BaseWidget):
             self.path_save_folder: [self.update_parameters, 'value'],
             self.ptm: [self.update_parameters, 'value'],
             self.analysis_software: [self.update_parameters, 'value'],
-            self.upload_button: [self.upload_data, 'clicks'],
+            # self.upload_button: [self.upload_data, 'clicks'],
 
         }
         for k in dependances.keys():
             k.param.watch(
                 dependances[k][0],
                 dependances[k][1],
-                onlychanged=True
+                # onlychanged=False
             )
+        self.upload_button.param.watch(
+            self.upload_data,
+            'clicks',
+            onlychanged=True
+        )
         return self.layout
 
 
     def update_parameters(self, event):
+        global method_conf
         convertion_dict = {
-            self.path_library.name: "save_at",
-            self.path_save_folder.name: "PTM",
-            self.ptm.name: "library_name",
+            self.path_library.name: "library_name",
+            self.path_save_folder.name: "save_at",
+            self.ptm.name: "PTM",
             self.analysis_software.name: "analysis_software",
         }
         method_conf['input'][convertion_dict[event.obj.name]] = event.new
@@ -346,7 +353,7 @@ class LoadLibraryCard(BaseWidget):
             ),
         ]
         diaid_pasef.main.create_folder(folder_paths)
-        xi, yi, zi = diaid_pasef.graphs.kernel_density_calculation(
+        self.xi, self.yi, self.zi = diaid_pasef.graphs.kernel_density_calculation(
             self.library,
             method_conf["graphs"]["numbins"]
         )
@@ -365,9 +372,9 @@ class LoadLibraryCard(BaseWidget):
         )
         self.layout[2][1] = pn.pane.Matplotlib(
             diaid_pasef.graphs.plot_density(
-                xi,
-                yi,
-                zi,
+                self.xi,
+                self.yi,
+                self.zi,
                 method_conf["graphs"],
                 os.path.join(
                     self.path_save_folder.value,
@@ -547,6 +554,7 @@ class SpecifyParametersCard(object):
         return self.layout
 
     def update_parameters(self, event):
+        global method_conf
         convertion_dict = {
             self.mz.name: "mz",
             self.ion_mobility.name: "ion_mobility",
@@ -565,10 +573,12 @@ class SpecifyParametersCard(object):
 
 
 
-class OptimizationCard(object):
+class OptimizationCard(BaseWidget):
     # TODO: docstring
     def __init__(self, data):
+        super().__init__(name="Optimization")
         self.data = data
+        self.opt_result_x = [0, 0, 0, 0]
         self.n_calls = pn.widgets.IntInput(
             name='Number of calls',
             start=1,
@@ -656,6 +666,13 @@ class OptimizationCard(object):
             width=35,
             height=35
         )
+        self.scan_area_A1_A2_B1_B2_only_used_for_specific_diaPASEF = pn.widgets.LiteralInput(
+            name='Scan area A1/A2/B1/B2 (only used for specific diaPASEF)',
+            value=[0,0,0,0],
+            type=list,
+            margin=(15, 15, 0, 15),
+            width=900
+        )
 
     def create(self):
         self.layout = pn.Card(
@@ -693,7 +710,7 @@ class OptimizationCard(object):
                     self.optimize_button,
                     self.optimize_spinner,
                     # self.import_error,
-                    align='center',
+                    align='start',
                     margin=(100, 10, 0, 0),
                 )
             ),
@@ -702,7 +719,9 @@ class OptimizationCard(object):
                 margin=(-20, 10, -20, 10),
             ),
             pn.Row(
-                None
+                None,
+                None,
+                align='center',
             ),
             title='Optimization',
             collapsed=False,
@@ -737,6 +756,7 @@ class OptimizationCard(object):
         return self.layout
 
     def update_parameters(self, event):
+        global method_conf
         convertion_dict = {
             self.n_calls.name: "n_calls",
             self.n_start.name: "n_start",
@@ -753,19 +773,65 @@ class OptimizationCard(object):
             method_conf['optimizer'][convertion_dict[event.obj.name]] = event.new
 
     def run_optimization(self, *args):
-        print(self.data.library)
+        self.optimize_spinner.value = True
+
+        folder_path = [
+            os.path.join(
+                method_conf["input"]["save_at"],
+                'optimization_plots'
+            )
+        ]
+        diaid_pasef.main.create_folder(folder_path)
+
+        opt_result = diaid_pasef.main.optimization(
+            self.data.library,
+            method_conf["method_parameters"],
+            self.data.xi,
+            self.data.yi,
+            self.data.zi,
+            method_conf,
+            method_conf["optimizer"]
+        )
+        self.scan_area_A1_A2_B1_B2_only_used_for_specific_diaPASEF.value = opt_result.x
+
+        filenames_plots =  diaid_pasef.loader.get_file_names_from_directory(
+            folder_path[0],
+            'png'
+        )
+
+        self.layout[2][0] = pn.pane.PNG(
+            os.path.join(
+                folder_path[0],
+                filenames_plots[0]
+            ),
+            height=345,
+            width=460,
+            align='center',
+        )
+
+        self.layout[2][1] = pn.widgets.DataFrame(
+            diaid_pasef.loader.create_opt_plot_df(filenames_plots[0]),
+            autosize_mode='none',
+            widths={'index': 80, 'parameters': 110, 'values': 180},
+            margin=(0, 0, 0, 100),
+            align='center'
+        )
+
+        self.trigger_dependancy()
+        self.optimize_spinner.value = False
 
 
 class CreateMethodCard(object):
     # TODO: docstring
-    def __init__(self):
-        self.scan_area_A1_A2_B1_B2_only_used_for_specific_diaPASEF = pn.widgets.LiteralInput(
-            name='Scan area A1/A2/B1/B2 (only used for specific diaPASEF)',
-            value=[0, 0, 0, 0],
-            type=list,
-            margin=(15, 15, 0, 15),
-            width=900
-        )
+    def __init__(self, opt_widget):
+        self.opt_widget = opt_widget
+        # self.scan_area_A1_A2_B1_B2_only_used_for_specific_diaPASEF = pn.widgets.LiteralInput(
+        #     name='Scan area A1/A2/B1/B2 (only used for specific diaPASEF)',
+        #     value=[0,0,0,0],
+        #     type=list,
+        #     margin=(15, 15, 0, 15),
+        #     width=900
+        # )
         self.create_button = pn.widgets.Button(
             name='Create',
             button_type='primary',
@@ -780,7 +846,7 @@ class CreateMethodCard(object):
                 pn.Column(
                     pn.WidgetBox(
                         pn.Row(
-                            self.scan_area_A1_A2_B1_B2_only_used_for_specific_diaPASEF,
+                            self.opt_widget.scan_area_A1_A2_B1_B2_only_used_for_specific_diaPASEF,
                             sizing_mode='stretch_width'
                         ),
                         sizing_mode='stretch_width',
@@ -818,7 +884,7 @@ class CreateMethodCard(object):
         )
 
         dependances = {
-            self.scan_area_A1_A2_B1_B2_only_used_for_specific_diaPASEF: [self.update_parameters, 'value'],
+            self.opt_widget.scan_area_A1_A2_B1_B2_only_used_for_specific_diaPASEF: [self.update_parameters, 'value'],
             # self.create_button: [, 'clicks'],
         }
         for k in dependances.keys():
@@ -830,8 +896,9 @@ class CreateMethodCard(object):
         return self.layout
 
     def update_parameters(self, event):
+        global method_conf
         convertion_dict = {
-            self.self.scan_area_A1_A2_B1_B2_only_used_for_specific_diaPASEF.name: "scan_area_A1_A2_B1_B2_only_used_for_specific_diaPASEF",
+            self.opt_widget.scan_area_A1_A2_B1_B2_only_used_for_specific_diaPASEF.name: "scan_area_A1_A2_B1_B2_only_used_for_specific_diaPASEF",
         }
         method_conf['method_parameters'][convertion_dict[event.obj.name]] = event.new
 
@@ -904,6 +971,7 @@ class EvaluateMethodCard(object):
         return self.layout
 
     def update_parameters(self, event):
+        global method_conf
         convertion_dict = {
             self.path_method.name: "diaPASEF_method_only_used_for_method_evaluation",
         }
@@ -1018,7 +1086,7 @@ class DiAIDPasefGUI(GUI):
         self.data = LoadLibraryCard()
         self.method_parameters = SpecifyParametersCard()
         self.optimization = OptimizationCard(self.data)
-        self.method_creation = CreateMethodCard()
+        self.method_creation = CreateMethodCard(self.optimization)
         self.method_evaluation = EvaluateMethodCard()
         self.layout += [
             self.main_widget.create(),
