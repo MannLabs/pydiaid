@@ -1,19 +1,28 @@
+# importing components for visualization
 import holoviews as hv
 import plotly.express as px
 
+# for data manipulation:
+import pandas as pd
+
+# importing for scientific and numeric manipulations
+from scipy.stats import kde
+import numpy as np
+
 hv.extension("bokeh")
 
-
-xi, yi, zi = kernel_density_calculation(
-    library_subset,
+# ---------------------------------------------------------------------------
+# example code for you, Jane :)
+xi, yi, zi = kernel_density_calculation_GUI(
+    library,
     method_conf["graphs"]["numbins"]
     )
 
 
-qmesh = desnity_plot(xi, yi, zi)
+qmesh = desnity_plot_GUI(xi, yi, zi)
 
 
-plot_window_scheme_on_top_of_density(df_parameters_final, qmesh, color_param = 'white', alpha_param = 0.2)
+plot_window_scheme_on_top_of_density(df_parameters_final, qmesh, plot_parameters)
 
 
 histogram_plots(library, "mz")
@@ -21,14 +30,15 @@ histogram_plots(library, "mz")
 
 histogram_plots(library, "IM")
 
+# --------------------------------------------------------------------------
 
-def kernel_density_calculation(
+
+def kernel_density_calculation_GUI(
     library_subset: pd.DataFrame,
     nbins: int,
 ) -> np.ndarray:  # todo: how to describe multiple values?
-    """Calculates the kernel density estimation of a data frame representing a
-        filtered proteomics library or
-        single-shot measurement.
+    """This function calculates the kernel density estimation of a data frame
+    representing a filtered proteomics library or single-shot measurement.
 
     Parameters:
     library_subset (pd.DataFrame): pre-filtered data frame with unified column
@@ -36,7 +46,7 @@ def kernel_density_calculation(
     nbins (int): number of bins for the kernel density estimation.
 
     Returns:
-    xi, yi, zi (numpy.ndarray): coordinates of the kernel density estimation
+    xi, yi, zi (numpy.ndarray): coordinates of the kernel density estimation,
         where zi indicates the density.
     """
 
@@ -53,8 +63,22 @@ def kernel_density_calculation(
     return xi, yi, zi
 
 
-def boxes(df: pd.DataFrame,
+def boxes_GUI(
+    df: pd.DataFrame,
 ) -> list:
+    """This function calculates dia-PASEF window specific information. It
+        creates a list, containing information for plotting the dia-PASEF
+        window scheme on top of a kernel density estimation plot.
+
+    Parameters:
+    df (pd.DataFrame): data frame that contains the scan type (PASEF), scan
+        number, and the corresponding diaPASEF window coordinates for each
+        window per scan.
+
+    Returns:
+    rect (list): This list contains all information to print the diaPASEF
+        windows on top of a kernel density estimation plot.
+    """
 
     rect = list()
 
@@ -66,17 +90,29 @@ def boxes(df: pd.DataFrame,
         df_2 = df[df["Cycle Id"] == i]
         df_2["xw"] = df_2.apply(lambda x: x["End Mass"]-x["Start Mass"], axis=1)
         df_2["yw"] = df_2.apply(lambda x: x["End IM"]-x["Start IM"], axis=1)
-        df_2["rect"] = df_2.apply(lambda x: [x["Start Mass"], x["Start IM"], x["xw"], x["yw"]], axis = 1)
+        df_2["rect"] = df_2.apply(lambda x: [
+            x["Start Mass"],
+            x["Start IM"],
+            x["xw"],
+            x["yw"]
+            ], axis=1)
         rect += list(df_2["rect"].values)
 
     return rect
 
 
-def desnity_plot(
-    xi,
-    yi,
-    zi
+def desnity_plot_GUI(
+    xi: np.ndarray,
+    yi: np.ndarray,
+    zi: np.ndarray
 ):
+    """Creates an interactive density plot from a data frame representing a
+    filtered proteomics library or single-shot measurement.
+
+    Parameters:
+    xi, yi, zi (numpy.ndarray): coordinates of the kernel density estimation,
+        where zi indicates the density
+    """
 
     qmesh = hv.QuadMesh((xi, yi, zi)).options(
         cmap=plt.get_cmap('viridis'),
@@ -93,16 +129,39 @@ def desnity_plot(
 
 
 def plot_window_scheme_on_top_of_density(
-    df,
-    qmesh,
-    color_param='white',
-    alpha_param=0.2
+    df: pd.DataFrame,
+    qmesh: hv.element.raster.QuadMesh,
+    plot_parameters: dict,
 ):
+    """Plot the dia-PASEF acquisition scheme on top of a density plot
+    representing a filtered proteomics library or single-shot measurement.
 
-    rect = boxes(df)
+    Parameters:
+    df (pd.DataFrame): data frame that contains the scan type (PASEF), scan
+        number and the corresponding diaPASEF window coordinates for each
+        window per scan.
+    qmesh (holoviews.element.raster.QuadMesh): interactive density plot, where
+        the dia-PASEF windows are plotted on top.
+    plot_parameters (dict): dictionary, which contains all input parameters for
+        creating plots (e.g., displayed m/z-range, ion mobility-range)
+    """
 
-    polys = hv.Polygons([hv.Box(rectangle[0], rectangle[1], (rectangle[2], rectangle[3])) for rectangle in rect])
-    polys.opts(color=color_param, line_width = 1, alpha = alpha_param)
+    rect = boxes_GUI(df)
+
+    polys = hv.Polygons(
+        [
+        hv.Box(
+            rectangle[0],
+            rectangle[1],
+            (rectangle[2], rectangle[3])
+            ) for rectangle in rect
+        ]
+    )
+    polys.opts(
+        color=plot_parameters["window_color"],
+        line_width=1,
+        alpha=plot_parameters["window_transparency"]
+        )
 
     qmesh.opts(colorbar_opts = {'title': 'Density'})
 
@@ -116,7 +175,19 @@ def plot_window_scheme_on_top_of_density(
     return plot
 
 
-def histogram_plots(library_subset, x_axis):
+def histogram_plots(
+    library_subset: pd.DataFrame,
+    x_axis: str,
+) -> None:
+    """Plot histograms with the precursor distribution in the m/z or ion
+        mobility dimension sorted by charge state.
+
+    Parameters:
+    library_subset (pd.DataFrame): pre-filtered data frame with unified column
+        names.
+    x_axis (str): the histogram can be build for the m/z- or ion Mobility
+        dimesion. This value selects the correct column in the data frame.
+    """
 
     axis_dict = {
         "mz": "m/z, Th",

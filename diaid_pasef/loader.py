@@ -11,7 +11,7 @@ def load_library(
         which should represent the diversity of possible peptides.
 
     Parameters:
-    library_name (str): path where the proteomics library is stored.
+    library_name (str): path, where the proteomics library is stored.
     analysis_software (str): an identifier for the analysis software used to
         create the input data. The script chooses different parse functions
         depending on this identifier.
@@ -49,7 +49,7 @@ def __load_dataframe_from_file(
         independent of the file format.
 
     Parameters:
-    library_name (str): path where the proteomics library is stored.
+    library_name (str): path, where the proteomics library is stored.
 
     Returns:
     pd.DataFrame: returns a data frame in the same way as the specific
@@ -155,7 +155,7 @@ def __parse_ms_fragger(
     pd.DataFrame: returns a pre-filtered data frame with unified column names.
     """
     #dataframe["ModifiedPeptideSequence"] = dataframe.apply(
-    #    lambda x: combine_columns(x, dataframe),
+    #    lambda x: combine_columns(x),
     #    axis=1
     #)
 
@@ -176,7 +176,18 @@ def __parse_ms_fragger(
     return library_subset
 
 
-def combine_columns(x, dataframe):
+def combine_columns(
+    x: pd.DataFrame,
+) -> str:
+    """One line of a data frame is parsed to this fuction to combine the
+        columns 'Modified Peptide' & 'Peptide'. Only necesary in rare cases.
+
+    Parameters:
+    x (pd.DataFrame): parsed line of a dataframe to combine two columns to one.
+
+    Returns:
+    str: output value with combined information.
+    """
     if pd.isna(x['Modified Peptide']) is True:
         return x['Peptide']
     else:

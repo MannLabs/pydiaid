@@ -10,9 +10,37 @@ import numpy as np
 import skopt
 
 
-def optimization(library, method_parameters, xi, yi, zi, method_conf, optimizer_parameters):
-    # Optimize method parameters Bayesian optimization using Gaussian process,
-    # values should follow a multivariate gaussian curve
+def optimization(
+    library: pd.DataFrame,
+    method_parameters: dict,
+    xi: np.ndarray,
+    yi: np.ndarray,
+    zi: np.ndarray,
+    method_conf: dict,
+    optimizer_parameters: dict,
+) ->  'optimize.OptimizeResult':
+    """ Optimize dia-PASEF method parameters: Bayesian optimization using a
+    Gaussian proces. The output values should follow a multivariate gaussian
+    curve.
+
+    Parameters:
+    library (pd.DataFrame): a pre-filtered data frame with unified column names
+        containing all required precursor information.
+    method_parameters (dict): dictionary, which includes all input parameters
+        for creating a dia-PASEF method.
+    xi, yi, zi (numpy.ndarray): coordinates of the kernel density estimation
+        where zi indicates the density
+    method_conf (dict): this dictionary contains all input parameters for all
+        sub-functions.
+    optimizer_parameters (dict): dictonary, which includes all input parameters
+        for optimizing a dia-PASEF method in dependence of a proteomics library.
+
+    Returns:
+    scipy.optimize.optimize.OptimizeResult: this parameter contains important
+    information regarding the optimization process (e.g., start settings,
+    tested parameters and test results)
+    """
+
     opt_result = skopt.gp_minimize(
         lambda dim: single_optimization_run(
             library,
@@ -82,15 +110,14 @@ def single_optimization_run(
 
     Parameters:
     library (pd.DataFrame): a pre-filtered data frame with unified column names
-    containing all required precursor
-        information.
+        containing all required precursor information.
     method_parameters (dict): dictionary, which includes all input parameters
         for creating a diaPASEF method (e.g., m/z-range, ion mobility-range,
         number of diaPASEF scans, number of ion mobility steps, the overlap of
         the diaPASEF windows, a shift of the final window scheme in the ion
-        mobility axis to account for the blind spot of the evaluation_parameter
-        (str): parameter, which was selected for optimization (e.g., all
-        precursors, all doubly charged precursors).
+        mobility axis to account for the blind spot of the
+    evaluation_parameter (str): parameter, which was selected for optimization
+        (e.g., all precursors, all doubly charged precursors).
     dim (list): y-coordinates of the scan area = A1, A2, B1, B2. x-coordinate
         for A1 and B1 is the lower m/z-range value, x-coordinate for A2 and B2
         is the upper m/z-range value.

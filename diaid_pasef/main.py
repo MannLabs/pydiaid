@@ -9,6 +9,9 @@ import pandas as pd
 # for creating new folders:
 import os
 
+# importing for scientific and numeric manipulations
+import numpy as np
+
 # todo: accelerate slow steps: loading of proteomics library, kernel density
 # estimation, Bayesian optimization
 # todo: change file locations to general solution
@@ -17,7 +20,7 @@ import os
 def create_folder(
     paths: list,
 ) -> None:
-    """This function creates a folder structure where all output files are
+    """This function creates a folder structure, where all output files are
         printed.
 
     Parameters:
@@ -30,7 +33,21 @@ def create_folder(
             os.makedirs(create_item)
 
 
-def library_information(method_conf, save_at):
+def library_information(
+    method_conf: dict,
+    save_at: str,
+) -> pd.DataFrame:
+    """This function exectues all steps concerning only the proteomics library:
+        loading of the protemics library as a pre-filtered data frame with
+        unified column names, calculating the kernel density estimation of a
+        data frame, creating a density plot and histogram from the data frame,
+        calculation of the charge state distribution of the precursors.
+
+    Parameters:
+    method_conf (dict): this dictionary contains all input parameters for all
+        sub-functions.
+    save_at (str): location, where all information shouldbe stored.
+    """
 
     library = loader.load_library(
         method_conf["input"]["library_name"],
@@ -74,7 +91,22 @@ def library_information(method_conf, save_at):
     return xi, yi, zi, library
 
 
-def precursor_within_scan_area(library, method_parameters, save_at):
+def precursor_within_scan_area(
+    library: pd.DataFrame,
+    method_parameters: dict,
+    save_at: str,
+) -> None:
+    """Calculation of the precursors within the scan area. The infomration
+    is saved as an csv file.
+
+    Parameters:
+    library (pd.DataFrame): pre-filtered data frame with unified column
+        names.
+    method_conf (dict): this dictionary contains all input parameters for all
+        sub-functions.
+    save_at (str): location, where all information shouldbe stored.
+    """
+
     # save parameters for method evaluation as .csv
     dict_precursors_within_scan_area = method_evaluation.calculate_precursor_within_scan_area(
         library,
@@ -97,11 +129,11 @@ def create_final_method(
     dim: list,
     method_conf: dict,
 ) -> pd.DataFrame:
-    """This function calculates the final diaPASEF window scheme with the
+    """This function calculates the final dia-PASEF window scheme with the
         optimized scan area coordinates and writes the .txt diaPASEF parameter
         file as input file for timsControl. By default, the scan area
         coordinates are up-shifted by 0.022 1/K0 since the quadrupole has a
-        dead time at the beginning of the diaPASEF window where no signal is
+        dead time at the beginning of the dia-PASEF window where no signal is
         acquired. The up-shift should prevent that this dead area lies within
         an area with a high precursor density.
 
@@ -144,16 +176,37 @@ def create_final_method(
 
 
 def final_method_information(
-    df_parameters_final,
-    xi,
-    yi,
-    zi,
-    method_conf,
-    save_at,
-    library,
-    method_parameters,
-    dim
-):
+    df_parameters_final: pd.DataFrame,
+    xi: np.ndarray,
+    yi: np.ndarray,
+    zi: np.ndarray,
+    method_conf: dict,
+    save_at: str,
+    library: pd.DataFrame,
+    method_parameters: dict,
+    dim: list
+) -> None:
+    """This function calculates the evaluation parameters for the final
+    dia-PASEF method and plots the dia-PASEF acquisition scheme on top of
+    the kernel density pot.
+
+    Parameters:
+    df_parameters_final (pd.DataFrame): data frame that contains the scan type
+        (PASEF), scan number, and the corresponding diaPASEF window coordinates
+        for each window per scan.
+    xi, yi, zi (numpy.ndarray): coordinates of the kernel density estimation,
+        where zi indicates the density.
+    method_conf (dict): this dictionary contains all input parameters for all
+            sub-functions.
+    save_at (str): location, where all information shouldbe stored.
+    library (pd.DataFrame): a pre-filtered data frame with unified column names
+        containing all required precursor information.
+    method_parameters (dict): dictionary, which includes all input parameters
+        for creating a diaPASEF method.
+    dim (list): y-coordinates of the scan area = A1, A2, B1, B2. x-coordinate
+        for A1 and B1 is the lower m/z-range value, x-coordinate for A2 and B2
+        is the upper m/z-range value.
+    """
     # plot created method on top of kernel density estimation of library
     graphs.plot_density_and_method(
         df_parameters_final,
@@ -190,11 +243,25 @@ def final_method_information(
 
 
 def evaluate_for_multiple_charged_prec(
-    method_conf,
-    save_at,
-    library,
-    df_parameters_final
-):
+    method_conf: dict,
+    save_at: str,
+    library: pd.DataFrame,
+    df_parameters_final: pd.DataFrame,
+) -> None:
+    """This function generates all kernel density plots with and without the
+        dia-PASEF acquisition scheme on top for precursors with multiple charge
+        states.
+
+    Parameters:
+    method_conf (dict): this dictionary contains all input parameters for all
+            sub-functions.
+    save_at (str): location, where all information shouldbe stored.
+    library (pd.DataFrame): a pre-filtered data frame with unified column names
+        containing all required precursor information.
+    df_parameters_final (pd.DataFrame): data frame that contains the scan type
+        (PASEF), scan number, and the corresponding diaPASEF window coordinates
+        for each window per scan.
+    """
 
     for charge in range(2, 5, 1):
         xi_charge, yi_charge, zi_charge = graphs.kernel_density_calculation_multiple_charge(

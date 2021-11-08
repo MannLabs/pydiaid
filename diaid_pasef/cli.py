@@ -59,8 +59,6 @@ def gui():
     required=True,
 )
 def optimize_window_scheme(parameter_file_name):
-    import diaid_pasef.main
-    import json
     print(f"Using parameter file {parameter_file_name}")
     with open(parameter_file_name, "r") as infile:
         method_conf = json.load(infile)
@@ -76,8 +74,6 @@ def optimize_window_scheme(parameter_file_name):
     required=True,
 )
 def create_diaPASEF_method(parameter_file_name,):
-    import diaid_pasef.main
-    import json
     print(f"Using parameter file {parameter_file_name}")
     with open(parameter_file_name, "r") as infile:
         method_conf = json.load(infile)
@@ -93,8 +89,6 @@ def create_diaPASEF_method(parameter_file_name,):
     required=True,
 )
 def evaluate_diaPASEF_method(parameter_file_name,):
-    import diaid_pasef.main
-    import json
     print(f"Using parameter file {parameter_file_name}")
     with open(parameter_file_name, "r") as infile:
         method_conf = json.load(infile)
@@ -110,8 +104,6 @@ def evaluate_diaPASEF_method(parameter_file_name,):
     required=True,
 )
 def evaluate_multiple_charged_prec(parameter_file_name,):
-    import diaid_pasef.main
-    import json
     print(f"Using parameter file {parameter_file_name}")
     with open(parameter_file_name, "r") as infile:
         method_conf = json.load(infile)
@@ -121,13 +113,14 @@ def evaluate_multiple_charged_prec(parameter_file_name,):
 def run_all(
     method_conf: dict,
 ) -> None:
-    """This function carries out all sub-functions step by step: loading of the
-    proteomics library, creating a folder for the output information,
+    """This function carries out all sub-functions step by step: creating a
+    folder for the output information, loading of the proteomics library,
     calculation of the kernel density estimation for the density plots,
-    Bayesian optimizationof diaPASEF method parameters by trying multiple scan
+    Bayesian optimization of diaPASEF method parameters by trying multiple scan
     area coordinates using a Gaussian process, writing all input and output
-    information in csv files, plot with diaPASEF windows overlaid on a kernel
-    density estimation of precursors.
+    information in json or csv files, creating final dia-PASEF method, plotting
+    diaPASEF windows on top of a kernel density estimation of precursors and
+    calculating method evaluation information.
 
     Parameters:
     method_conf (dict): this dictionary contains all input parameters for all
@@ -202,6 +195,19 @@ def run_all(
 def library_plus_evaluate_method(
     method_conf: dict
 ) -> None:
+    """This function carries out all sub-functions required for method
+    evaluation: creating a folder for the output information, loading of the
+    proteomics library, loading of the acquisition scheme, calculation of the
+    kernel density estimation for the density plots, writing all input and
+    output information in json or csv files, plotting of the diaPASEF windows
+    on top of a kernel density estimation of precursors, and calculating method
+    evaluation information
+
+    Parameters:
+    method_conf (dict): this dictionary contains all input parameters for all
+        sub-functions.
+
+    """
 
     method_parameters = method_conf["method_parameters"]
     save_at = method_conf["input"]["save_at"]
@@ -247,6 +253,18 @@ def library_plus_evaluate_method(
 def library_plus_create_methods(
     method_conf: dict
 ) -> None:
+    """This function carries out all sub-functions required to generate a
+    dia-PASEF method with specific scan area coordinates (A1, A2, B1, B2):
+    creating a folder for the output information, loading of the proteomics
+    library, writing all input and output information in json or csv files,
+    creating the dia-PASEF method.
+
+    Parameters:
+    method_conf (dict): this dictionary contains all input parameters for all
+        sub-functions.
+
+    """
+
     method_parameters = method_conf["method_parameters"]
     save_at = method_conf["input"]["save_at"]
     dim = method_parameters["scan_area_A1_A2_B1_B2_only_used_for_create"]
@@ -287,6 +305,19 @@ def library_plus_create_methods(
 def multiple_charged_prec(
     method_conf: dict
 ) -> None:
+    """This function carries out all sub-functions required for method
+    evaluation of precursor with multiple charge state: creating a folder for
+    the output information, loading of the proteomics library, loading of the
+    acquisition scheme, calculation of the kernel density estimation for the
+    density plots depending on the charge state, writing all input information
+    in a json file, plotting of the diaPASEF windows on top of a kernel density
+    estimation and calculating of method evaluation information.
+
+    Parameters:
+    method_conf (dict): this dictionary contains all input parameters for all
+        sub-functions.
+
+    """
 
     save_at = method_conf["input"]["save_at"]
 
