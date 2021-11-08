@@ -234,6 +234,57 @@ class LoadLibraryCard(BaseWidget):
             width=200,
             margin=(15, 15, 15, 15)
         )
+        # PLOTS
+        self.plot_mz = pn.widgets.EditableRangeSlider(
+            name='Plot M/z range',
+            start=100,
+            end=2000,
+            value=tuple(method_conf['graphs']['plot_mz']),
+            step=50,
+            margin=(15, 15, 0, 15),
+            width=430,
+        )
+        self.plot_im = pn.widgets.EditableRangeSlider(
+            name='Plot IM range',
+            start=0.5,
+            end=2.0,
+            value=tuple(method_conf['graphs']['plot_IM']),
+            step=0.1,
+            margin=(15, 15, 0, 15),
+            width=430,
+        )
+        self.numbins = pn.widgets.IntInput(
+            name='Number of bins',
+            start=1,
+            end=50,
+            value=method_conf['graphs']['numbins'],
+            step=1,
+            margin=(15, 15, 0, 15),
+            width=430,
+        )
+        self.window_transparency = pn.widgets.FloatInput(
+            name='Transparency',
+            start=0.1,
+            end=1,
+            value=method_conf['graphs']['window_transparency'],
+            step=0.1,
+            margin=(15, 15, 0, 15),
+            width=430,
+        )
+        self.window_frame_color = pn.widgets.Select(
+            name='Frame color',
+            value=method_conf['graphs']['window_frame_color'],
+            options=['black', 'grey'],
+            margin=(15, 15, 0, 15),
+            width=430,
+        )
+        self.window_color = pn.widgets.Select(
+            name='Color',
+            value=method_conf['graphs']['window_color'],
+            options=['yellow', 'green', 'black', 'grey'],
+            margin=(15, 15, 0, 15),
+            width=430,
+        )
         # UPLOAD DATA
         self.upload_button = pn.widgets.Button(
             name='Upload library',
@@ -278,6 +329,29 @@ class LoadLibraryCard(BaseWidget):
                     margin=(0, 130, 0, 0),
                 )
             ),
+            pn.Column(
+                pn.WidgetBox(
+                    pn.Row(
+                        self.plot_mz,
+                        self.plot_im,
+                        sizing_mode='stretch_width',
+                    ),
+                    pn.Row(
+                        self.numbins,
+                        self.window_transparency,
+                        sizing_mode='stretch_width'
+                    ),
+                    pn.Row(
+                        self.window_frame_color,
+                        self.window_color,
+                        sizing_mode='stretch_width'
+                    ),
+                    sizing_mode='stretch_width',
+                    margin=(10, 10, 30, 10),
+                    height=220
+                ),
+                margin=(10, 30, 10, 10),
+            ),
             pn.layout.Divider(
                 sizing_mode='stretch_width',
                 margin=(0, 10, -20, 10),
@@ -293,7 +367,6 @@ class LoadLibraryCard(BaseWidget):
             header_color='#333',
             align='center',
             sizing_mode='stretch_width',
-            # height=470,
             margin=(5, 8, 10, 8),
             css_classes=['background']
         )
@@ -303,20 +376,22 @@ class LoadLibraryCard(BaseWidget):
             self.path_save_folder: [self.update_parameters, 'value'],
             self.ptm: [self.update_parameters, 'value'],
             self.analysis_software: [self.update_parameters, 'value'],
-            # self.upload_button: [self.upload_data, 'clicks'],
+            self.plot_mz: [self.update_parameters_plotting, 'value'],
+            self.plot_im: [self.update_parameters_plotting, 'value'],
+            self.numbins: [self.update_parameters_plotting, 'value'],
+            self.window_transparency: [self.update_parameters_plotting, 'value'],
+            self.window_frame_color: [self.update_parameters_plotting, 'value'],
+            self.window_color: [self.update_parameters_plotting, 'value'],
+            self.upload_button: [self.upload_data, 'clicks'],
 
         }
         for k in dependances.keys():
             k.param.watch(
                 dependances[k][0],
                 dependances[k][1],
-                # onlychanged=False
+                onlychanged=True
             )
-        self.upload_button.param.watch(
-            self.upload_data,
-            'clicks',
-            onlychanged=True
-        )
+
         return self.layout
 
 
@@ -330,6 +405,17 @@ class LoadLibraryCard(BaseWidget):
         }
         method_conf['input'][convertion_dict[event.obj.name]] = event.new
 
+    def update_parameters_plotting(self, event):
+        global method_conf
+        convertion_dict = {
+            self.plot_mz.name: "plot_mz",
+            self.plot_im.name: "plot_IM",
+            self.numbins.name: "numbins",
+            self.window_frame_color.name: "window_frame_color",
+            self.window_color.name: "window_color",
+            self.window_transparency.name: "window_transparency",
+        }
+        method_conf['graphs'][convertion_dict[event.obj.name]] = event.new
 
     def upload_data(self, *args):
         self.upload_progress.active = True
@@ -355,7 +441,7 @@ class LoadLibraryCard(BaseWidget):
             self.library,
             method_conf["graphs"]["numbins"]
         )
-        self.layout[2][0] = pn.pane.Matplotlib(
+        self.layout[3][0] = pn.pane.Matplotlib(
             diaid_pasef.graphs.plot_precursor_distribution_as_histogram(
                 self.library,
                 method_conf["graphs"],
@@ -368,7 +454,7 @@ class LoadLibraryCard(BaseWidget):
             ),
             tight=True
         )
-        self.layout[2][1] = pn.pane.Matplotlib(
+        self.layout[3][1] = pn.pane.Matplotlib(
             diaid_pasef.graphs.plot_density(
                 self.xi,
                 self.yi,
@@ -398,7 +484,7 @@ class LoadLibraryCard(BaseWidget):
             ),
             index=False
         )
-        self.layout[2][2] = pn.Column(
+        self.layout[3][2] = pn.Column(
             pn.pane.Markdown(
                 '### Percentage of multiple charged precursors',
                  align='center'
@@ -1269,7 +1355,6 @@ class DiAIDPasefGUI(GUI):
 
 
 def run():
-    # set style
     init_panel()
     DiAIDPasefGUI(start_server=True)
 
