@@ -46,7 +46,8 @@ def method_creation(
     # calculate the start and end mz range for each diaPASEF window
     # [400,420][420,450], ... :
     x_splits = divide_mz_range_in_equally_filled_parts(
-        library_mz_values, method_parameters["mz"],
+        library_mz_values,
+        method_parameters["mz"],
         num_splits
     )
     # calculate the position of each diaPASEF window. 1st scan: position 0, 12;
@@ -78,6 +79,7 @@ def method_creation(
         x_splits
     )
 
+    # enable this for returning the actuall windows without elongaiton
     #return pd.DataFrame(
     #    results_sorted,
     #    columns=["MS Type", "Cycle Id", "Start IM", "End IM", "Start Mass", "End Mass"]
