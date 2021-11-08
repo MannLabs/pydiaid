@@ -8,9 +8,10 @@ import numpy as np
 from matplotlib.patches import Rectangle
 
 
-def calculate_precursor_within_mz_range(
+def calculate_precursor_within_scan_area(
     library: pd.DataFrame,
     mz: tuple,
+    im: tuple,
 ) -> dict:
     """This function calculates the number of precursors within the set
         m/z-range in percent.
@@ -18,20 +19,20 @@ def calculate_precursor_within_mz_range(
     library (pd.DataFrame): a pre-filtered data frame with unified column names
         containing all required precursor information.
     mz (tuple): lower and upper value of the m/z range.
+    im (tuple): lower and upper value of the ion mobility range.
 
     Returns:
     dict: this dictionary has only one item. The key is the value description,
         and the value is the ratio of precursors[%] within the set m/z-range.
     """
-    x = library['mz']
-    ctr = 0
-    for i in x:
-        if mz[0] < i and i < mz[1]:
-            ctr += 1
-        else:
-            next
-    prec_mz_range = (ctr/len(x))*100
-    return {'precursors within m/z-range [%]': round(prec_mz_range, 2)}
+    filtered_selection = library['mz'] > mz[0]
+    filtered_selection &= library['mz'] < mz[1]
+    filtered_selection &= library['IM'] > im[0]
+    filtered_selection &= library['IM'] < im[1]
+
+    prec_scan_area = (len(library[filtered_selection])/len(library['mz']))*100
+
+    return {'precursors within m/z-range [%]': round(prec_scan_area, 2)}
 
 
 def calculate_percentage_multiple_charged_precursors(
