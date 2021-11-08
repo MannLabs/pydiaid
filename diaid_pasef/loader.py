@@ -83,7 +83,7 @@ def __parse_alpha_pept(
 
     filtered_dataframe = dataframe[
         (dataframe["q_value"] <= 0.01) &
-        (dataframe["decoy"] is False)
+        (dataframe["decoy"] == False)
     ]
     library_subset = library_loader(
         filtered_dataframe,
