@@ -18,7 +18,7 @@ def optimization(
     zi: np.ndarray,
     method_conf: dict,
     optimizer_parameters: dict,
-) ->  'optimize.OptimizeResult':
+) -> 'scipy.optimize.optimize.OptimizeResult':
     """ Optimize dia-PASEF method parameters: Bayesian optimization using a
     Gaussian proces. The output values should follow a multivariate gaussian
     curve.
@@ -101,10 +101,10 @@ def single_optimization_run(
     zi: np.ndarray,
     method_conf: dict,
 ) -> int:
-    """This function contains one method creation step. First a diaPASEF scheme
+    """This function contains one optimization step. First a dia-PASEF scheme
         is calculated based on the scan area coordinates, second the evaluation
         parameter is calculated to estimate the optimization potential, last
-        the diaPASEF method scheme is printed on top of the kernel density
+        the dia-PASEF method scheme is printed on top of the kernel density
         estimation of the used proteomics library to follow the optimization
         process visually.
 
@@ -112,10 +112,7 @@ def single_optimization_run(
     library (pd.DataFrame): a pre-filtered data frame with unified column names
         containing all required precursor information.
     method_parameters (dict): dictionary, which includes all input parameters
-        for creating a diaPASEF method (e.g., m/z-range, ion mobility-range,
-        number of diaPASEF scans, number of ion mobility steps, the overlap of
-        the diaPASEF windows, a shift of the final window scheme in the ion
-        mobility axis to account for the blind spot of the
+        for creating a dia-PASEF method.
     evaluation_parameter (str): parameter, which was selected for optimization
         (e.g., all precursors, all doubly charged precursors).
     dim (list): y-coordinates of the scan area = A1, A2, B1, B2. x-coordinate
@@ -164,13 +161,14 @@ def single_optimization_run(
     )
     return result
 
+
 def write_tested_parameters_into_csv(
     opt_result: pd.DataFrame,  # scipy.optimize.optimize.OptimizeResult
     optimizer_parameters: str,
     method_conf: dict,
 ) -> None:
-    """This function writes all important parameters into a .csv that were used
-        during the method optimization step.
+    """This function writes all important parameters that were used during the
+    method optimization step into a .csv file.
 
     Parameters:
     opt_result (pd.DataFrame): a dictionary containing all input and output
