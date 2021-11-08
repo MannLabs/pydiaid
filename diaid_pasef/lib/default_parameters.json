@@ -1,38 +1,38 @@
 {
   "input": {
-    "save_at" : "output_diaid_pasef",
+    "save_at" : "output_diaid_pasef_proteomics_diAID-PASEF_test",
     "PTM": "None",
-    "library_name": "./diaid_pasef/input/test_libraries/20201125_Phospho_CE_energies_Spectronaut_library.xls",
-    "analysis_software": "Spectronaut_library",
-    "diaPASEF_method_only_used_for_method_evaluation": "./diaid_pasef/static/DIAParameterspy3TC.txt"
+    "library_name": "D:/diaid_pasef/diaid_pasef/static/AlphaPept_results.csv",
+    "analysis_software": "AlphaPept",
+    "diaPASEF_method_only_used_for_evaluate": "D:/diaid_pasef/diaid_pasef/static/DIAParameterspy3TC.txt"
   },
   "method_parameters": {
     "mz": [300, 1200],
     "ion_mobility": [0.6, 1.6],
-    "num_dia_pasef_scans": 12,
-    "im_steps": 2,
+    "num_dia_pasef_scans": 5,
+    "im_steps": 3,
     "overlap": 0,
     "shift_of_final_method": 0.022,
-    "scan_area_A1_A2_B1_B2_only_used_for_specific_diaPASEF": [0.7, 0.9, 1.1, 1.5]
+    "scan_area_A1_A2_B1_B2_only_used_for_create": [0.68, 1.04, 0.9, 1.30]
   },
   "graphs": {
     "plot_mz": [250, 1250],
     "plot_IM": [0.6, 1.6],
-    "numbins": 10,
+    "numbins": 30,
     "window_frame_color": "black",
-    "window_color": "yellow",
+    "window_color": "white",
     "window_transparency": 0.5
   },
   "optimizer": {
     "optimizer": "Gauss",
     "n_random_starts": null,
     "n_calls": 5,
-    "n_start": 1,
-    "initial_points": 1,
-    "YA1": [0.4, 0.6],
-    "YA2": [0.8, 0.95],
-    "YB1": [0.96, 1.2],
-    "YB2": [1.25, 1.5],
+    "n_start": 2,
+    "initial_points": 2,
+    "YA1": [0.5, 0.9],
+    "YA2": [0.6, 1.0],
+    "YB1": [0.9, 1.5],
+    "YB2": [1.0, 1.8],
     "evaluation_parameter": "No. of covered precursors"
   }
 }
