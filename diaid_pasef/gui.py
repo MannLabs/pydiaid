@@ -18,6 +18,7 @@ import diaid_pasef
 import diaid_pasef.loader
 import diaid_pasef.main
 import diaid_pasef.graphs
+import diaid_pasef.method_optimizer
 
 import warnings
 warnings.filterwarnings("ignore")
@@ -871,7 +872,7 @@ class OptimizationCard(BaseWidget):
         ]
         diaid_pasef.main.create_folder(self.folder_path)
 
-        self.opt_result = diaid_pasef.main.optimization(
+        self.opt_result = diaid_pasef.method_optimizer.optimization(
             self.data.library,
             method_conf["method_parameters"],
             self.data.xi,
@@ -1065,7 +1066,7 @@ class CreateMethodCard(BaseWidget):
             method_conf["input"]["save_at"],
             self.data.library,
             method_conf["method_parameters"],
-            self.opt_widget.opt_result
+            self.opt_widget.scan_area_A1_A2_B1_B2_only_used_for_specific_diaPASEF.value
         )
         final_method_path = os.path.join(
             method_conf["input"]["save_at"],
