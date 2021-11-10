@@ -201,7 +201,7 @@ class MainWidget(object):
 
 class LoadLibraryCard(BaseWidget):
     # TODO: docstring
-    def __init__(self):
+    def __init__(self, description):
         super().__init__(name="Data")
         self.library = None
         self.layout = None
@@ -287,6 +287,13 @@ class LoadLibraryCard(BaseWidget):
             margin=(15, 15, 0, 15),
             width=430,
         )
+        self.load_library_descr = pn.pane.Markdown(
+            description,
+            margin=(2, 0, 2, 0),
+            # css_classes=['main-part'],
+            align='center',
+            # width=460
+        )
         # UPLOAD DATA
         self.upload_button = pn.widgets.Button(
             name='Upload library',
@@ -312,6 +319,7 @@ class LoadLibraryCard(BaseWidget):
 
     def create(self):
         self.layout = pn.Card(
+            self.load_library_descr,
             pn.Row(
                 pn.Column(
                     self.path_library,
@@ -443,7 +451,7 @@ class LoadLibraryCard(BaseWidget):
             self.library,
             method_conf["graphs"]["numbins"]
         )
-        self.layout[3][0] = pn.pane.Matplotlib(
+        self.layout[4][0] = pn.pane.Matplotlib(
             diaid_pasef.graphs.plot_precursor_distribution_as_histogram(
                 self.library,
                 method_conf["graphs"],
@@ -456,7 +464,7 @@ class LoadLibraryCard(BaseWidget):
             ),
             tight=True
         )
-        self.layout[3][1] = pn.pane.Matplotlib(
+        self.layout[4][1] = pn.pane.Matplotlib(
             diaid_pasef.graphs.plot_density(
                 self.xi,
                 self.yi,
@@ -486,7 +494,7 @@ class LoadLibraryCard(BaseWidget):
             ),
             index=False
         )
-        self.layout[3][2] = pn.Column(
+        self.layout[4][2] = pn.Column(
             pn.pane.Markdown(
                 '### Percentage of multiple charged precursors',
                  align='center'
@@ -506,7 +514,7 @@ class LoadLibraryCard(BaseWidget):
 
 class SpecifyParametersCard(BaseWidget):
     # TODO: docstring
-    def __init__(self, data):
+    def __init__(self, data, description):
         super().__init__(name="Parameters")
         self.data = data
         self.mz = pn.widgets.EditableRangeSlider(
@@ -569,6 +577,13 @@ class SpecifyParametersCard(BaseWidget):
             align='center',
             auto_edit=False,
         )
+        self.specify_parameter_descr = pn.pane.Markdown(
+            description,
+            margin=(2, 0, 2, 0),
+            # css_classes=['main-part'],
+            align='center',
+            # width=460
+        )
         self.calculate_button = pn.widgets.Button(
             name='Calculate',
             button_type='primary',
@@ -581,6 +596,7 @@ class SpecifyParametersCard(BaseWidget):
 
     def create(self):
         self.layout = pn.Card(
+            self.specify_parameter_descr,
             pn.Row(
                 pn.Column(
                     pn.WidgetBox(
@@ -685,11 +701,11 @@ class SpecifyParametersCard(BaseWidget):
         )
 
         self.spec_param_table.value = df
-        self.layout[2][0] = self.spec_param_table
+        self.layout[3][0] = self.spec_param_table
 
 class OptimizationCard(BaseWidget):
     # TODO: docstring
-    def __init__(self, data):
+    def __init__(self, data, description):
         super().__init__(name="Optimization")
         self.data = data
         self.opt_result_x = [0, 0, 0, 0]
@@ -788,9 +804,17 @@ class OptimizationCard(BaseWidget):
             margin=(15, 15, 0, 15),
             width=900
         )
+        self.optimization_descr = pn.pane.Markdown(
+            description,
+            margin=(2, 0, 2, 0),
+            # css_classes=['main-part'],
+            align='center',
+            # width=460
+        )
 
     def create(self):
         self.layout = pn.Card(
+            self.optimization_descr,
             pn.Row(
                 pn.Column(
                     pn.WidgetBox(
@@ -946,9 +970,9 @@ class OptimizationCard(BaseWidget):
             auto_edit=False
         )
 
-        self.layout[2][0] = self.player
-        self.layout[2][1][0] = self.kde_plot
-        self.layout[2][1][1] = self.kde_plot_table
+        self.layout[3][0] = self.player
+        self.layout[3][1][0] = self.kde_plot
+        self.layout[3][1][1] = self.kde_plot_table
 
         self.player.param.watch(
             self.update_kde_plot_df,
@@ -966,13 +990,13 @@ class OptimizationCard(BaseWidget):
             self.folder_path[0],
             self.filenames_plots[event.new]
         )
-        self.layout[2][1][0] = self.kde_plot
-        self.layout[2][1][1] = self.kde_plot_table
+        self.layout[3][1][0] = self.kde_plot
+        self.layout[3][1][1] = self.kde_plot_table
 
 
 class CreateMethodCard(BaseWidget):
     # TODO: docstring
-    def __init__(self, data, opt_widget):
+    def __init__(self, data, opt_widget, description):
         super().__init__(name="Method_creation")
         self.data = data
         self.opt_widget = opt_widget
@@ -992,9 +1016,17 @@ class CreateMethodCard(BaseWidget):
             sizing_mode='stretch_width',
             margin=(15, 15, 0, 15)
         )
+        self.create_method_descr = pn.pane.Markdown(
+            description,
+            margin=(2, 0, 2, 0),
+            # css_classes=['main-part'],
+            align='center',
+            # width=460
+        )
 
     def create(self):
         self.layout = pn.Card(
+            self.create_method_descr,
             pn.Row(
                 pn.Column(
                     pn.WidgetBox(
@@ -1102,7 +1134,7 @@ class CreateMethodCard(BaseWidget):
             'diaPASEF_method.txt'
         )
         self.path_method.value = final_method_path
-        self.layout[2][0] = pn.pane.PNG(
+        self.layout[3][0] = pn.pane.PNG(
             object=os.path.join(
                 method_conf["input"]["save_at"],
                 'final_method',
@@ -1112,7 +1144,7 @@ class CreateMethodCard(BaseWidget):
             width=460,
             align='center',
         )
-        self.layout[2][1] = pn.widgets.DataFrame(
+        self.layout[3][1] = pn.widgets.DataFrame(
             pd.read_csv(
                 final_method_path,
                 header=None,
@@ -1129,7 +1161,7 @@ class CreateMethodCard(BaseWidget):
 
 class EvaluateMethodCard(object):
     # TODO: docstring
-    def __init__(self, data, method_creation):
+    def __init__(self, data, method_creation, description):
         self.data = data
         self.method_creation = method_creation
         self.evaluate_button = pn.widgets.Button(
@@ -1140,9 +1172,17 @@ class EvaluateMethodCard(object):
             align='center',
             margin=(0, 0, 0, 0)
         )
+        self.evaluate_method_descr = pn.pane.Markdown(
+            description,
+            margin=(2, 0, 2, 0),
+            # css_classes=['main-part'],
+            align='center',
+            # width=460
+        )
 
     def create(self):
         self.layout = pn.Card(
+            self.evaluate_method_descr,
             pn.Row(
                 pn.Column(
                     self.method_creation.path_method,
@@ -1251,7 +1291,7 @@ class EvaluateMethodCard(object):
             )
             method_eval_table.value = final_df
 
-        self.layout[2][0] = method_eval_table
+        self.layout[3][0] = method_eval_table
 
 def get_css_style(
     file_name="dashboard_style.css",
@@ -1346,6 +1386,11 @@ class DiAIDPasefGUI(GUI):
             github_url='https://github.com/MannLabs/diaid_pasef',
         )
         self.project_description = """### Include the description."""
+        self.load_library_description = "#### test" + ' test' * 50
+        self.specify_parameter_description = "#### test" + ' test' * 50
+        self.optimization_description = "#### test" + ' test' * 50
+        self.create_method_description = "#### test" + ' test' * 50
+        self.evaluate_method_description = "#### test" + ' test' * 50
         self.manual_path = os.path.join(
             DOCS_PATH,
             "manual.pdf"
@@ -1358,20 +1403,24 @@ class DiAIDPasefGUI(GUI):
         # ERROR/WARNING MESSAGES
         self.error_message_upload = "The selected file can't be uploaded. Please check the instructions for data uploading."
 
-        self.data = LoadLibraryCard()
+        self.data = LoadLibraryCard(self.load_library_description)
         self.method_parameters = SpecifyParametersCard(
-            self.data
+            self.data,
+            self.specify_parameter_description
         )
         self.optimization = OptimizationCard(
-            self.data
+            self.data,
+            self.optimization_description
         )
         self.method_creation = CreateMethodCard(
             self.data,
-            self.optimization
+            self.optimization,
+            self.create_method_description
         )
         self.method_evaluation = EvaluateMethodCard(
             self.data,
-            self.method_creation
+            self.method_creation,
+            self.evaluate_method_description
         )
         self.layout += [
             self.main_widget.create(),
