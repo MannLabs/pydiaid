@@ -216,6 +216,14 @@ def final_method_information(
         method_conf["graphs"],
         save_at +'/final_method/Kernel_density_distribution_and_final_method.pdf'
     )
+    graphs.plot_density_and_method(
+        df_parameters_final,
+        xi,
+        yi,
+        zi,
+        method_conf["graphs"],
+        save_at +'/final_method/Kernel_density_distribution_and_final_method.png'
+    )
 
     # save parameters for method evaluation as .csv
     dict_evaluation_of_final_method = method_evaluation.coverage(
