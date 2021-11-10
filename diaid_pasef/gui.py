@@ -1134,17 +1134,7 @@ class CreateMethodCard(BaseWidget):
             'diaPASEF_method.txt'
         )
         self.path_method.value = final_method_path
-        self.layout[3][0] = pn.pane.PNG(
-            object=os.path.join(
-                method_conf["input"]["save_at"],
-                'final_method',
-                'Kernel_density_distribution_and_final_method.png'
-            ),
-            height=345,
-            width=460,
-            align='center',
-        )
-        self.layout[3][1] = pn.widgets.DataFrame(
+        self.layout[3][0] = pn.widgets.DataFrame(
             pd.read_csv(
                 final_method_path,
                 header=None,
@@ -1201,7 +1191,9 @@ class EvaluateMethodCard(object):
                 margin=(-20, 10, -20, 10),
             ),
             pn.Row(
-                None
+                None,
+                None,
+                align='center'
             ),
             title='Method Evaluation',
             collapsed=True,
@@ -1239,7 +1231,7 @@ class EvaluateMethodCard(object):
         method_eval_table = pn.widgets.DataFrame(
             autosize_mode='fit_viewport',
             # margin=(0, 0, 0, 100),
-            align='center',
+            # align='center',
             auto_edit=False,
         )
 
@@ -1291,7 +1283,18 @@ class EvaluateMethodCard(object):
             )
             method_eval_table.value = final_df
 
-        self.layout[3][0] = method_eval_table
+        self.layout[3][0] = pn.pane.PNG(
+            object=os.path.join(
+                method_conf["input"]["save_at"],
+                'final_method',
+                'Kernel_density_distribution_and_final_method.png'
+            ),
+            height=345,
+            width=460,
+            align='center',
+            margin=(0, 20, 0, 0)
+        )
+        self.layout[3][1] = method_eval_table
 
 def get_css_style(
     file_name="dashboard_style.css",
