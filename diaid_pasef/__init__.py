@@ -5,13 +5,20 @@ __project__ = "diaid_pasef"
 __version__ = "0.0.1"
 __license__ = "Apache"
 __description__ = "An open-source Python package of the AlphaPept ecosystem"
-__author__ = "Mann Labs"
+__author__ = "Patricia Skowronek, Sander Willems, Eugenia Voytik"
 __author_email__ = "opensource@alphapept.com"
 __github__ = "https://github.com/MannLabs/diaid_pasef"
 __keywords__ = [
     "bioinformatics",
     "software",
     "AlphaPept ecosystem",
+    "ms",
+    "mass spectrometry",
+    "bruker",
+    "timsTOF",
+    "proteomics",
+    "bioinformatics",
+    "diaPASEF",
 ]
 __python_version__ = ">=3.8,<3.10"
 __classifiers__ = [
