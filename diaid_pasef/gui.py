@@ -19,6 +19,7 @@ import diaid_pasef.loader
 import diaid_pasef.main
 import diaid_pasef.graphs
 import diaid_pasef.method_optimizer
+import diaid_pasef.method_evaluation
 
 import warnings
 warnings.filterwarnings("ignore")
@@ -422,7 +423,7 @@ class LoadLibraryCard(BaseWidget):
         self.upload_progress.active = True
         self.library = diaid_pasef.loader.load_library(
             self.path_library.value,
-            "AlphaPept",
+            method_conf["input"]["analysis_software"],
             method_conf["input"]["PTM"]
         )
         self.upload_progress.active = False
@@ -503,9 +504,11 @@ class LoadLibraryCard(BaseWidget):
         self.upload_progress.active = False
 
 
-class SpecifyParametersCard(object):
+class SpecifyParametersCard(BaseWidget):
     # TODO: docstring
-    def __init__(self):
+    def __init__(self, data):
+        super().__init__(name="Parameters")
+        self.data = data
         self.mz = pn.widgets.EditableRangeSlider(
             name='M/z range',
             start=100,
@@ -559,6 +562,12 @@ class SpecifyParametersCard(object):
             step=0.01,
             margin=(15, 15, 0, 15),
             width=430,
+        )
+        self.spec_param_table = pn.widgets.DataFrame(
+            autosize_mode='fit_viewport',
+            # margin=(0, 0, 0, 100),
+            align='center',
+            auto_edit=False,
         )
         self.calculate_button = pn.widgets.Button(
             name='Calculate',
@@ -655,9 +664,28 @@ class SpecifyParametersCard(object):
             method_conf['method_parameters'][convertion_dict[event.obj.name]] = event.new
 
     def run_calculation(self, *args):
-        pass
+        dict_precursors_within_scan_area = diaid_pasef.method_evaluation.calculate_precursor_within_scan_area(
+            self.data.library,
+            method_conf['method_parameters']["mz"],
+            method_conf['method_parameters']["ion_mobility"]
+        )
 
+        df = pd.DataFrame({
+            "column name": list(dict_precursors_within_scan_area.keys()),
+            "column value": list(dict_precursors_within_scan_area.values())
+        })
 
+        df.to_csv(
+            os.path.join(
+                method_conf["input"]["save_at"],
+                'final_method',
+                'precursors_within_scan_area.csv'
+            ),
+            index=False
+        )
+
+        self.spec_param_table.value = df
+        self.layout[2][0] = self.spec_param_table
 
 class OptimizationCard(BaseWidget):
     # TODO: docstring
@@ -1331,7 +1359,9 @@ class DiAIDPasefGUI(GUI):
         self.error_message_upload = "The selected file can't be uploaded. Please check the instructions for data uploading."
 
         self.data = LoadLibraryCard()
-        self.method_parameters = SpecifyParametersCard()
+        self.method_parameters = SpecifyParametersCard(
+            self.data
+        )
         self.optimization = OptimizationCard(
             self.data
         )
