@@ -12,7 +12,7 @@ def load_library(
         which should represent the diversity of possible peptides.
 
     Parameters:
-    library_name (str): path where the proteomics library is stored.
+    library_name (str): path, where the proteomics library is stored.
     analysis_software (str): an identifier for the analysis software used to
         create the input data. The script chooses different parse functions
         depending on this identifier.
@@ -50,7 +50,7 @@ def __load_dataframe_from_file(
         independent of the file format.
 
     Parameters:
-    library_name (str): path where the proteomics library is stored.
+    library_name (str): path, where the proteomics library is stored.
 
     Returns:
     pd.DataFrame: returns a data frame in the same way as the specific
@@ -155,17 +155,44 @@ def __parse_ms_fragger(
     Returns:
     pd.DataFrame: returns a pre-filtered data frame with unified column names.
     """
+    #dataframe["ModifiedPeptideSequence"] = dataframe.apply(
+    #    lambda x: combine_columns(x),
+    #    axis=1
+    #)
 
     library_subset = library_loader(
         dataframe,
         ptm,
-        'PrecursorMz',
-        'PrecursorIonMobility',
-        'PrecursorCharge',
-        'ProteinId',
-        'ModifiedPeptideSequence'
+        #'Calibrated Observed M/Z',
+        #'Ion Mobility',
+        #'Charge',
+        #'Protein ID',
+        #"ModifiedPeptideSequence"
+         'PrecursorMz',
+         'PrecursorIonMobility',
+         'PrecursorCharge',
+         'ProteinId',
+         'ModifiedPeptideSequence'
     )
     return library_subset
+
+
+def combine_columns(
+    x: pd.DataFrame,
+) -> str:
+    """One line of a data frame is parsed to this fuction to combine the
+        columns 'Modified Peptide' & 'Peptide'. Only necesary in rare cases.
+
+    Parameters:
+    x (pd.DataFrame): parsed line of a dataframe to combine two columns to one.
+
+    Returns:
+    str: output value with combined information.
+    """
+    if pd.isna(x['Modified Peptide']) is True:
+        return x['Peptide']
+    else:
+        return x['Modified Peptide']
 
 
 def __parse_spectronaut_single_shot(
@@ -276,7 +303,7 @@ def library_loader(
         library[ptm] = library[modified_peptide].apply(
             lambda x: find_PTM(x, ptm)
         )
-        library_filtered = library[library[ptm] is True]
+        library_filtered = library[library[ptm] == True]
         library_subset = library_filtered.drop_duplicates(
             [modified_peptide, charge]
         )

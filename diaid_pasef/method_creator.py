@@ -14,9 +14,10 @@ def method_creation(
     B2: float,
 ) -> pd.DataFrame:
     """This function calculates the diaPASEF window coordinates based on the
-        input parameters with variable isolation widths, adjusted to the
-        precursor density in the m/z dimension. All diaAPSeF windows together
-        add up to the diaPASEF window scheme.
+        input parameters with dynamic isolation widths, adjusted to the
+        precursor density in the m/z dimension. All dia-PASEF windows together
+        add up to the dia-PASEF window scheme.
+
     Parameters:
     library_mz_values (list): list of all mz precursor values.
     method_parameters (dict): dictionary, which contains all input parameters
@@ -46,7 +47,8 @@ def method_creation(
     # calculate the start and end mz range for each diaPASEF window
     # [400,420][420,450], ... :
     x_splits = divide_mz_range_in_equally_filled_parts(
-        library_mz_values, method_parameters["mz"],
+        library_mz_values,
+        method_parameters["mz"],
         num_splits
     )
     # calculate the position of each diaPASEF window. 1st scan: position 0, 12;
@@ -78,6 +80,12 @@ def method_creation(
         x_splits
     )
 
+    # enable this for returning the actuall windows without elongaiton
+    #return pd.DataFrame(
+    #    results_sorted,
+    #    columns=["MS Type", "Cycle Id", "Start IM", "End IM", "Start Mass", "End Mass"]
+    #)
+
     return enhance_diaPASEF_windows_to_edges_of_IM_ranges(
         results_sorted,
         method_parameters["ion_mobility"],
@@ -98,7 +106,8 @@ def calculate_diaPASEF_window_coordinates(
     """This function calculates the diaPASEF window parameters. The x start and
         end coordinate of each window (= rectangle) is already defined in
         x_splits, and the y coordinates are calculated through the intersection
-        point of the x coordinate with the respective line equation.
+        point of the x coordinates with the respective line equation.
+
     Parameters:
     num_steps (int): number of ion mobility windows per diaPASEF scan.
     num_scans (int): number of diaPASEF scans.
@@ -144,10 +153,10 @@ def calculate_diaPASEF_window_coordinates(
 
             temp.append("PASEF")
             temp.append(scan + 1)
-            temp.append(round(y_bottom,2))
-            temp.append(round(y_upper,2))
-            temp.append(round(x_splits[i*num_scans + scan][0],2))
-            temp.append(round(x_splits[i*num_scans + scan][-1],2))
+            temp.append(round(y_bottom, 2))
+            temp.append(round(y_upper, 2))
+            temp.append(round(x_splits[i*num_scans + scan][0], 2))
+            temp.append(round(x_splits[i*num_scans + scan][-1], 2))
             scan_bottom[scan] = y_upper
             results.append(temp)
 
@@ -173,6 +182,7 @@ def enhance_diaPASEF_windows_to_edges_of_IM_ranges(
         windows per diaPASEF scan to enhance the diapASEF windows to the
         borders of the ion mobility range. This enhances the overall precursor
         coverage without loss in sensitivity or acquisition speed.
+
     Parameters:
     df_without_column_names (pd.DataFrame): data frame containing the scan type
         (PASEF), scan number, and the corresponding diaPASEF window coordinates
@@ -223,6 +233,7 @@ def divide_mz_range_in_equally_filled_parts(
     """This function calculates the lower and upper m/z value of each ion
         mobility window equalizing the number of precursors per diaPASEF window
         across the m/z dimension.
+
     Parameters:
     x_series (list(float)): list of all m/z precursor values.
     mz_range (tuple): lower and upper value of the m/z range.
@@ -264,7 +275,7 @@ def line_equation(
 ) -> float:  # todo m: float, c: float; how to write this with two output values?
     """This function calculates the line equation of two coordinates.
     Parameters:
-    l1 (tuple): x and y coordinate of the 1st point. #Line encoded as l=(x,y).
+    l1 (tuple): x and y coordinate of the 1st point. Line encoded as l=(x,y).
     l2 (tuple): x and y coordinate of the 2nd point.
 
     Returns:
@@ -281,7 +292,7 @@ def create_parameter_dataframe(
     file_name: str,
 ) -> None:
     """This function writes the diaPASEF parameter file as .txt. This file
-        serves as input for the generation of new diaPASEF methods with
+        serves as input for the generation of new dia-PASEF methods with
         timsControl (timsTof Pro 2 control software).
     Parameters:
     df_parameters_final (pd.DataFrame): data frame that contains the scan type
@@ -289,14 +300,11 @@ def create_parameter_dataframe(
         for each window per scan extended to the ion mobility borders.
     file_name (str): file path and file name where the diaPASEF parameter file
         should be saved.
-
-    Returns:
-    None
     """
     results_input = df_parameters_final.astype(str)
     results = results_input.values.tolist()
 
-    with open("./diaid_pasef/static/DIAParameterspy3TC.txt") as f:
+    with open("D:\diaid_pasef\diaid_pasef\static\DIAParameterspy3TC.txt") as f:
         content = f.readlines()
 
     ref_line = [

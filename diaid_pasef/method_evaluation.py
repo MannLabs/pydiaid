@@ -8,30 +8,32 @@ import numpy as np
 from matplotlib.patches import Rectangle
 
 
-def calculate_precursor_within_mz_range(
+def calculate_precursor_within_scan_area(
     library: pd.DataFrame,
     mz: tuple,
+    im: tuple,
 ) -> dict:
-    """This function calculates the number of precursors within the set
-        m/z-range in percent.
+    """This function calculates the number of precursors within the scan area
+    in percent.
+
     Parameters:
     library (pd.DataFrame): a pre-filtered data frame with unified column names
         containing all required precursor information.
     mz (tuple): lower and upper value of the m/z range.
+    im (tuple): lower and upper value of the ion mobility range.
 
     Returns:
     dict: this dictionary has only one item. The key is the value description,
-        and the value is the ratio of precursors[%] within the set m/z-range.
+        and the value is the ratio of precursors [%] within the set scan area.
     """
-    x = library['mz']
-    ctr = 0
-    for i in x:
-        if mz[0] < i and i < mz[1]:
-            ctr += 1
-        else:
-            next
-    prec_mz_range = (ctr/len(x))*100
-    return {'precursors within m/z-range [%]': round(prec_mz_range, 2)}
+    filtered_selection = library['mz'] > mz[0]
+    filtered_selection &= library['mz'] < mz[1]
+    filtered_selection &= library['IM'] > im[0]
+    filtered_selection &= library['IM'] < im[1]
+
+    prec_scan_area = (len(library[filtered_selection])/len(library['mz']))*100
+
+    return {'precursors within m/z-range [%]': round(prec_scan_area, 2)}
 
 
 def calculate_percentage_multiple_charged_precursors(
@@ -39,6 +41,7 @@ def calculate_percentage_multiple_charged_precursors(
 ) -> dict:
     """This function calculates the ratio of precursors with different charge
         states in percent.
+
     Parameters:
     library_subset (pd.DataFrame): a pre-filtered data frame with unified
         column names containing all required precursor information.
@@ -67,8 +70,10 @@ def coverage(
     library: pd.DataFrame,
 ) -> dict:
     """This function calculates different evaluation values to estimate the
-        optimization potential of the tested diaPASEF method based on the
+        optimization potential of the tested dia-PASEF method based on the
         theoretically covered (doubly/ triply charged) precursors.
+
+    Parameters:
     df (pd.DataFrame): data frame that contains the scan type (PASEF), scan
         number, and the corresponding diaPASEF window coordinates for each
         window per scan.
@@ -102,12 +107,14 @@ def coverage(
         "No. of covered proteins": len(coverage_removed_prec_duplicates.drop_duplicates(['Proteins'])),
         "No. of covered precursors": len(coverage_removed_prec_duplicates),
         "No. of covered, doubly charged precursors": len(coverage_removed_prec_duplicates[coverage_removed_prec_duplicates['Charge'] == 2]),
-        "No. of covered, triply charged precursors": len(coverage_removed_prec_duplicates[coverage_removed_prec_duplicates['Charge'] == 3])
+        "No. of covered, triply charged precursors": len(coverage_removed_prec_duplicates[coverage_removed_prec_duplicates['Charge'] == 3]),
+        "No. of covered, quadruply charged precursors": len(coverage_removed_prec_duplicates[coverage_removed_prec_duplicates['Charge'] == 4])
     }
     dict_prec_coverage["all proteins covered"] = format(np.round(dict_prec_coverage["No. of covered proteins"]/len(library.drop_duplicates(['Proteins']))*100, 1)) + "%"
     dict_prec_coverage["all precursors covered"] = format(np.round(dict_prec_coverage["No. of covered precursors"]/len(library)*100, 1)) + "%"
     dict_prec_coverage["all doubly charged precursors covered"] = format(np.round(dict_prec_coverage["No. of covered, doubly charged precursors"] / len(library[library['Charge'] == 2]) * 100, 1)) + "%"
     dict_prec_coverage["all triply charged precursors covered"] = format(np.round(dict_prec_coverage["No. of covered, triply charged precursors"] / len(library[library['Charge'] == 3]) * 100, 1)) + "%"
+    dict_prec_coverage["all quadruply charged precursors covered"] = format(np.round(dict_prec_coverage["No. of covered, quadruply charged precursors"] / len(library[library['Charge'] == 4]) * 100, 1)) + "%"
     return dict_prec_coverage
 
 
@@ -115,22 +122,24 @@ def boxes(
     df: pd.DataFrame,
 ) -> int:  # todo: how to describe multiple values?
     """This function calculates diaPASEF window specific information regarding
-        the window size and creates two lists. One is for plotting the diaPASEF
+        the window size and creates two lists. One is for plotting the dia-PASEF
         window scheme on top of a kernel density estimation plot. The second is
         to calculate the number of proteins and precursors covered by the
-        diaPASEF window scheme.
+        dia-PASEF window scheme.
+
+    Parameters:
     df (pd.DataFrame): data frame that contains the scan type (PASEF), scan
-        number, and the corresponding diaPASEF window coordinates for each
+        number, and the corresponding dia-PASEF window coordinates for each
         window per scan.
 
     Returns:
-    rect (list): This list =contains all information to print the diaPASEF
+    rect (list): This list contains all information to print the dia-PASEF
         windows on top of a kernel density estimation plot.
-    border(list(tuples)): The list "borders" contains a list of tuples where
-        each tuple represents the edge coordinates for each diaPASEF window.
-    small_window(int): size of the smallest diaPASEF window [Da].
-    big_window(int): size of the biggest diaPASEF window [Da].
-    mean_window(int): average diaPASEF window size [Da].
+    border (list(tuples)): The list "borders" contains a list of tuples where
+        each tuple represents the edge coordinates for each dia-PASEF window.
+    small_window (int): size of the smallest diaPASEF window [Da].
+    big_window (int): size of the biggest diaPASEF window [Da].
+    mean_window (int): average dia-PASEF window size [Da].
     """
     rect = list()
     borders = list()
