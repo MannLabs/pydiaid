@@ -283,7 +283,7 @@ class LoadLibraryCard(BaseWidget):
         self.window_color = pn.widgets.Select(
             name='Color',
             value=method_conf['graphs']['window_color'],
-            options=['yellow', 'green', 'black', 'grey'],
+            options=['yellow', 'green', 'black', 'grey', 'white'],
             margin=(15, 15, 0, 15),
             width=430,
         )
@@ -712,7 +712,7 @@ class OptimizationCard(BaseWidget):
         self.n_calls = pn.widgets.IntInput(
             name='Number of calls',
             start=1,
-            end=10,
+            end=200,
             value=method_conf['optimizer']['n_calls'],
             step=1,
             margin=(15, 15, 0, 15),
@@ -721,7 +721,7 @@ class OptimizationCard(BaseWidget):
         self.n_start = pn.widgets.IntInput(
             name='n_start',
             start=1,
-            end=10,
+            end=20,
             value=method_conf['optimizer']['n_start'],
             step=1,
             margin=(15, 15, 0, 15),
@@ -730,7 +730,7 @@ class OptimizationCard(BaseWidget):
         self.initial_points = pn.widgets.IntInput(
             name='initial_points',
             start=1,
-            end=10,
+            end=20,
             value=method_conf['optimizer']['initial_points'],
             step=1,
             margin=(15, 15, 0, 15),
@@ -933,7 +933,8 @@ class OptimizationCard(BaseWidget):
             method_conf,
             method_conf["optimizer"]
         )
-        self.scan_area_A1_A2_B1_B2_only_used_for_specific_diaPASEF.value = self.opt_result.x
+
+        self.scan_area_A1_A2_B1_B2_only_used_for_specific_diaPASEF.value = self.opt_result
 
         self.filenames_plots =  diaid_pasef.loader.get_file_names_from_directory(
             self.folder_path[0],
