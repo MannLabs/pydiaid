@@ -3,6 +3,7 @@
 
 # external
 import click
+import time
 
 # local
 import diaid_pasef
