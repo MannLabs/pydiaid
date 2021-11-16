@@ -72,6 +72,12 @@ def optimization(
         optimizer_parameters["initial_points"],  # initial points
         )
 
+
+    optimized_results = [opt_result.x[0],
+        opt_result.x[0]+opt_result.x[1],
+        opt_result.x[0]+opt_result.x[2],
+        opt_result.x[0]+opt_result.x[3]]
+
     print("########")
     print("BEST RESULT")
     print("INPUT: " + str(
@@ -89,7 +95,8 @@ def optimization(
         method_conf
         )
 
-    return opt_result
+    # return opt_result
+    return optimized_results
 
 def single_optimization_run(
     library: pd.DataFrame,
