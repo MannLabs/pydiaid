@@ -156,7 +156,7 @@ def run_all(
         save_at
         )
 
-    opt_result = method_optimizer.optimization(
+    self.opt_result = method_optimizer.optimization(
         library,
         method_parameters,
         xi,
@@ -166,17 +166,17 @@ def run_all(
         optimizer_parameters
         )
 
-    dim = [
-        opt_result.x[0],
-        opt_result.x[0] + opt_result.x[1],
-        opt_result.x[0] + opt_result.x[2],
-        opt_result.x[0] + opt_result.x[3]
-        ]
+#    dim = [
+#        opt_result.x[0],
+#        opt_result.x[0] + opt_result.x[1],
+#        opt_result.x[0] + opt_result.x[2],
+#        opt_result.x[0] + opt_result.x[3]
+#        ]
 
     df_parameters_final = main.create_final_method(
         library,
         method_parameters,
-        dim,
+        self.opt_result,
         method_conf
         )
 
