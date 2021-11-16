@@ -19,7 +19,7 @@ xi, yi, zi = kernel_density_calculation_GUI(
     )
 
 
-qmesh = desnity_plot_GUI(xi, yi, zi)
+qmesh = density_plot_GUI(xi, yi, zi)
 
 
 plot_window_scheme_on_top_of_density(df_parameters_final, qmesh, plot_parameters)
@@ -101,7 +101,7 @@ def boxes_GUI(
     return rect
 
 
-def desnity_plot_GUI(
+def density_plot_GUI(
     xi: np.ndarray,
     yi: np.ndarray,
     zi: np.ndarray
