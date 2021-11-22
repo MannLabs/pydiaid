@@ -1,6 +1,6 @@
 {
   "input": {
-    "save_at" : "output_diaid_pasef_proteomics_diAID-PASEF_test",
+    "save_at" : "output_py_diAID",
     "PTM": "None",
     "library_name": "D:/diaid_pasef/diaid_pasef/static/AlphaPept_results.csv",
     "analysis_software": "AlphaPept",
@@ -9,8 +9,8 @@
   "method_parameters": {
     "mz": [300, 1200],
     "ion_mobility": [0.6, 1.6],
-    "num_dia_pasef_scans": 5,
-    "im_steps": 3,
+    "num_dia_pasef_scans": 12,
+    "im_steps": 2,
     "overlap": 0,
     "shift_of_final_method": 0.022,
     "scan_area_A1_A2_B1_B2_only_used_for_create": [0.68, 1.04, 0.9, 1.30]
@@ -18,7 +18,7 @@
   "graphs": {
     "plot_mz": [250, 1250],
     "plot_IM": [0.6, 1.6],
-    "numbins": 30,
+    "numbins": 50,
     "window_frame_color": "black",
     "window_color": "white",
     "window_transparency": 0.5
