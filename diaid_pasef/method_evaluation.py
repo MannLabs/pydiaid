@@ -52,15 +52,12 @@ def calculate_percentage_multiple_charged_precursors(
     """
     dict_charge_prec = dict()
     for i in range(1, 5):
-        dict_charge_prec[
-            'ratio of precursor with charge state '+str(i)+' [%]'
-        ] = round(
+        dict_charge_prec[str(i)] = round(
             (
                 len(
                     library_subset[library_subset['Charge'] == i]
                 ) / len(library_subset)
-            ) * 100,
-            2
+            ) * 100, 2
         )
     return dict_charge_prec
 
