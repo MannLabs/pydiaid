@@ -238,18 +238,18 @@ class LoadLibraryCard(BaseWidget):
         )
         # PLOTS
         self.plot_mz = pn.widgets.EditableRangeSlider(
-            name='Plot M/z range',
+            name='Plot m/z-range',
             start=100,
-            end=2000,
+            end=1700,
             value=tuple(method_conf['graphs']['plot_mz']),
             step=50,
             margin=(15, 15, 0, 15),
             width=430,
         )
         self.plot_im = pn.widgets.EditableRangeSlider(
-            name='Plot IM range',
-            start=0.5,
-            end=2.0,
+            name='Plot ion mobility-range',
+            start=0.6,
+            end=1.6,
             value=tuple(method_conf['graphs']['plot_IM']),
             step=0.1,
             margin=(15, 15, 0, 15),
@@ -258,7 +258,7 @@ class LoadLibraryCard(BaseWidget):
         self.numbins = pn.widgets.IntInput(
             name='Number of bins',
             start=1,
-            end=50,
+            end=300,
             value=method_conf['graphs']['numbins'],
             step=1,
             margin=(15, 15, 0, 15),
@@ -482,8 +482,8 @@ class LoadLibraryCard(BaseWidget):
         dict_charge_of_precursor = diaid_pasef.method_evaluation.calculate_percentage_multiple_charged_precursors(self.library)
         mult_charged_precursor_info = pd.DataFrame(
             {
-                "column name": list(dict_charge_of_precursor.keys()),
-                "column value": list(dict_charge_of_precursor.values())
+                "charge state of precursors": list(dict_charge_of_precursor.keys()),
+                "ratio [%]": list(dict_charge_of_precursor.values())
             }
         )
         mult_charged_precursor_info.to_csv(
@@ -518,25 +518,25 @@ class SpecifyParametersCard(BaseWidget):
         super().__init__(name="Parameters")
         self.data = data
         self.mz = pn.widgets.EditableRangeSlider(
-            name='M/z range',
+            name='m/z-range [Da]',
             start=100,
-            end=2000,
+            end=1700,
             value=tuple(method_conf['method_parameters']['mz']),
             step=50,
             margin=(15, 15, 0, 15),
             width=430,
         )
         self.ion_mobility = pn.widgets.EditableRangeSlider(
-            name='IM range',
-            start=0.5,
-            end=2.0,
+            name='ion mobility-range [1/K0]',
+            start=0.6,
+            end=1.6,
             value=tuple(method_conf['method_parameters']['ion_mobility']),
-            step=0.1,
+            step=0.05,
             margin=(15, 15, 0, 15),
             width=430,
         )
         self.num_dia_pasef_scans = pn.widgets.IntInput(
-            name='Number of DIA PASEF scans',
+            name='Number of dia-PASEF scans',
             start=1,
             end=20,
             value=method_conf['method_parameters']['num_dia_pasef_scans'],
@@ -545,7 +545,7 @@ class SpecifyParametersCard(BaseWidget):
             width=430,
         )
         self.im_steps = pn.widgets.IntInput(
-            name='Number of IM steps',
+            name='Number of ion mobility windows / dia-PASEF scan',
             start=1,
             end=10,
             value=method_conf['method_parameters']['im_steps'],
@@ -554,7 +554,7 @@ class SpecifyParametersCard(BaseWidget):
             width=430,
         )
         self.overlap = pn.widgets.IntInput(
-            name='Overlap',
+            name='Isolation window overlap',
             start=0,
             end=10,
             value=method_conf['method_parameters']['overlap'],
@@ -563,7 +563,7 @@ class SpecifyParametersCard(BaseWidget):
             width=430,
         )
         self.shift_of_final_method = pn.widgets.FloatInput(
-            name='Shift of final method',
+            name='Shift of the final acquisition scheme (in IM dimension)',
             start=0.0,
             end=1.0,
             value=method_conf['method_parameters']['shift_of_final_method'],
@@ -687,8 +687,7 @@ class SpecifyParametersCard(BaseWidget):
         )
 
         df = pd.DataFrame({
-            "column name": list(dict_precursors_within_scan_area.keys()),
-            "column value": list(dict_precursors_within_scan_area.values())
+            "precursors within the scan area [%]": list(dict_precursors_within_scan_area.values())
         })
 
         df.to_csv(
@@ -706,7 +705,7 @@ class SpecifyParametersCard(BaseWidget):
 class OptimizationCard(BaseWidget):
     # TODO: docstring
     def __init__(self, data, description):
-        super().__init__(name="Optimization")
+        super().__init__(name="Optimize Method")
         self.data = data
         self.opt_result_x = [0, 0, 0, 0]
         self.n_calls = pn.widgets.IntInput(
@@ -775,7 +774,13 @@ class OptimizationCard(BaseWidget):
         self.evaluation_parameter = pn.widgets.Select(
             name='Evaluation parameter',
             value=method_conf['optimizer']['evaluation_parameter'],
-            options=['No. of covered precursors'],
+            options=[
+                "No. of covered proteins",
+                'No. of covered precursors',
+                "No. of covered, doubly charged precursors",
+                "No. of covered, triply charged precursors",
+                "No. of covered, quadruply charged precursors"
+            ],
             width=430,
             margin=(15, 15, 0, 15)
         )
@@ -797,7 +802,7 @@ class OptimizationCard(BaseWidget):
             height=35
         )
         self.scan_area_A1_A2_B1_B2_only_used_for_specific_diaPASEF = pn.widgets.LiteralInput(
-            name='Scan area A1/A2/B1/B2 (only used for specific diaPASEF)',
+            name='Scan area A1/A2/B1/B2 (only used for creating a specific dia-PASEF method)',
             # value=method_conf['method_parameters']['scan_area_A1_A2_B1_B2_only_used_for_specific_diaPASEF'],
             value=[0,0,0,0],
             type=list,
@@ -1140,7 +1145,7 @@ class CreateMethodCard(BaseWidget):
                 final_method_path,
                 header=None,
                 skiprows=3,
-                names=["MS Type", "Cycle Id", "Start IM", "End IM", "Start Mass", "End Mass"]
+                names=["MS Type", "Cycle Id", "Start IM", "End IM", "Start Mass", "End Mass", "CE"]
             ),
             autosize_mode='fit_viewport',
             margin=(0, 0, 0, 100),
@@ -1196,7 +1201,7 @@ class EvaluateMethodCard(object):
                 None,
                 align='center'
             ),
-            title='Method Evaluation',
+            title='Evaluate Method',
             collapsed=True,
             collapsible=True,
             header_background='#eaeaea',
@@ -1271,8 +1276,8 @@ class EvaluateMethodCard(object):
                 method_conf["method_parameters"]["scan_area_A1_A2_B1_B2_only_used_for_specific_diaPASEF"][3] + method_parameters["shift_of_final_method"]]
             )
             final_df = pd.DataFrame({
-                "column name": list(dict_evaluation_of_final_method.keys()),
-                "column value": list(dict_evaluation_of_final_method.values())
+                "evaluation parameter": list(dict_evaluation_of_final_method.keys()),
+                "value": list(dict_evaluation_of_final_method.values())
             })
             final_df.to_csv(
                 os.path.join(
@@ -1385,16 +1390,16 @@ class DiAIDPasefGUI(GUI):
 
     def __init__(self, start_server=False):
         super().__init__(
-            name=f"diAID-PASEF {diaid_pasef.__version__}",
+            name=f"py_diAID {diaid_pasef.__version__}",
             img_folder_path=IMG_PATH,
             github_url='https://github.com/MannLabs/diaid_pasef',
         )
-        self.project_description = """### Include the description."""
-        self.load_library_description = "#### test" + ' test' * 50
-        self.specify_parameter_description = "#### test" + ' test' * 50
-        self.optimization_description = "#### test" + ' test' * 50
-        self.create_method_description = "#### test" + ' test' * 50
-        self.evaluate_method_description = "#### test" + ' test' * 50
+        self.project_description = """#### py_diAID uses an Automated Isolation Design to generate optimal dia-PASEF methods in respect to the peptide precursor density. It designs isolation windows with dynamic widths, which enable short acquisition cycles while covering essentially the complete m/z-ion mobility-range."""
+        self.load_library_description = "#### Load here an output file of the indicated analysis softwares to check the distribution of the precursors in the m/z-ion mobility plain."
+        self.specify_parameter_description = "#### We found a strong correlation of a high theoretical and empirical precursor coverage. This result suggests using a scan area with a wide m/z-range and a narrow ion mobility range. Specify the number of dia-PASEF scans, which depend on the chromatographic peak width, and the number of ion mobility windows per dia-PASEF scan. We recommend two ion mobility windows."
+        self.optimization_description = "#### py_diAID uses a bayesian optimization following a Gaussian processes to find the optimal scan area."
+        self.create_method_description = "#### Create a dia-PASEF method with an optimal or an individually specified scan area."
+        self.evaluate_method_description = "#### Evaluate the optimal dia-PASEF method or check if an already existing dia-PASEF method is suitable for your experiment."
         self.manual_path = os.path.join(
             DOCS_PATH,
             "manual.pdf"
