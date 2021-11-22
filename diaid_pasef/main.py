@@ -79,8 +79,8 @@ def library_information(
     dict_charge_of_precursor = method_evaluation.calculate_percentage_multiple_charged_precursors(library)
     pd.DataFrame(
         {
-            "column name": list(dict_charge_of_precursor.keys()),
-            "column value": list(dict_charge_of_precursor.values())
+            "charge state of precursors": list(dict_charge_of_precursor.keys()),
+            "ration [%]": list(dict_charge_of_precursor.values())
         }
         ).to_csv(
             save_at
