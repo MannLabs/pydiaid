@@ -1276,16 +1276,15 @@ class EvaluateMethodCard(object):
                 **dict_precursors_coverage
             }
 
-            print(method_conf["method_parameters"])
-            #if method_conf["method_parameters"]["scan_area_A1_A2_B1_B2_only_used_for_specific_diaPASEF"][0] != int:
-            #    next
-            #else:
-            #    dict_evaluation_of_final_method["final A1, A2, B1, B2 values"] = str([
-            #        method_conf["method_parameters"]["scan_area_A1_A2_B1_B2_only_used_for_specific_diaPASEF"][0] + method_parameters["shift_of_final_method"],
-            #        method_conf["method_parameters"]["scan_area_A1_A2_B1_B2_only_used_for_specific_diaPASEF"][1] + method_parameters["shift_of_final_method"],
-            #        method_conf["method_parameters"]["scan_area_A1_A2_B1_B2_only_used_for_specific_diaPASEF"][2] + method_parameters["shift_of_final_method"],
-            #        method_conf["method_parameters"]["scan_area_A1_A2_B1_B2_only_used_for_specific_diaPASEF"][3] + method_parameters["shift_of_final_method"]]
-            #    )
+            if method_conf["method_parameters"]["scan_area_A1_A2_B1_B2_only_used_for_specific_diaPASEF"][0] != int:
+                next
+            else:
+                dict_evaluation_of_final_method["final A1, A2, B1, B2 values"] = str([
+                    method_conf["method_parameters"]["scan_area_A1_A2_B1_B2_only_used_for_specific_diaPASEF"][0] + method_parameters["shift_of_final_method"],
+                    method_conf["method_parameters"]["scan_area_A1_A2_B1_B2_only_used_for_specific_diaPASEF"][1] + method_parameters["shift_of_final_method"],
+                    method_conf["method_parameters"]["scan_area_A1_A2_B1_B2_only_used_for_specific_diaPASEF"][2] + method_parameters["shift_of_final_method"],
+                    method_conf["method_parameters"]["scan_area_A1_A2_B1_B2_only_used_for_specific_diaPASEF"][3] + method_parameters["shift_of_final_method"]]
+                )
             final_df = pd.DataFrame({
                 "evaluation parameter": list(dict_evaluation_of_final_method.keys()),
                 "value": list(dict_evaluation_of_final_method.values())
