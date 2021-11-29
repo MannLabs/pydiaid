@@ -538,7 +538,7 @@ class SpecifyParametersCard(BaseWidget):
         self.num_dia_pasef_scans = pn.widgets.IntInput(
             name='Number of dia-PASEF scans',
             start=1,
-            end=20,
+            end=40,
             value=method_conf['method_parameters']['num_dia_pasef_scans'],
             step=1,
             margin=(15, 15, 0, 15),
@@ -1103,25 +1103,31 @@ class CreateMethodCard(BaseWidget):
         )
 
         # save input_parameter as .csv
-        pd.DataFrame(
-            {
-            "column name": list(method_conf["input"].keys()) +
-                list(method_conf["method_parameters"].keys()) +
-                list(method_conf["graphs"].keys()) +
-                list(method_conf["optimizer"].keys()),
-            "column value": list(method_conf["input"].values()) +
-                list(method_conf["method_parameters"].values()) +
-                list(method_conf["graphs"].values()) +
-                list(method_conf["optimizer"].values())
-            }
-        ).to_csv(
-            os.path.join(
-                method_conf["input"]["save_at"],
-                'final_method',
-                'input_parameters.csv'
-            ),
-            index=False
-        )
+        #pd.DataFrame(
+        #    {
+        #    "parameters": list(method_conf["input"].keys()) +
+        #        list(method_conf["method_parameters"].keys()) +
+        #        list(method_conf["graphs"].keys()) +
+        #        list(method_conf["optimizer"].keys()),
+        #    "value": list(method_conf["input"].values()) +
+        #        list(method_conf["method_parameters"].values()) +
+        #        list(method_conf["graphs"].values()) +
+        #        list(method_conf["optimizer"].values())
+        #    }
+        #).to_csv(
+        #    os.path.join(
+        #        method_conf["input"]["save_at"],
+        #        'final_method',
+        #        'input_parameters.csv'
+        #    ),
+        #    index=False
+        #)
+
+        # save input parameters as json file for reusing
+        out_file = open(
+                method_conf["input"]["save_at"]+'/input_parameters.json', "w")
+        json.dump(method_conf, out_file, indent = 4)
+        out_file.close()
 
         diaid_pasef.main.final_method_information(
             df_parameters_final,
@@ -1256,9 +1262,10 @@ class EvaluateMethodCard(object):
                 names=["MS Type", "Cycle Id", "Start IM", "End IM", "Start Mass", "End Mass", "CE"]
             )
             # save parameters for method evaluation as .csv
-            dict_precursors_within_mz = diaid_pasef.method_evaluation.calculate_precursor_within_mz_range(
+            dict_precursors_within_mz = diaid_pasef.method_evaluation.calculate_precursor_within_scan_area(
                 self.data.library,
-                method_conf["method_parameters"]["mz"]
+                method_conf["method_parameters"]["mz"],
+                method_conf["method_parameters"]["ion_mobility"]
             )
             dict_precursors_coverage = diaid_pasef.method_evaluation.coverage(
                 df_parameters_final,
@@ -1269,12 +1276,16 @@ class EvaluateMethodCard(object):
                 **dict_precursors_coverage
             }
 
-            dict_evaluation_of_final_method["final A1, A2, B1, B2 values"] = str([
-                method_conf["method_parameters"]["scan_area_A1_A2_B1_B2_only_used_for_specific_diaPASEF"][0] + method_parameters["shift_of_final_method"],
-                method_conf["method_parameters"]["scan_area_A1_A2_B1_B2_only_used_for_specific_diaPASEF"][1] + method_parameters["shift_of_final_method"],
-                method_conf["method_parameters"]["scan_area_A1_A2_B1_B2_only_used_for_specific_diaPASEF"][2] + method_parameters["shift_of_final_method"],
-                method_conf["method_parameters"]["scan_area_A1_A2_B1_B2_only_used_for_specific_diaPASEF"][3] + method_parameters["shift_of_final_method"]]
-            )
+            print(method_conf["method_parameters"])
+            #if method_conf["method_parameters"]["scan_area_A1_A2_B1_B2_only_used_for_specific_diaPASEF"][0] != int:
+            #    next
+            #else:
+            #    dict_evaluation_of_final_method["final A1, A2, B1, B2 values"] = str([
+            #        method_conf["method_parameters"]["scan_area_A1_A2_B1_B2_only_used_for_specific_diaPASEF"][0] + method_parameters["shift_of_final_method"],
+            #        method_conf["method_parameters"]["scan_area_A1_A2_B1_B2_only_used_for_specific_diaPASEF"][1] + method_parameters["shift_of_final_method"],
+            #        method_conf["method_parameters"]["scan_area_A1_A2_B1_B2_only_used_for_specific_diaPASEF"][2] + method_parameters["shift_of_final_method"],
+            #        method_conf["method_parameters"]["scan_area_A1_A2_B1_B2_only_used_for_specific_diaPASEF"][3] + method_parameters["shift_of_final_method"]]
+            #    )
             final_df = pd.DataFrame({
                 "evaluation parameter": list(dict_evaluation_of_final_method.keys()),
                 "value": list(dict_evaluation_of_final_method.values())
@@ -1289,6 +1300,11 @@ class EvaluateMethodCard(object):
             )
             method_eval_table.value = final_df
 
+        print(os.path.join(
+            method_conf["input"]["save_at"],
+            'final_method',
+            'Kernel_density_distribution_and_final_method.png'
+        ))
         self.layout[3][0] = pn.pane.PNG(
             object=os.path.join(
                 method_conf["input"]["save_at"],
@@ -1394,12 +1410,12 @@ class DiAIDPasefGUI(GUI):
             img_folder_path=IMG_PATH,
             github_url='https://github.com/MannLabs/diaid_pasef',
         )
-        self.project_description = """#### py_diAID uses an Automated Isolation Design to generate optimal dia-PASEF methods in respect to the peptide precursor density. It designs isolation windows with dynamic widths, which enable short acquisition cycles while covering essentially the complete m/z-ion mobility-range."""
-        self.load_library_description = "#### Load here an output file of the indicated analysis softwares to check the distribution of the precursors in the m/z-ion mobility plain."
-        self.specify_parameter_description = "#### We found a strong correlation of a high theoretical and empirical precursor coverage. This result suggests using a scan area with a wide m/z-range and a narrow ion mobility range. Specify the number of dia-PASEF scans, which depend on the chromatographic peak width, and the number of ion mobility windows per dia-PASEF scan. We recommend two ion mobility windows."
-        self.optimization_description = "#### py_diAID uses a bayesian optimization following a Gaussian processes to find the optimal scan area."
+        self.project_description = """#### py_diAID uses an Automated Isolation Design to generate optimal dia-PASEF methods with respect to the peptide precursor density. It designs isolation windows with dynamic widths, which enable short acquisition cycles, while essentially covering the complete m/z-ion mobility-range."""
+        self.load_library_description = "#### Please load the library for the indicated analysis software’s to check the distribution of the precursors in the m/z-ion mobility plain."
+        self.specify_parameter_description = "####  We found a strong correlation between a high theoretical and empirical precursor coverage. This result suggests using a scan area with a wide m/z-range and a narrow ion mobility range. Specify the number of dia-PASEF scans, which depend on the chromatographic peak width, and the number of ion mobility windows per dia-PASEF scan. We recommend two ion mobility windows."
+        self.optimization_description = "#### py_diAID uses a Bayesian optimization following a Gaussian process to find the optimal scan area."
         self.create_method_description = "#### Create a dia-PASEF method with an optimal or an individually specified scan area."
-        self.evaluate_method_description = "#### Evaluate the optimal dia-PASEF method or check if an already existing dia-PASEF method is suitable for your experiment."
+        self.evaluate_method_description = "#### Evaluate the optimal dia-PASEF method or confirm if an already existing dia-PASEF method is suitable for your experiment."
         self.manual_path = os.path.join(
             DOCS_PATH,
             "manual.pdf"
