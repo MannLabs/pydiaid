@@ -162,6 +162,10 @@ else:
 		"dist",
 		exe_name,
 		"sklearn",
-		"neighbors"
-		os.path.basename(sklearn.neighbors._partition_nodes.__file__)
+		"neighbors",
+		os.path.basename(sklearn.neighbors._partition_nodes.__file__),
+	)
+	shutil.copyfile(
+		sklearn.neighbors._partition_nodes.__file__,
+		new_location
 	)
