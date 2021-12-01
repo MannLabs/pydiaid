@@ -33,4 +33,4 @@ mkdir -p dist/diAID_PASEF_gui_installer_linux/usr/local/bin
 mv dist/diAID_PASEF dist/diAID_PASEF_gui_installer_linux/usr/local/bin/diAID_PASEF
 mkdir dist/diAID_PASEF_gui_installer_linux/DEBIAN
 cp control dist/diAID_PASEF_gui_installer_linux/DEBIAN
-dpkg-deb --build --root-owner-group dist/diAID_PASEF_gui_installer_linux/
+dpkg-deb --build --root-owner-group dist/diaid_pasef_gui_installer_linux/
