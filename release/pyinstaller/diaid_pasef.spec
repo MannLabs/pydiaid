@@ -150,3 +150,15 @@ else:
 		upx_exclude=[],
 		name=exe_name
 	)
+	if sys.platform[:6] == "darwin":
+		import cmath
+		import shutil
+		shutil.copyfile(
+			cmath.__file__,
+			f"dist/{exe_name}/{os.path.basename(cmath.__file__)}"
+		)
+		import sklearn.neighbors._partition_nodes
+		shutil.copyfile(
+			klearn.neighbors._partition_nodes.__file__,
+			f"dist/{exe_name}/sklearn/neighbors/{os.path.basename(klearn.neighbors._partition_nodes.__file__)}"
+		)
