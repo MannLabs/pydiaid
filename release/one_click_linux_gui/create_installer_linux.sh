@@ -30,7 +30,7 @@ conda deactivate
 
 # Wrapping the pyinstaller folder in a .deb package
 mkdir -p dist/diaid_pasef_gui_installer_linux/usr/local/bin
-mv dist/diaid_pasef dist/diaid_pasef_gui_installer_linux/usr/local/bin/diaid_pasef
+mv dist/diAID_PASEF dist/diaid_pasef_gui_installer_linux/usr/local/bin/diaid_pasef
 mkdir dist/diaid_pasef_gui_installer_linux/DEBIAN
 cp control dist/diaid_pasef_gui_installer_linux/DEBIAN
 dpkg-deb --build --root-owner-group dist/diaid_pasef_gui_installer_linux/
