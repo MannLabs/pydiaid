@@ -159,6 +159,6 @@ else:
 		)
 		import sklearn.neighbors._partition_nodes
 		shutil.copyfile(
-			klearn.neighbors._partition_nodes.__file__,
-			f"dist/{exe_name}/sklearn/neighbors/{os.path.basename(klearn.neighbors._partition_nodes.__file__)}"
+			sklearn.neighbors._partition_nodes.__file__,
+			f"dist/{exe_name}/sklearn/neighbors/{os.path.basename(sklearn.neighbors._partition_nodes.__file__)}"
 		)
