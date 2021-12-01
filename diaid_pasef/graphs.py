@@ -107,31 +107,25 @@ def plot_precursor_distribution_as_histogram(
     gui (bool): whether to use in the GUI or not. Defaults is False.
     """
     fig = plt.figure()
-    colors = ['#7AC7C9', '#4EA7BB', '#267FA5']
-    sns.distplot(
-        library_subset['mz'],
-        hist=True,
-        kde=False,
-        rug=False,
-        color=colors[0],
-        label='all precursors'
+
+    plt.hist(
+        [
+            library_subset['mz'][library_subset['Charge'] == 3],
+            library_subset['mz'][library_subset['Charge'] == 2],
+            library_subset['mz']
+        ],
+        bins=100,
+        histtype='step',
+        fill=True,
+        alpha=0.5,
+        color = ['#267FA5', '#4EA7BB', '#7AC7C9'],
+        label=[
+            'triply charged precursors',
+            'doubly charged precursors',
+            'all precursors'
+        ]
     )
-    sns.distplot(
-        library_subset['mz'][library_subset['Charge'] == 2],
-        hist=True,
-        kde=False,
-        rug=False,
-        color=colors[1],
-        label='doubly charged precursors'
-    )
-    sns.distplot(
-        library_subset['mz'][library_subset['Charge'] == 3],
-        hist=True,
-        kde=False,
-        rug=False,
-        color=colors[2],
-        label='triply charged precursors'
-    )
+
     plt.xlim([plot_parameters["plot_mz"][0], plot_parameters["plot_mz"][1]])
     plt.ylabel('No. of precursors')
     plt.legend(bbox_to_anchor=(0.8, 1.42))
