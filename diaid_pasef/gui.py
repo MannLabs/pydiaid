@@ -1129,17 +1129,6 @@ class CreateMethodCard(BaseWidget):
         json.dump(method_conf, out_file, indent = 4)
         out_file.close()
 
-        diaid_pasef.main.final_method_information(
-            df_parameters_final,
-            self.data.xi,
-            self.data.yi,
-            self.data.zi,
-            method_conf,
-            method_conf["input"]["save_at"],
-            self.data.library,
-            method_conf["method_parameters"],
-            self.opt_widget.scan_area_A1_A2_B1_B2_only_used_for_specific_diaPASEF.value
-        )
         final_method_path = os.path.join(
             method_conf["input"]["save_at"],
             'final_method',
@@ -1248,56 +1237,62 @@ class EvaluateMethodCard(object):
         )
 
         method_eval_dir = os.path.dirname(self.method_creation.path_method.value)
-        if method_conf["input"]["save_at"] in method_eval_dir:
-            method_eval_table.value = pd.read_csv(
-                os.path.join(
-                    method_eval_dir,
-                    'parameters_to_evaluate_method.csv'
-                )
-            )
-        else:
-            df_parameters_final = pd.read_csv(
-                method_conf["input"]["diaPASEF_method_only_used_for_method_evaluation"],
-                skiprows=4,
-                names=["MS Type", "Cycle Id", "Start IM", "End IM", "Start Mass", "End Mass", "CE"]
-            )
-            # save parameters for method evaluation as .csv
-            dict_precursors_within_mz = diaid_pasef.method_evaluation.calculate_precursor_within_scan_area(
-                self.data.library,
-                method_conf["method_parameters"]["mz"],
-                method_conf["method_parameters"]["ion_mobility"]
-            )
-            dict_precursors_coverage = diaid_pasef.method_evaluation.coverage(
-                df_parameters_final,
-                self.data.library,
-            )
-            dict_evaluation_of_final_method = {
-                **dict_precursors_within_mz,
-                **dict_precursors_coverage
-            }
 
-            if method_conf["method_parameters"]["scan_area_A1_A2_B1_B2_only_used_for_specific_diaPASEF"][0] != int:
-                next
-            else:
-                dict_evaluation_of_final_method["final A1, A2, B1, B2 values"] = str([
-                    method_conf["method_parameters"]["scan_area_A1_A2_B1_B2_only_used_for_specific_diaPASEF"][0] + method_parameters["shift_of_final_method"],
-                    method_conf["method_parameters"]["scan_area_A1_A2_B1_B2_only_used_for_specific_diaPASEF"][1] + method_parameters["shift_of_final_method"],
-                    method_conf["method_parameters"]["scan_area_A1_A2_B1_B2_only_used_for_specific_diaPASEF"][2] + method_parameters["shift_of_final_method"],
-                    method_conf["method_parameters"]["scan_area_A1_A2_B1_B2_only_used_for_specific_diaPASEF"][3] + method_parameters["shift_of_final_method"]]
-                )
-            final_df = pd.DataFrame({
-                "evaluation parameter": list(dict_evaluation_of_final_method.keys()),
-                "value": list(dict_evaluation_of_final_method.values())
-            })
-            final_df.to_csv(
-                os.path.join(
-                    method_conf["input"]["save_at"],
-                    'final_method',
-                    'parameters_to_evaluate_method.csv'
-                ),
-                index=False
+        df_parameters_final = pd.read_csv(
+            method_conf["input"]["diaPASEF_method_only_used_for_method_evaluation"],
+            skiprows=4,
+            names=["MS Type", "Cycle Id", "Start IM", "End IM", "Start Mass", "End Mass", "CE"]
+        )
+
+        diaid_pasef.main.final_method_information(
+            df_parameters_final,
+            self.data.xi,
+            self.data.yi,
+            self.data.zi,
+            method_conf,
+            method_conf["input"]["save_at"],
+            self.data.library,
+            method_conf["method_parameters"],
+            method_conf["method_parameters"]["scan_area_A1_A2_B1_B2_only_used_for_specific_diaPASEF"]
+        )
+
+        # save parameters for method evaluation as .csv
+        dict_precursors_within_mz = diaid_pasef.method_evaluation.calculate_precursor_within_scan_area(
+            self.data.library,
+            method_conf["method_parameters"]["mz"],
+            method_conf["method_parameters"]["ion_mobility"]
+        )
+        dict_precursors_coverage = diaid_pasef.method_evaluation.coverage(
+            df_parameters_final,
+            self.data.library,
+        )
+        dict_evaluation_of_final_method = {
+            **dict_precursors_within_mz,
+            **dict_precursors_coverage
+        }
+
+        if method_conf["method_parameters"]["scan_area_A1_A2_B1_B2_only_used_for_specific_diaPASEF"][0] != int:
+            next
+        else:
+            dict_evaluation_of_final_method["final A1, A2, B1, B2 values"] = str([
+                method_conf["method_parameters"]["scan_area_A1_A2_B1_B2_only_used_for_specific_diaPASEF"][0] + method_parameters["shift_of_final_method"],
+                method_conf["method_parameters"]["scan_area_A1_A2_B1_B2_only_used_for_specific_diaPASEF"][1] + method_parameters["shift_of_final_method"],
+                method_conf["method_parameters"]["scan_area_A1_A2_B1_B2_only_used_for_specific_diaPASEF"][2] + method_parameters["shift_of_final_method"],
+                method_conf["method_parameters"]["scan_area_A1_A2_B1_B2_only_used_for_specific_diaPASEF"][3] + method_parameters["shift_of_final_method"]]
             )
-            method_eval_table.value = final_df
+        final_df = pd.DataFrame({
+            "evaluation parameter": list(dict_evaluation_of_final_method.keys()),
+            "value": list(dict_evaluation_of_final_method.values())
+        })
+        final_df.to_csv(
+            os.path.join(
+                method_conf["input"]["save_at"],
+                'final_method',
+                'parameters_to_evaluate_method.csv'
+            ),
+            index=False
+        )
+        method_eval_table.value = final_df
 
         print(os.path.join(
             method_conf["input"]["save_at"],
