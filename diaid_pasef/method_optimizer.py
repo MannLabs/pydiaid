@@ -20,7 +20,7 @@ def optimization(
     optimizer_parameters: dict,
 ) ->  'optimize.OptimizeResult':
     """ Optimize dia-PASEF method parameters: Bayesian optimization using a
-    Gaussian proces. The output values should follow a multivariate gaussian
+    Gaussian process. The output values should follow a multivariate gaussian
     curve.
 
     Parameters:
@@ -160,7 +160,7 @@ def single_optimization_run(
     ) + " | RESULT: " + str(1.0 / result))
 
     # plot the created diaPASEF methods on top of the kernel density estimation
-    file_name_optimization_plot = method_conf["input"]["save_at"] + '/optimization_plots/Optimization_plot_A1_' + str(dim[0]) + "_A2_ " +str(dim[0]+dim[1]) + "_B1_ " + str(dim[0]+dim[2]) + "_B2_ " + str(dim[0]+dim[3]) + "_result_" + str(1.0 / result) + ".png"
+    file_name_optimization_plot = method_conf["input"]["save_at"] + '/optimization_plots/Optimization_plot_A1_' + str(dim[0]) + "_A2_ " +str(dim[0]+dim[1]) + "_B1_ " + str(dim[0]+dim[2]) + "_B2_ " + str(dim[0]+dim[3]) + "_result_" + str(1.0 / result) + ".pdf"
     graphs.plot_density_and_method(
         df_parameters_final,
         xi,
