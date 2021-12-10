@@ -738,7 +738,7 @@ class OptimizationCard(BaseWidget):
         self.YA1 = pn.widgets.EditableRangeSlider(
             name='YA1 range',
             start=0.2,
-            end=1.0,
+            end=2.0,
             value=tuple(method_conf['optimizer']['YA1']),
             step=0.1,
             margin=(15, 15, 0, 15),
@@ -746,8 +746,8 @@ class OptimizationCard(BaseWidget):
         )
         self.YA2 = pn.widgets.EditableRangeSlider(
             name='YA2 range',
-            start=0.6,
-            end=1.2,
+            start=0.2,
+            end=2.0,
             value=tuple(method_conf['optimizer']['YA2']),
             step=0.05,
             margin=(15, 15, 0, 15),
@@ -755,8 +755,8 @@ class OptimizationCard(BaseWidget):
         )
         self.YB1 = pn.widgets.EditableRangeSlider(
             name='YB1 range',
-            start=0.6,
-            end=1.5,
+            start=0.2,
+            end=2.0,
             value=tuple(method_conf['optimizer']['YB1']),
             step=0.1,
             margin=(15, 15, 0, 15),
@@ -764,8 +764,8 @@ class OptimizationCard(BaseWidget):
         )
         self.YB2 = pn.widgets.EditableRangeSlider(
             name='YB2 range',
-            start=1.0,
-            end=1.8,
+            start=0.2,
+            end=2.0,
             value=tuple(method_conf['optimizer']['YB2']),
             step=0.05,
             margin=(15, 15, 0, 15),
