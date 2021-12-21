@@ -20,7 +20,7 @@ def optimization(
     optimizer_parameters: dict,
 ) ->  'optimize.OptimizeResult':
     """ Optimize dia-PASEF method parameters: Bayesian optimization using a
-    Gaussian proces. The output values should follow a multivariate gaussian
+    Gaussian process. The output values should follow a multivariate gaussian
     curve.
 
     Parameters:

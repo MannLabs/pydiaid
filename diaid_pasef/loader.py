@@ -133,9 +133,6 @@ def __parse_max_quant(
     )
     return library_subset
 
-# todo: Maria told me about new MSFragger versions, which might have a
-# different file layout.
-
 
 def __parse_ms_fragger(
     dataframe: pd.DataFrame,
