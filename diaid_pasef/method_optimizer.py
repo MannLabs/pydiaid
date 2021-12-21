@@ -160,7 +160,7 @@ def single_optimization_run(
     ) + " | RESULT: " + str(1.0 / result))
 
     # plot the created diaPASEF methods on top of the kernel density estimation
-    file_name_optimization_plot = method_conf["input"]["save_at"] + '/optimization_plots/Optimization_plot_A1_' + str(dim[0]) + "_A2_ " +str(dim[0]+dim[1]) + "_B1_ " + str(dim[0]+dim[2]) + "_B2_ " + str(dim[0]+dim[3]) + "_result_" + str(1.0 / result) + ".pdf"
+    file_name_optimization_plot = method_conf["input"]["save_at"] + '/optimization_plots/Optimization_plot_A1_' + str(dim[0]) + "_A2_ " +str(dim[0]+dim[1]) + "_B1_ " + str(dim[0]+dim[2]) + "_B2_ " + str(dim[0]+dim[3]) + "_result_" + str(1.0 / result) + ".png"
     graphs.plot_density_and_method(
         df_parameters_final,
         xi,
