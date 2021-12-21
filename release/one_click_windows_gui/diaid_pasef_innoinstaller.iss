@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "diAID_PASEF"
-#define MyAppVersion "0.0.1"
+#define MyAppVersion "0.0.2"
 #define MyAppPublisher "Max Planck Institute of Biochemistry, Mann Labs"
 #define MyAppURL "https://github.com/MannLabs/diaid_pasef"
 #define MyAppExeName "diaid_pasef_gui.exe"
