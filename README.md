@@ -27,21 +27,21 @@ An open-source Python package of the AlphaPept ecosystem from the [Mann Labs at 
 ---
 ## License
 
-diAID-PASEF was developed by the [Mann Labs at the Max Planck Institute of Biochemistry](https://www.biochem.mpg.de/mann) and is freely available with an [Apache License](LICENSE.txt). External Python packages (available in the [requirements](requirements) folder) have their own licenses, which can be consulted on their respective websites.
+py_diAID was developed by the [Mann Labs at the Max Planck Institute of Biochemistry](https://www.biochem.mpg.de/mann) and is freely available with an [Apache License](LICENSE.txt). External Python packages (available in the [requirements](requirements) folder) have their own licenses, which can be consulted on their respective websites.
 
 ---
 ## Installation
 
-diAID-PASEF can be installed and used on all major operating systems (Windows, macOS and Linux).
+py_diAID can be installed and used on all major operating systems (Windows, macOS and Linux).
 There are three different types of installation possible:
 
 * [**One-click GUI installer:**](#one-click-gui) Choose this installation if you only want the GUI and/or keep things as simple as possible.
-* [**Pip installer:**](#pip) Choose this installation if you want to use diAID-PASEF as a Python package in an existing Python 3.8 environment (e.g. a Jupyter notebook). If needed, the GUI and CLI can be installed with pip as well.
-* [**Developer installer:**](#developer) Choose this installation if you are familiar with CLI tools, [conda](https://docs.conda.io/en/latest/) and Python. This installation allows access to all available features of diAID-PASEF and even allows to modify its source code directly. Generally, the developer version of diAID-PASEF outperforms the precompiled versions which makes this the installation of choice for high-throughput experiments.
+* [**Pip installer:**](#pip) Choose this installation if you want to use py_diAID as a Python package in an existing Python 3.8 environment (e.g. a Jupyter notebook). If needed, the GUI and CLI can be installed with pip as well.
+* [**Developer installer:**](#developer) Choose this installation if you are familiar with CLI tools, [conda](https://docs.conda.io/en/latest/) and Python. This installation allows access to all available features of py_diAID and even allows to modify its source code directly. Generally, the developer version of py_diAID outperforms the precompiled versions which makes this the installation of choice for high-throughput experiments.
 
 ### One-click GUI
 
-The GUI of diAID-PASEF is a completely stand-alone tool that requires no knowledge of Python or CLI tools. Click on one of the links below to download the latest release for:
+The GUI of py_diAID is a completely stand-alone tool that requires no knowledge of Python or CLI tools. Click on one of the links below to download the latest release for:
 
 * [**Windows**](https://github.com/MannLabs/py_diaid/releases/latest/download/diaid_pasef_gui_installer_windows.exe)
 * [**macOS**](https://github.com/MannLabs/py_diaid/releases/latest/download/diaid_pasef_gui_installer_macos.pkg)
@@ -51,19 +51,19 @@ Older releases remain available on the [release page](https://github.com/MannLab
 
 ### Pip
 
-diAID-PASEF can be installed in an existing Python 3.8 environment with a single `bash` command. *This `bash` command can also be run directly from within a Jupyter notebook by prepending it with a `!`*:
+py_diAID can be installed in an existing Python 3.8 environment with a single `bash` command. *This `bash` command can also be run directly from within a Jupyter notebook by prepending it with a `!`*:
 
 ```bash
 pip install py_diaid
 ```
 
-Installing diAID-PASEF like this avoids conflicts when integrating it in other tools, as this does not enforce strict versioning of dependancies. However, if new versions of dependancies are released, they are not guaranteed to be fully compatible with diAID-PASEF. While this should only occur in rare cases where dependencies are not backwards compatible, you can always force diAID-PASEF to use dependancy versions which are known to be compatible with:
+Installing py_diAID like this avoids conflicts when integrating it in other tools, as this does not enforce strict versioning of dependancies. However, if new versions of dependancies are released, they are not guaranteed to be fully compatible with py_diAID. While this should only occur in rare cases where dependencies are not backwards compatible, you can always force py_diAID to use dependancy versions which are known to be compatible with:
 
 ```bash
 pip install "py_diaid[stable]"
 ```
 
-NOTE: You might need to run `pip install pip==21.0` before installing diAID-PASEF like this. Also note the double quotes `"`.
+NOTE: You might need to run `pip install pip==21.0` before installing py_diAID like this. Also note the double quotes `"`.
 
 For those who are really adventurous, it is also possible to directly install any branch (e.g. `@development`) with any extras (e.g. `#egg=py_diaid[stable,development-stable]`) from GitHub with e.g.
 
@@ -82,7 +82,7 @@ cd ~/folder/where/to/install/software
 
 ***The following commands assume you do not perform any additional `cd` commands anymore***.
 
-Next, download the diAID-PASEF repository from GitHub either directly or with a `git` command. This creates a new diAID-PASEF subfolder in your current directory.
+Next, download the py_diAID repository from GitHub either directly or with a `git` command. This creates a new py_diAID subfolder in your current directory.
 
 ```bash
 git clone https://github.com/MannLabs/py_diaid.git
@@ -95,7 +95,7 @@ conda create --name py_diaid python=3.8 -y
 conda activate py_diaid
 ```
 
-Finally, diAID-PASEF and all its [dependancies](requirements) need to be installed. To take advantage of all features and allow development (with the `-e` flag), this is best done by also installing the [development dependencies](requirements/requirements_development.txt) instead of only the [core dependencies](requirements/requirements.txt):
+Finally, py_diAID and all its [dependancies](requirements) need to be installed. To take advantage of all features and allow development (with the `-e` flag), this is best done by also installing the [development dependencies](requirements/requirements_development.txt) instead of only the [core dependencies](requirements/requirements.txt):
 
 ```bash
 pip install -e "./py_diaidf[development]"
@@ -103,18 +103,18 @@ pip install -e "./py_diaidf[development]"
 
 By default this installs loose dependancies (no explicit versioning), although it is also possible to use stable dependencies (e.g. `pip install -e "./py_diaidf[stable,development-stable]"`).
 
-***By using the editable flag `-e`, all modifications to the [py_diAID source code folder](py_diaid) are directly reflected when running diAID-PASEF. Note that the diAID-PASEF folder cannot be moved and/or renamed if an editable version is installed.***
+***By using the editable flag `-e`, all modifications to the [py_diAID source code folder](py_diaid) are directly reflected when running py_diAID. Note that the py_diAID folder cannot be moved and/or renamed if an editable version is installed.***
 
 ---
 ## Usage
 
-There are three ways to use diAID-PASEF:
+There are three ways to use py_diAID:
 
 * [**GUI**](#gui)
 * [**CLI**](#cli)
 * [**Python**](#python-and-jupyter-notebooks)
 
-NOTE: The first time you use a fresh installation of diAID-PASEF, it is often quite slow because some functions might still need compilation on your local operating system and architecture. Subsequent use should be a lot faster.
+NOTE: The first time you use a fresh installation of py_diAID, it is often quite slow because some functions might still need compilation on your local operating system and architecture. Subsequent use should be a lot faster.
 
 ### GUI
 
