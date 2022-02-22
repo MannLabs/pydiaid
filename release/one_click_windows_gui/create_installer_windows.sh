@@ -8,7 +8,7 @@ rm -rf dist
 rm -rf build
 
 # Creating a conda environment
-conda create -n py_installer python=3.8 -y
+conda create -n pydiaid_installer python=3.8 -y
 conda activate pydiaid_installer
 
 # Creating the wheel
