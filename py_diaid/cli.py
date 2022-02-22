@@ -36,7 +36,7 @@ DEFAULT_FILE = os.path.join(
 @click.pass_context
 @click.version_option(py_diaid.__version__, "-v", "--version")
 def run(ctx, **kwargs):
-    name = f"diAID-PASEF {py_diaid.__version__}"
+    name = f"py_diAID {py_diaid.__version__}"
     click.echo("*" * (len(name) + 4))
     click.echo(f"* {name} *")
     click.echo("*" * (len(name) + 4))
