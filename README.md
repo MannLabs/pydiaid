@@ -43,9 +43,9 @@ There are three different types of installation possible:
 
 The GUI of py_diAID is a completely stand-alone tool that requires no knowledge of Python or CLI tools. Click on one of the links below to download the latest release for:
 
-* [**Windows**](https://github.com/MannLabs/py_diaid/releases/latest/download/diaid_pasef_gui_installer_windows.exe)
-* [**macOS**](https://github.com/MannLabs/py_diaid/releases/latest/download/diaid_pasef_gui_installer_macos.pkg)
-* [**Linux**](https://github.com/MannLabs/py_diaid/releases/latest/download/diaid_pasef_gui_installer_linux.deb)
+* [**Windows**](https://github.com/MannLabs/py_diaid/releases/latest/download/py_diaid_gui_installer_windows.exe)
+* [**macOS**](https://github.com/MannLabs/py_diaid/releases/latest/download/py_diaid_gui_installer_macos.pkg)
+* [**Linux**](https://github.com/MannLabs/py_diaid/releases/latest/download/py_diaid_gui_installer_linux.deb)
 
 Older releases remain available on the [release page](https://github.com/MannLabs/py_diaid/releases), but no backwards compatibility is guaranteed.
 
