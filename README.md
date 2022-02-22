@@ -1,8 +1,8 @@
-![Pip installation](https://github.com/MannLabs/diaid_pasef/workflows/Default%20installation%20and%20tests/badge.svg)
-![GUI and PyPi releases](https://github.com/MannLabs/diaid_pasef/workflows/Publish%20on%20PyPi%20and%20release%20on%20GitHub/badge.svg)
+![Pip installation](https://github.com/MannLabs/py_diaid/workflows/Default%20installation%20and%20tests/badge.svg)
+![GUI and PyPi releases](https://github.com/MannLabs/py_diaid/workflows/Publish%20on%20PyPi%20and%20release%20on%20GitHub/badge.svg)
 
 # py_diAID
-An open-source Python package of the AlphaPept ecosystem from the [Mann Labs at the Max Planck Institute of Biochemistry](https://www.biochem.mpg.de/mann). To enable all hyperlinks in this document, please view it at [GitHub](https://github.com/MannLabs/diaid_pasef).
+An open-source Python package of the AlphaPept ecosystem from the [Mann Labs at the Max Planck Institute of Biochemistry](https://www.biochem.mpg.de/mann). To enable all hyperlinks in this document, please view it at [GitHub](https://github.com/MannLabs/py_diaid).
 
 * [**About**](#about)
 * [**License**](#license)
