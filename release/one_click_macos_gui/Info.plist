@@ -3,19 +3,19 @@
 <plist version="1.0">
 <dict>
 	<key>CFBundleDisplayName</key>
-	<string>diAID_PASEF</string>
+	<string>py_diAID</string>
 	<key>CFBundleExecutable</key>
-	<string>MacOS/diaid_pasef_terminal</string>
+	<string>MacOS/py_diaid_terminal</string>
 	<key>CFBundleIconFile</key>
 	<string>alpha_logo.icns</string>
 	<key>CFBundleIdentifier</key>
-	<string>diaid_pasef.0.0.3</string>
+	<string>py_diaid.0.0.3</string>
 	<key>CFBundleShortVersionString</key>
 	<string>0.0.3</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>diAID_PASEF</string>
+	<string>py_diAID</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>LSBackgroundOnly</key>

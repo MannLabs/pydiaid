@@ -1,5 +1,5 @@
 #!/bin/sh
 
 # make sure this file itself is executable
-rm -rf /Applications/diAID_PASEF.app
+rm -rf /Applications/py_diAID.app
 echo "Preinstall finished"

@@ -21,7 +21,7 @@ Steps to reproduce the behavior:
 A clear and concise description of what you expected to happen.
 
 **Logs**
-Please provide the log (see the diAID-PASEF terminal on where to find it).
+Please provide the log (see the py_diAID terminal on where to find it).
 
 **Screenshots**
 If applicable, add screenshots to help explain your problem.
