@@ -1,0 +1,2 @@
+[console_scripts]
+py_diaid = py_diaid.cli:run
