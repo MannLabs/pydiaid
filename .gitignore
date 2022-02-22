@@ -133,6 +133,5 @@ pydiaid/logs
 *.DS_Store
 *sandbox*
 pydiaid/input
-pydiaid/static
-pydiaid/lib
+pydiaid/static/AlphaPept_results.csv
 output_pydiaid
