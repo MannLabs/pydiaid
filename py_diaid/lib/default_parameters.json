@@ -2,7 +2,7 @@
     "input": {
         "save_at": "D:\\output_test2",
         "PTM": "None",
-        "library_name": "D:\\Input_for_diaid_pasef\\library21min24fractions.tsv",
+        "library_name": "D:\\Input_for_py_diaid\\library21min24fractions.tsv",
         "analysis_software": "MS_Fragger",
         "diaPASEF_method_only_used_for_evaluate": "D:/py_diaid/py_diaid/static/DIAParameterspy3TC.txt"
     },
