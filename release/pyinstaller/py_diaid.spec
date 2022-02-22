@@ -7,21 +7,21 @@ from PyInstaller.building.build_main import Analysis, PYZ, EXE, COLLECT, BUNDLE,
 import PyInstaller.utils.hooks
 import pkg_resources
 import importlib.metadata
-import py_diaid
+import pydiaid
 
 
 ##################### User definitions
-exe_name = 'py_diaid_gui'
-script_name = 'py_diaid_pyinstaller.py'
+exe_name = 'pydiaid_gui'
+script_name = 'pydiaid_pyinstaller.py'
 if sys.platform[:6] == "darwin":
 	icon = '../logos/alpha_logo.icns'
 else:
 	icon = '../logos/alpha_logo.ico'
 block_cipher = None
 location = os.getcwd()
-project = "py_diaid"
+project = "pydiaid"
 remove_tests = True
-bundle_name = "py_diaid"
+bundle_name = "pydiaid"
 #####################
 
 

@@ -8,8 +8,8 @@ rm -rf dist
 rm -rf build
 
 # Creating a conda environment
-conda create -n py_diaid_installer python=3.8 -y
-conda activate py_diaid_installer
+conda create -n pydiaid_installer python=3.8 -y
+conda activate pydiaid_installer
 
 # Creating the wheel
 python setup.py sdist bdist_wheel
@@ -17,20 +17,20 @@ python setup.py sdist bdist_wheel
 # Setting up the local package
 cd release/one_click_linux_gui
 # Make sure you include the required extra packages and always use the stable or very-stable options!
-pip install "../../dist/py_diaid-0.0.3-py3-none-any.whl[stable]"
+pip install "../../dist/pydiaid-0.0.3-py3-none-any.whl[stable]"
 
 # Creating the stand-alone pyinstaller folder
 pip install pyinstaller==4.2
-pyinstaller ../pyinstaller/py_diaid.spec -y
+pyinstaller ../pyinstaller/pydiaid.spec -y
 conda deactivate
 
 # If needed, include additional source such as e.g.:
-# cp ../../py_diaid/data/*.fasta dist/py_diaid/data
+# cp ../../pydiaid/data/*.fasta dist/pydiaid/data
 # WARNING: this probably does not work!!!!
 
 # Wrapping the pyinstaller folder in a .deb package
-mkdir -p dist/py_diaid_gui_installer_linux/usr/local/bin
-mv dist/py_diaid dist/py_diaid_gui_installer_linux/usr/local/bin/py_diaid
-mkdir dist/py_diaid_gui_installer_linux/DEBIAN
-cp control dist/py_diaid_gui_installer_linux/DEBIAN
-dpkg-deb --build --root-owner-group dist/py_diaid_gui_installer_linux/
+mkdir -p dist/pydiaid_gui_installer_linux/usr/local/bin
+mv dist/pydiaid dist/pydiaid_gui_installer_linux/usr/local/bin/pydiaid
+mkdir dist/pydiaid_gui_installer_linux/DEBIAN
+cp control dist/pydiaid_gui_installer_linux/DEBIAN
+dpkg-deb --build --root-owner-group dist/pydiaid_gui_installer_linux/

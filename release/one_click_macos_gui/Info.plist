@@ -5,11 +5,11 @@
 	<key>CFBundleDisplayName</key>
 	<string>py_diAID</string>
 	<key>CFBundleExecutable</key>
-	<string>MacOS/py_diaid_terminal</string>
+	<string>MacOS/pydiaid_terminal</string>
 	<key>CFBundleIconFile</key>
 	<string>alpha_logo.icns</string>
 	<key>CFBundleIdentifier</key>
-	<string>py_diaid.0.0.3</string>
+	<string>pydiaid.0.0.3</string>
 	<key>CFBundleShortVersionString</key>
 	<string>0.0.3</string>
 	<key>CFBundleInfoDictionaryVersion</key>

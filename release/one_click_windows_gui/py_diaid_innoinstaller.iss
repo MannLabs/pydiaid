@@ -4,13 +4,13 @@
 #define MyAppName "py_diAID"
 #define MyAppVersion "0.0.3"
 #define MyAppPublisher "Max Planck Institute of Biochemistry, Mann Labs"
-#define MyAppURL "https://github.com/MannLabs/py_diaid"
-#define MyAppExeName "py_diaid_gui.exe"
+#define MyAppURL "https://github.com/MannLabs/pydiaid"
+#define MyAppExeName "pydiaid_gui.exe"
 
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application. Do not use the same AppId value in installers for other applications.
 ; (To generate a new GUID, click Tools | Generate GUID inside the IDE.)
-AppId={{py_diaid_Mann_Labs_MPI}
+AppId={{pydiaid_Mann_Labs_MPI}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
 ;AppVerName={#MyAppName} {#MyAppVersion}
@@ -25,7 +25,7 @@ LicenseFile=..\..\LICENSE.txt
 PrivilegesRequired=lowest
 PrivilegesRequiredOverridesAllowed=dialog
 OutputDir=dist
-OutputBaseFilename=py_diaid_gui_installer_windows
+OutputBaseFilename=pydiaid_gui_installer_windows
 SetupIconFile=..\logos\alpha_logo.ico
 Compression=lzma
 SolidCompression=yes
@@ -38,8 +38,8 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
-Source: "dist\py_diaid_gui\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
-Source: "dist\py_diaid_gui\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "dist\pydiaid_gui\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
+Source: "dist\pydiaid_gui\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Icons]

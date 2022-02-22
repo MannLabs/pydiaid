@@ -1,5 +1,5 @@
 if __name__ == "__main__":
-    import py_diaid.gui
+    import pydiaid.gui
     import multiprocessing
     multiprocessing.freeze_support()
-    py_diaid.gui.run()
+    pydiaid.gui.run()
