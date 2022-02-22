@@ -4,6 +4,8 @@ import pandas as pd
 # importing for scientific and numeric manipulations
 import numpy as np
 
+import os
+
 
 def method_creation(
     library_mz_values: list,  # todo or pd.Series?
@@ -304,7 +306,7 @@ def create_parameter_dataframe(
     results_input = df_parameters_final.astype(str)
     results = results_input.values.tolist()
 
-    with open("D:\diaid_pasef\diaid_pasef\static\DIAParameterspy3TC.txt") as f:
+    with open(os.path.join(os.path.dirname(__file__), "static/DIAParameterspy3TC.txt")) as f:
         content = f.readlines()
 
     ref_line = [

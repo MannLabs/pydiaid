@@ -1,11 +1,11 @@
 #!python -m unittest tests.test_utils
-"""This module provides unit tests for diaid_pasef.gui."""
+"""This module provides unit tests for py_diaid.gui."""
 
 # builtin
 import unittest
 
 # local
-import diaid_pasef.gui
+import py_diaid.gui
 
 if __name__ == "__main__":
     unittest.main()

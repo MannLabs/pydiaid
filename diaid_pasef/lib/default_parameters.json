@@ -2,9 +2,9 @@
   "input": {
     "save_at" : "output",
     "PTM": "None",
-    "library_name": "D:/diaid_pasef/diaid_pasef/static/AlphaPept_results.csv",
+    "library_name": "D:/py_diaid/py_diaid/static/AlphaPept_results.csv",
     "analysis_software": "AlphaPept",
-    "diaPASEF_method_only_used_for_evaluate": "D:/diaid_pasef/diaid_pasef/static/DIAParameterspy3TC.txt"
+    "diaPASEF_method_only_used_for_evaluate": "D:/py_diaid/py_diaid/static/DIAParameterspy3TC.txt"
   },
   "method_parameters": {
     "mz": [300, 1200],

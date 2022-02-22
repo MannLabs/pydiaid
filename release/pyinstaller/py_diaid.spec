@@ -7,21 +7,21 @@ from PyInstaller.building.build_main import Analysis, PYZ, EXE, COLLECT, BUNDLE,
 import PyInstaller.utils.hooks
 import pkg_resources
 import importlib.metadata
-import diaid_pasef
+import py_diaid
 
 
 ##################### User definitions
-exe_name = 'diaid_pasef_gui'
-script_name = 'diaid_pasef_pyinstaller.py'
+exe_name = 'py_diaid_gui'
+script_name = 'py_diaid_pyinstaller.py'
 if sys.platform[:6] == "darwin":
 	icon = '../logos/alpha_logo.icns'
 else:
 	icon = '../logos/alpha_logo.ico'
 block_cipher = None
 location = os.getcwd()
-project = "diaid_pasef"
+project = "py_diaid"
 remove_tests = True
-bundle_name = "diAID_PASEF"
+bundle_name = "py_diaid"
 #####################
 
 
@@ -149,4 +149,23 @@ else:
 		upx=True,
 		upx_exclude=[],
 		name=exe_name
+	)
+	import shutil
+	import sklearn.neighbors._partition_nodes
+	if sys.platform[:6] == "darwin":
+		import cmath
+		shutil.copyfile(
+			cmath.__file__,
+			f"dist/{exe_name}/{os.path.basename(cmath.__file__)}"
+		)
+	new_location = os.path.join(
+		"dist",
+		exe_name,
+		"sklearn",
+		"neighbors",
+		os.path.basename(sklearn.neighbors._partition_nodes.__file__),
+	)
+	shutil.copyfile(
+		sklearn.neighbors._partition_nodes.__file__,
+		new_location
 	)

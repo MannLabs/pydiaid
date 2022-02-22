@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8" standalone="no"?>
 <installer-script minSpecVersion="1.000000">
-    <title>diAID_PASEF 0.0.1</title>
+    <title>py_diAID 0.0.3</title>
     <background mime-type="image/png" file="alpha_logo.png" scaling="proportional"/>
     <welcome file="welcome.html" mime-type="text/html" />
     <conclusion file="conclusion.html" mime-type="text/html" />
@@ -8,10 +8,10 @@
     <options customize="never" allow-external-scripts="no"/>
     <domains enable_localSystem="true" />
     <choices-outline>
-        <line choice="diAID_PASEF"/>
+        <line choice="py_diAID"/>
     </choices-outline>
-    <choice id="diAID_PASEF" title="diAID_PASEF">
-        <pkg-ref id="diAID_PASEF.pkg"/>
+    <choice id="py_diAID" title="py_diAID">
+        <pkg-ref id="py_diAID.pkg"/>
     </choice>
-    <pkg-ref id="diAID_PASEF.pkg" auth="Root">diAID_PASEF.pkg</pkg-ref>
+    <pkg-ref id="py_diAID.pkg" auth="Root">py_diAID.pkg</pkg-ref>
 </installer-script>

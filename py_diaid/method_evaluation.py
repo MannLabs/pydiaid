@@ -52,15 +52,12 @@ def calculate_percentage_multiple_charged_precursors(
     """
     dict_charge_prec = dict()
     for i in range(1, 5):
-        dict_charge_prec[
-            'ratio of precursor with charge state '+str(i)+' [%]'
-        ] = round(
+        dict_charge_prec[str(i)] = round(
             (
                 len(
                     library_subset[library_subset['Charge'] == i]
                 ) / len(library_subset)
-            ) * 100,
-            2
+            ) * 100, 2
         )
     return dict_charge_prec
 
@@ -101,9 +98,9 @@ def coverage(
     dict_prec_coverage = {
         "unique proteins in the library": len(library.drop_duplicates(['Proteins'])),
         "unique precursors in the library": len(library.drop_duplicates(['Peptide', 'Charge'])),
-        "smallest diaPASEF window": small_window,
-        "biggest diaPASEF window": big_window,
-        "average diaPASEF window size": mean_window,
+        "smallest diaPASEF window": round(small_window, 2),
+        "biggest diaPASEF window": round(big_window, 2),
+        "average diaPASEF window size": round(mean_window, 2),
         "No. of covered proteins": len(coverage_removed_prec_duplicates.drop_duplicates(['Proteins'])),
         "No. of covered precursors": len(coverage_removed_prec_duplicates),
         "No. of covered, doubly charged precursors": len(coverage_removed_prec_duplicates[coverage_removed_prec_duplicates['Charge'] == 2]),

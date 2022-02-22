@@ -5,7 +5,7 @@ import setuptools
 import re
 import os
 # local
-import diaid_pasef as package2install
+import py_diaid as package2install
 
 
 def get_long_description():

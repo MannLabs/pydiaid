@@ -1,6 +1,6 @@
 cd ../..
-conda create -n diaid_pasef_pypi_wheel python=3.8
-conda activate diaid_pasef_pypi_wheel
+conda create -n py_diaid_pypi_wheel python=3.8
+conda activate py_diaid_pypi_wheel
 pip install twine
 rm -rf dist
 rm -rf build

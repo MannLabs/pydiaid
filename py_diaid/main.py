@@ -1,7 +1,7 @@
-from diaid_pasef import loader
-from diaid_pasef import method_creator
-from diaid_pasef import method_evaluation
-from diaid_pasef import graphs
+from py_diaid import loader
+from py_diaid import method_creator
+from py_diaid import method_evaluation
+from py_diaid import graphs
 
 # import logging
 #
@@ -97,8 +97,8 @@ def library_information(
     dict_charge_of_precursor = method_evaluation.calculate_percentage_multiple_charged_precursors(library)
     pd.DataFrame(
         {
-            "column name": list(dict_charge_of_precursor.keys()),
-            "column value": list(dict_charge_of_precursor.values())
+            "charge state of precursors": list(dict_charge_of_precursor.keys()),
+            "ration [%]": list(dict_charge_of_precursor.values())
         }
         ).to_csv(
             save_at
@@ -234,6 +234,14 @@ def final_method_information(
         zi,
         method_conf["graphs"],
         save_at +'/final_method/Kernel_density_distribution_and_final_method.pdf'
+    )
+    graphs.plot_density_and_method(
+        df_parameters_final,
+        xi,
+        yi,
+        zi,
+        method_conf["graphs"],
+        save_at +'/final_method/Kernel_density_distribution_and_final_method.png'
     )
 
     # save parameters for method evaluation as .csv

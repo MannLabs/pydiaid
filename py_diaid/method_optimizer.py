@@ -1,6 +1,6 @@
-from diaid_pasef import method_creator
-from diaid_pasef import method_evaluation
-from diaid_pasef import graphs
+from py_diaid import method_creator
+from py_diaid import method_evaluation
+from py_diaid import graphs
 
 # for data manipulation:
 import pandas as pd
@@ -20,7 +20,7 @@ def optimization(
     optimizer_parameters: dict,
 ) -> 'scipy.optimize.optimize.OptimizeResult':
     """ Optimize dia-PASEF method parameters: Bayesian optimization using a
-    Gaussian proces. The output values should follow a multivariate gaussian
+    Gaussian process. The output values should follow a multivariate gaussian
     curve.
 
     Parameters:
@@ -72,6 +72,12 @@ def optimization(
         optimizer_parameters["initial_points"],  # initial points
         )
 
+
+    optimized_results = [opt_result.x[0],
+        opt_result.x[0]+opt_result.x[1],
+        opt_result.x[0]+opt_result.x[2],
+        opt_result.x[0]+opt_result.x[3]]
+
     print("########")
     print("BEST RESULT")
     print("INPUT: " + str(
@@ -89,7 +95,8 @@ def optimization(
         method_conf
         )
 
-    return opt_result
+    # return opt_result
+    return optimized_results
 
 def single_optimization_run(
     library: pd.DataFrame,

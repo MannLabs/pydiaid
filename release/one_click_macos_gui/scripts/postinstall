@@ -1,6 +1,6 @@
 #!/bin/sh
 
 # make sure this file itself is executable
-xattr -dr com.apple.quarantine /Applications/diAID_PASEF.app
-chmod -R 577 /Applications/diAID_PASEF.app
+xattr -dr com.apple.quarantine /Applications/py_diAID.app
+chmod -R 577 /Applications/py_diAID.app
 echo "Postinstall finished"

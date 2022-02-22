@@ -129,10 +129,10 @@ dmypy.json
 .pyre/
 
 # User defined:
-diaid_pasef/logs
+py_diaid/logs
 *.DS_Store
 *sandbox*
-diaid_pasef/input
-diaid_pasef/static
-diaid_pasef/lib
-output_diaid_pasef
+py_diaid/input
+py_diaid/static
+py_diaid/lib
+output_py_diaid
