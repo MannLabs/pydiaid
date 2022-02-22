@@ -101,7 +101,7 @@ Finally, py_diAID and all its [dependancies](requirements) need to be installed.
 pip install -e "./py_diaid[development]"
 ```
 
-By default this installs loose dependancies (no explicit versioning), although it is also possible to use stable dependencies (e.g. `pip install -e "./py_diaidf[stable,development-stable]"`).
+By default this installs loose dependancies (no explicit versioning), although it is also possible to use stable dependencies (e.g. `pip install -e "./py_diaid[stable,development-stable]"`).
 
 ***By using the editable flag `-e`, all modifications to the [py_diAID source code folder](py_diaid) are directly reflected when running py_diAID. Note that the py_diAID folder cannot be moved and/or renamed if an editable version is installed.***
 
