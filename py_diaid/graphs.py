@@ -140,56 +140,7 @@ def plot_precursor_distribution_as_histogram(
     else:
         plt.clf()
 
-def plot_precursor_distribution_as_histogrami_IM(
-    library_subset: pd.DataFrame,
-    plot_parameters: dict,
-    file_name: str,
-) -> None:
-    """Plot histogram with the precursor distribution in the m/z dimension
-        sorted by charge state.
 
-    Parameters:
-    library_subset (pd.DataFrame): pre-filtered data frame with unified column
-        names.
-    plot_parameters (dict): dictionary, which contains all input parameters for
-        creating plots (e.g., displayed m/z-range, ion mobility-range)
-    file_name: file path and file name where the plot should be saved.
-    """
-
-    colors = ['#7AC7C9', '#4EA7BB', '#267FA5']
-#    hist = sns.distplot(
-#    library_subset['mz'],
-#        hist=True,
-#        kde=False,
-#        rug=False,
-#        color=colors[0],
-#        label='all precursors'
-#    )
-    hist = sns.distplot(
-        library_subset['IM'][library_subset['Charge'] == 2],
-        hist=True,
-        kde=False,
-        rug=False,
-        color=colors[1],
-        label='doubly charged precursors'
-    )
-    hist = sns.distplot(
-        library_subset['IM'][library_subset['Charge'] == 3],
-        hist=True,
-        kde=False,
-        rug=False,
-        color=colors[2],
-        label='triply charged precursors'
-    )
-    hist.set(
-        xlim=(plot_parameters["plot_IM"][0],
-        plot_parameters["plot_IM"][1])
-    )
-    plt.ylabel('No. of precursors')
-    plt.legend(bbox_to_anchor=(0.8, 1.42))
-    plt.xlabel('$\mathregular{\it{IM}}$')
-    hist.figure.savefig(file_name, bbox_inches='tight', pad_inches=0, dpi=300)
-    plt.clf()
 
 
 def plot_density_and_method(
@@ -220,7 +171,7 @@ def plot_density_and_method(
     plt.pcolormesh(
         xi, yi, zi.reshape(xi.shape),
         vmax=0.02,
-        cmap=plt.cm.Greys
+        cmap=plt.cm.viridis
     )
     pc = PatchCollection(
         rect,
@@ -232,7 +183,7 @@ def plot_density_and_method(
 
     ax.set_xlim(plot_parameters["plot_mz"][0], plot_parameters["plot_mz"][1])
     ax.set_ylim(plot_parameters["plot_IM"][0], plot_parameters["plot_IM"][1])
-    ax.set_facecolor('white')
+    ax.set_facecolor('#440256')
     plt.xlabel('$\mathregular{\it{m/z}}$')
     plt.ylabel('$\mathregular{1/K_0}$ [Vs $\mathregular{cm^{-2}}$]')
     plt.colorbar().set_label('Density', labelpad=-28, y=1.14, rotation=0)

@@ -3,17 +3,6 @@ from py_diaid import method_creator
 from py_diaid import method_evaluation
 from py_diaid import graphs
 
-# import logging
-#
-# logger = logging.getLogger('root')
-# formatter = logging.Formatter(
-#     '%(asctime)s> %(message)s', "%Y-%m-%d %H:%M:%S"
-# )
-# logger.setLevel(logging.INFO)
-# logger.setFormatter(formatter)
-
-import time
-
 # for data manipulation:
 import pandas as pd
 
@@ -80,12 +69,6 @@ def library_information(
         '/input_library/Histogram_precursor_distribution_in_library.pdf'
         )
 
-    #graphs.plot_precursor_distribution_as_histogrami_IM(
-    #    library, method_conf["graphs"],
-    #    save_at +
-    #    '/input_library/Histogram_precursor_distribution_in_library_IM.pdf'
-    #    )
-
     graphs.plot_density(
         xi,
         yi,
@@ -131,7 +114,6 @@ def precursor_within_scan_area(
         method_parameters["mz"],
         method_parameters["ion_mobility"]
     )
-    print(time.asctime())
     print(dict_precursors_within_scan_area)
 
     pd.DataFrame({

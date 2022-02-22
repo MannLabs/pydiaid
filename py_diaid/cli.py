@@ -3,7 +3,6 @@
 
 # external
 import click
-import time
 
 # local
 import py_diaid
