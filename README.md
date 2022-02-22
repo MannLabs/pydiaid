@@ -43,9 +43,9 @@ There are three different types of installation possible:
 
 The GUI of py_diAID is a completely stand-alone tool that requires no knowledge of Python or CLI tools. Click on one of the links below to download the latest release for:
 
-* [**Windows**](https://github.com/MannLabs/py_diaid/releases/latest/download/diaid_pasef_gui_installer_windows.exe)
-* [**macOS**](https://github.com/MannLabs/py_diaid/releases/latest/download/diaid_pasef_gui_installer_macos.pkg)
-* [**Linux**](https://github.com/MannLabs/py_diaid/releases/latest/download/diaid_pasef_gui_installer_linux.deb)
+* [**Windows**](https://github.com/MannLabs/py_diaid/releases/latest/download/py_diaid_gui_installer_windows.exe)
+* [**macOS**](https://github.com/MannLabs/py_diaid/releases/latest/download/py_diaid_gui_installer_macos.pkg)
+* [**Linux**](https://github.com/MannLabs/py_diaid/releases/latest/download/py_diaid_gui_installer_linux.deb)
 
 Older releases remain available on the [release page](https://github.com/MannLabs/py_diaid/releases), but no backwards compatibility is guaranteed.
 
@@ -98,7 +98,7 @@ conda activate py_diaid
 Finally, py_diAID and all its [dependancies](requirements) need to be installed. To take advantage of all features and allow development (with the `-e` flag), this is best done by also installing the [development dependencies](requirements/requirements_development.txt) instead of only the [core dependencies](requirements/requirements.txt):
 
 ```bash
-pip install -e "./py_diaidf[development]"
+pip install -e "./py_diaid[development]"
 ```
 
 By default this installs loose dependancies (no explicit versioning), although it is also possible to use stable dependencies (e.g. `pip install -e "./py_diaidf[stable,development-stable]"`).
