@@ -1,5 +1,5 @@
-conda create -n diaid_pasef python=3.8 -y
-conda activate diaid_pasef
+conda create -n py_diaid python=3.8 -y
+conda activate py_diaid
 pip install -e '../.[stable,development-stable]'
-diaid_pasef
+py_diaid
 conda deactivate
