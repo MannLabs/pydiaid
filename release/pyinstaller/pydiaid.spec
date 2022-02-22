@@ -152,6 +152,7 @@ else:
 	)
 	import shutil
 	import sklearn.neighbors._partition_nodes
+	import sklearn.utils._typedefs
 	if sys.platform[:6] == "darwin":
 		import cmath
 		shutil.copyfile(
@@ -167,5 +168,16 @@ else:
 	)
 	shutil.copyfile(
 		sklearn.neighbors._partition_nodes.__file__,
+		new_location
+	)
+	new_location = os.path.join(
+		"dist",
+		exe_name,
+		"sklearn",
+		"utils",
+		os.path.basename(sklearn.utils._typedefs.__file__),
+	)
+	shutil.copyfile(
+		sklearn.utils._typedefs.__file_,
 		new_location
 	)
