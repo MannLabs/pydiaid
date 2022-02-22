@@ -14,12 +14,12 @@ import panel as pn
 import bokeh.server.views.ws
 
 # modules
-import diaid_pasef
-import diaid_pasef.loader
-import diaid_pasef.main
-import diaid_pasef.graphs
-import diaid_pasef.method_optimizer
-import diaid_pasef.method_evaluation
+import py_diaid
+import py_diaid.loader
+import py_diaid.main
+import py_diaid.graphs
+import py_diaid.method_optimizer
+import py_diaid.method_evaluation
 
 import warnings
 warnings.filterwarnings("ignore")
@@ -39,13 +39,13 @@ with open(DEFAULT_FILE, "r") as infile:
     method_conf = json.load(infile)
 
 if platform.system() == 'Windows':
-    method_path_placeholder = 'D:\diaid_pasef\static\DIAParameterspy3TC.txt'
-    library_path_placeholder = 'D:\diaid_pasef\static\AlphaPept_results.csv'
-    save_folder_placeholder = 'D:\diaid_pasef\static'
+    method_path_placeholder = 'D:\py_diaid\static\DIAParameterspy3TC.txt'
+    library_path_placeholder = 'D:\py_diaid\static\AlphaPept_results.csv'
+    save_folder_placeholder = 'D:\py_diaid\static'
 else:
-    method_path_placeholder = '/Users/diaid_pasef/static/DIAParameterspy3TC.txt'
-    library_path_placeholder = '/Users/diaid_pasef/static/AlphaPept_results.csv'
-    save_folder_placeholder = '/Users/diaid_pasef/static'
+    method_path_placeholder = '/Users/py_diaid/static/DIAParameterspy3TC.txt'
+    library_path_placeholder = '/Users/py_diaid/static/AlphaPept_results.csv'
+    save_folder_placeholder = '/Users/py_diaid/static'
 
 
 class BaseWidget(object):
@@ -429,7 +429,7 @@ class LoadLibraryCard(BaseWidget):
 
     def upload_data(self, *args):
         self.upload_progress.active = True
-        self.library = diaid_pasef.loader.load_library(
+        self.library = py_diaid.loader.load_library(
             self.path_library.value,
             method_conf["input"]["analysis_software"],
             method_conf["input"]["PTM"]
@@ -446,13 +446,13 @@ class LoadLibraryCard(BaseWidget):
                 'final_method'
             ),
         ]
-        diaid_pasef.main.create_folder(folder_paths)
-        self.xi, self.yi, self.zi = diaid_pasef.graphs.kernel_density_calculation(
+        py_diaid.main.create_folder(folder_paths)
+        self.xi, self.yi, self.zi = py_diaid.graphs.kernel_density_calculation(
             self.library,
             method_conf["graphs"]["numbins"]
         )
         self.layout[4][0] = pn.pane.Matplotlib(
-            diaid_pasef.graphs.plot_precursor_distribution_as_histogram(
+            py_diaid.graphs.plot_precursor_distribution_as_histogram(
                 self.library,
                 method_conf["graphs"],
                 os.path.join(
@@ -465,7 +465,7 @@ class LoadLibraryCard(BaseWidget):
             tight=True
         )
         self.layout[4][1] = pn.pane.Matplotlib(
-            diaid_pasef.graphs.plot_density(
+            py_diaid.graphs.plot_density(
                 self.xi,
                 self.yi,
                 self.zi,
@@ -479,7 +479,7 @@ class LoadLibraryCard(BaseWidget):
             ),
             tight=True
         )
-        dict_charge_of_precursor = diaid_pasef.method_evaluation.calculate_percentage_multiple_charged_precursors(self.library)
+        dict_charge_of_precursor = py_diaid.method_evaluation.calculate_percentage_multiple_charged_precursors(self.library)
         mult_charged_precursor_info = pd.DataFrame(
             {
                 "charge state of precursors": list(dict_charge_of_precursor.keys()),
@@ -680,7 +680,7 @@ class SpecifyParametersCard(BaseWidget):
             method_conf['method_parameters'][convertion_dict[event.obj.name]] = event.new
 
     def run_calculation(self, *args):
-        dict_precursors_within_scan_area = diaid_pasef.method_evaluation.calculate_precursor_within_scan_area(
+        dict_precursors_within_scan_area = py_diaid.method_evaluation.calculate_precursor_within_scan_area(
             self.data.library,
             method_conf['method_parameters']["mz"],
             method_conf['method_parameters']["ion_mobility"]
@@ -927,9 +927,9 @@ class OptimizationCard(BaseWidget):
                 'optimization_plots'
             )
         ]
-        diaid_pasef.main.create_folder(self.folder_path)
+        py_diaid.main.create_folder(self.folder_path)
 
-        self.opt_result = diaid_pasef.method_optimizer.optimization(
+        self.opt_result = py_diaid.method_optimizer.optimization(
             self.data.library,
             method_conf["method_parameters"],
             self.data.xi,
@@ -941,7 +941,7 @@ class OptimizationCard(BaseWidget):
 
         self.scan_area_A1_A2_B1_B2_only_used_for_specific_diaPASEF.value = self.opt_result
 
-        self.filenames_plots =  diaid_pasef.loader.get_file_names_from_directory(
+        self.filenames_plots =  py_diaid.loader.get_file_names_from_directory(
             self.folder_path[0],
             'png'
         )
@@ -955,7 +955,7 @@ class OptimizationCard(BaseWidget):
             margin=(0, 0, 50, 0)
         )
 
-        opt_plot_df = diaid_pasef.loader.create_opt_plot_df(
+        opt_plot_df = py_diaid.loader.create_opt_plot_df(
             self.filenames_plots[self.player.value]
         )
 
@@ -989,7 +989,7 @@ class OptimizationCard(BaseWidget):
         self.optimize_spinner.value = False
 
     def update_kde_plot_df(self, event):
-        self.kde_plot_table.value = diaid_pasef.loader.create_opt_plot_df(
+        self.kde_plot_table.value = py_diaid.loader.create_opt_plot_df(
             self.filenames_plots[event.new]
         )
         self.kde_plot.object = os.path.join(
@@ -1095,7 +1095,7 @@ class CreateMethodCard(BaseWidget):
         method_conf['method_parameters'][convertion_dict[event.obj.name]] = event.new
 
     def create_method(self, event):
-        df_parameters_final = diaid_pasef.main.create_final_method(
+        df_parameters_final = py_diaid.main.create_final_method(
             self.data.library,
             method_conf["method_parameters"],
             self.opt_widget.scan_area_A1_A2_B1_B2_only_used_for_specific_diaPASEF.value,
@@ -1244,7 +1244,7 @@ class EvaluateMethodCard(object):
             names=["MS Type", "Cycle Id", "Start IM", "End IM", "Start Mass", "End Mass", "CE"]
         )
 
-        diaid_pasef.main.final_method_information(
+        py_diaid.main.final_method_information(
             df_parameters_final,
             self.data.xi,
             self.data.yi,
@@ -1257,12 +1257,12 @@ class EvaluateMethodCard(object):
         )
 
         # save parameters for method evaluation as .csv
-        dict_precursors_within_mz = diaid_pasef.method_evaluation.calculate_precursor_within_scan_area(
+        dict_precursors_within_mz = py_diaid.method_evaluation.calculate_precursor_within_scan_area(
             self.data.library,
             method_conf["method_parameters"]["mz"],
             method_conf["method_parameters"]["ion_mobility"]
         )
-        dict_precursors_coverage = diaid_pasef.method_evaluation.coverage(
+        dict_precursors_coverage = py_diaid.method_evaluation.coverage(
             df_parameters_final,
             self.data.library,
         )
@@ -1400,9 +1400,9 @@ class DiAIDPasefGUI(GUI):
 
     def __init__(self, start_server=False):
         super().__init__(
-            name=f"py_diAID {diaid_pasef.__version__}",
+            name=f"py_diAID {py_diaid.__version__}",
             img_folder_path=IMG_PATH,
-            github_url='https://github.com/MannLabs/diaid_pasef',
+            github_url='https://github.com/MannLabs/py_diaid',
         )
         self.project_description = """#### py_diAID uses an Automated Isolation Design to generate optimal dia-PASEF methods with respect to the peptide precursor density. It designs isolation windows with dynamic widths, which enable short acquisition cycles, while essentially covering the complete m/z-ion mobility-range."""
         self.load_library_description = "#### Please load the library for the indicated analysis software’s to check the distribution of the precursors in the m/z-ion mobility plain."

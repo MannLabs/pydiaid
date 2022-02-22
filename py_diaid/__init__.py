@@ -1,13 +1,13 @@
 #!python
 
 
-__project__ = "diaid_pasef"
+__project__ = "py_diaid"
 __version__ = "0.0.3"
 __license__ = "Apache"
 __description__ = "An open-source Python package of the AlphaPept ecosystem"
 __author__ = "Patricia Skowronek, Sander Willems, Eugenia Voytik"
 __author_email__ = "opensource@alphapept.com"
-__github__ = "https://github.com/MannLabs/diaid_pasef"
+__github__ = "https://github.com/MannLabs/py_diaid"
 __keywords__ = [
     "bioinformatics",
     "software",
@@ -36,7 +36,7 @@ __classifiers__ = [
     "Topic :: Scientific/Engineering :: Bio-Informatics",
 ]
 __console_scripts__ = [
-    "diaid_pasef=diaid_pasef.cli:run",
+    "py_diaid=py_diaid.cli:run",
 ]
 __urls__ = {
     "Mann Labs at MPIB": "https://www.biochem.mpg.de/mann",

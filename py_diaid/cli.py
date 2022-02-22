@@ -5,10 +5,10 @@
 import click
 
 # local
-import diaid_pasef
-from diaid_pasef import loader
-from diaid_pasef import main
-from diaid_pasef import method_optimizer
+import py_diaid
+from py_diaid import loader
+from py_diaid import main
+from py_diaid import method_optimizer
 
 # for data manipulation:
 import pandas as pd
@@ -34,9 +34,9 @@ DEFAULT_FILE = os.path.join(
     invoke_without_command=True
 )
 @click.pass_context
-@click.version_option(diaid_pasef.__version__, "-v", "--version")
+@click.version_option(py_diaid.__version__, "-v", "--version")
 def run(ctx, **kwargs):
-    name = f"diAID-PASEF {diaid_pasef.__version__}"
+    name = f"diAID-PASEF {py_diaid.__version__}"
     click.echo("*" * (len(name) + 4))
     click.echo(f"* {name} *")
     click.echo("*" * (len(name) + 4))
@@ -46,8 +46,8 @@ def run(ctx, **kwargs):
 
 @run.command("gui", help="Start graphical user interface.")
 def gui():
-    import diaid_pasef.gui
-    diaid_pasef.gui.run()
+    import py_diaid.gui
+    py_diaid.gui.run()
 
 
 @run.command("optimize", help="Optimize a dia-PASEF method.")

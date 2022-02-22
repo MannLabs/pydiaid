@@ -14,7 +14,7 @@ import seaborn as sns
 # for suppressing warnings
 import warnings
 
-from diaid_pasef.method_evaluation import boxes
+from py_diaid.method_evaluation import boxes
 
 # importing components for visualization
 mpl.rcParams['font.family'] = 'Arial'

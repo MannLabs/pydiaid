@@ -1,7 +1,7 @@
-from diaid_pasef import loader
-from diaid_pasef import method_creator
-from diaid_pasef import method_evaluation
-from diaid_pasef import graphs
+from py_diaid import loader
+from py_diaid import method_creator
+from py_diaid import method_evaluation
+from py_diaid import graphs
 
 # for data manipulation:
 import pandas as pd
