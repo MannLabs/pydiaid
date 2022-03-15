@@ -1,5 +1,5 @@
-![Pip installation](https://github.com/MannLabs/py_diaid/workflows/Default%20installation%20and%20tests/badge.svg)
-![GUI and PyPi releases](https://github.com/MannLabs/py_diaid/workflows/Publish%20on%20PyPi%20and%20release%20on%20GitHub/badge.svg)
+![Pip installation](https://github.com/MannLabs/pydiaid/workflows/Default%20installation%20and%20tests/badge.svg)
+![GUI and PyPi releases](https://github.com/MannLabs/pydiaid/workflows/Publish%20on%20PyPi%20and%20release%20on%20GitHub/badge.svg)
 
 # py_diAID
 An open-source Python package of the AlphaPept ecosystem from the [Mann Labs at the Max Planck Institute of Biochemistry](https://www.biochem.mpg.de/mann). To enable all hyperlinks in this document, please view it at [GitHub](https://github.com/MannLabs/py_diaid).
@@ -43,11 +43,11 @@ There are three different types of installation possible:
 
 The GUI of py_diAID is a completely stand-alone tool that requires no knowledge of Python or CLI tools. Click on one of the links below to download the latest release for:
 
-* [**Windows**](https://github.com/MannLabs/py_diaid/releases/latest/download/py_diaid_gui_installer_windows.exe)
-* [**macOS**](https://github.com/MannLabs/py_diaid/releases/latest/download/py_diaid_gui_installer_macos.pkg)
-* [**Linux**](https://github.com/MannLabs/py_diaid/releases/latest/download/py_diaid_gui_installer_linux.deb)
+* [**Windows**](https://github.com/MannLabs/py_diaid/releases/latest/download/pydiaid_gui_installer_windows.exe)
+* [**macOS**](https://github.com/MannLabs/py_diaid/releases/latest/download/pydiaid_gui_installer_macos.pkg)
+* [**Linux**](https://github.com/MannLabs/py_diaid/releases/latest/download/pydiaid_gui_installer_linux.deb)
 
-Older releases remain available on the [release page](https://github.com/MannLabs/py_diaid/releases), but no backwards compatibility is guaranteed.
+Older releases remain available on the [release page](https://github.com/MannLabs/pydiaid/releases), but no backwards compatibility is guaranteed.
 
 ### Pip
 
@@ -147,8 +147,8 @@ A brief [Jupyter notebook tutorial](nbs/tutorial.ipynb) on how to use the API is
 
 In case of issues, check out the following:
 
-* [Issues](https://github.com/MannLabs/py_diaid/issues): Try a few different search terms to find out if a similar problem has been encountered before
-* [Discussions](https://github.com/MannLabs/py_diaid/discussions): Check if your problem or feature requests has been discussed before.
+* [Issues](https://github.com/MannLabs/pydiaid/issues): Try a few different search terms to find out if a similar problem has been encountered before
+* [Discussions](https://github.com/MannLabs/pydiaid/discussions): Check if your problem or feature requests has been discussed before.
 
 ---
 ## Citations
@@ -158,7 +158,7 @@ There are currently no plans to draft a manuscript.
 ---
 ## How to contribute
 
-If you like this software, you can give us a [star](https://github.com/MannLabs/py_diaid/stargazers) to boost our visibility! All direct contributions are also welcome. Feel free to post a new [issue](https://github.com/MannLabs/py_diaid/issues) or clone the repository and create a [pull request](https://github.com/MannLabs/py_diaid/pulls) with a new branch. For an even more interactive participation, check out the [discussions](https://github.com/MannLabs/py_diaid/discussions) and the [the Contributors License Agreement](misc/CLA.md).
+If you like this software, you can give us a [star](https://github.com/MannLabs/pydiaid/stargazers) to boost our visibility! All direct contributions are also welcome. Feel free to post a new [issue](https://github.com/MannLabs/pydiaid/issues) or clone the repository and create a [pull request](https://github.com/MannLabs/pydiaid/pulls) with a new branch. For an even more interactive participation, check out the [discussions](https://github.com/MannLabs/pydiaid/discussions) and the [the Contributors License Agreement](misc/CLA.md).
 
 ---
 ## Changelog
