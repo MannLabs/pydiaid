@@ -178,6 +178,6 @@ else:
 		os.path.basename(sklearn.utils._typedefs.__file__),
 	)
 	shutil.copyfile(
-		sklearn.utils._typedefs.__file_,
+		sklearn.utils._typedefs.__file__,
 		new_location
 	)
