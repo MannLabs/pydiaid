@@ -564,7 +564,7 @@ class SpecifyParametersCard(BaseWidget):
         )
         self.shift_of_final_method = pn.widgets.FloatInput(
             name='Shift of the final acquisition scheme (in IM dimension)',
-            start=0.0,
+            start=-0.5,
             end=1.0,
             value=method_conf['method_parameters']['shift_of_final_method'],
             step=0.01,
