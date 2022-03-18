@@ -9,7 +9,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 from matplotlib.collections import PatchCollection
-import seaborn as sns
 
 # for suppressing warnings
 import warnings
