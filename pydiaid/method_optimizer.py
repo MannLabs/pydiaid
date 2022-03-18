@@ -136,8 +136,10 @@ def single_optimization_run(
     """
     # create the diaPASEF method scheme; dim[0],dim[1],dim[2],dim[3] == A1, A2,
     # B1, B2. Calculate the optimization parameter.
+    library_reduced = library[library['Charge'] != 1]
+
     df_parameters_final = method_creator.method_creation(
-        library["mz"],
+        library_reduced["mz"],
         method_parameters,
         dim[0],
         dim[0]+dim[1],
