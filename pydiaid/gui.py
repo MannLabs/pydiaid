@@ -243,7 +243,7 @@ class LoadLibraryCard(BaseWidget):
             width=430,
         )
         self.plot_im = pn.widgets.EditableRangeSlider(
-            name='Plot ion mobility-range [1/K0]',
+            name='Plot ion mobility range [1/K0]',
             start=0.6,
             end=1.6,
             value=tuple(method_conf['graphs']['plot_IM']),
@@ -523,7 +523,7 @@ class SpecifyParametersCard(BaseWidget):
             width=430,
         )
         self.ion_mobility = pn.widgets.EditableRangeSlider(
-            name='ion mobility-range [1/K0]',
+            name='Ion mobility range [1/K0]',
             start=0.6,
             end=1.6,
             value=tuple(method_conf['method_parameters']['ion_mobility']),
