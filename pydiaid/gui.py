@@ -1,13 +1,9 @@
 #!python
-import sys
 import os
-import re
-import time
 import json
 import logging
 import platform
 import pandas as pd
-import numpy as np
 
 # visualization
 import panel as pn
@@ -232,13 +228,13 @@ class LoadLibraryCard(BaseWidget):
         self.analysis_software = pn.widgets.Select(
             name='Analysis software',
             value=method_conf["input"]["analysis_software"],
-            options=['AlphaPept', 'MaxQuant', 'MS_Fragger', 'Spectronaut_single-shot', 'Spectronaut_library'],
+            options=['AlphaPept', 'MaxQuant', 'FragPipe', 'Spectronaut single-run', 'Spectronaut library'],
             width=200,
             margin=(15, 15, 15, 15)
         )
         # PLOTS
         self.plot_mz = pn.widgets.EditableRangeSlider(
-            name='Plot m/z-range',
+            name='Plot m/z-range [Da]',
             start=100,
             end=1700,
             value=tuple(method_conf['graphs']['plot_mz']),
@@ -247,7 +243,7 @@ class LoadLibraryCard(BaseWidget):
             width=430,
         )
         self.plot_im = pn.widgets.EditableRangeSlider(
-            name='Plot ion mobility-range',
+            name='Plot ion mobility-range [1/K0]',
             start=0.6,
             end=1.6,
             value=tuple(method_conf['graphs']['plot_IM']),
@@ -554,7 +550,7 @@ class SpecifyParametersCard(BaseWidget):
             width=430,
         )
         self.overlap = pn.widgets.IntInput(
-            name='Isolation window overlap',
+            name='Isolation window overlap [Da]',
             start=0,
             end=10,
             value=method_conf['method_parameters']['overlap'],
@@ -563,7 +559,7 @@ class SpecifyParametersCard(BaseWidget):
             width=430,
         )
         self.shift_of_final_method = pn.widgets.FloatInput(
-            name='Shift of the final acquisition scheme (in IM dimension)',
+            name='Shift of the final acquisition scheme (in IM dimension) [1/K0]',
             start=-0.5,
             end=1.0,
             value=method_conf['method_parameters']['shift_of_final_method'],
@@ -709,7 +705,7 @@ class OptimizationCard(BaseWidget):
         self.data = data
         self.opt_result_x = [0, 0, 0, 0]
         self.n_calls = pn.widgets.IntInput(
-            name='Number of calls',
+            name='Number of iterative optimization steps',
             start=1,
             end=200,
             value=method_conf['optimizer']['n_calls'],
@@ -717,17 +713,17 @@ class OptimizationCard(BaseWidget):
             margin=(15, 15, 0, 15),
             width=430,
         )
-        self.n_start = pn.widgets.IntInput(
-            name='n_start',
-            start=1,
-            end=20,
-            value=method_conf['optimizer']['n_start'],
-            step=1,
-            margin=(15, 15, 0, 15),
-            width=430,
-        )
+        #self.n_start = pn.widgets.IntInput(
+        #    name='Number of starting points',
+        #    start=1,
+        #    end=20,
+        #    value=method_conf['optimizer']['n_start'],
+        #    step=1,
+        #    margin=(15, 15, 0, 15),
+        #    width=430,
+        #)
         self.initial_points = pn.widgets.IntInput(
-            name='initial_points',
+            name='Number of starting points',
             start=1,
             end=20,
             value=method_conf['optimizer']['initial_points'],
@@ -736,7 +732,7 @@ class OptimizationCard(BaseWidget):
             width=430,
         )
         self.YA1 = pn.widgets.EditableRangeSlider(
-            name='YA1 range',
+            name='A1 range',
             start=0.2,
             end=2.0,
             value=tuple(method_conf['optimizer']['YA1']),
@@ -745,7 +741,7 @@ class OptimizationCard(BaseWidget):
             width=430,
         )
         self.YA2 = pn.widgets.EditableRangeSlider(
-            name='YA2 range',
+            name='A2 range',
             start=0.2,
             end=2.0,
             value=tuple(method_conf['optimizer']['YA2']),
@@ -754,7 +750,7 @@ class OptimizationCard(BaseWidget):
             width=430,
         )
         self.YB1 = pn.widgets.EditableRangeSlider(
-            name='YB1 range',
+            name='B1 range',
             start=0.2,
             end=2.0,
             value=tuple(method_conf['optimizer']['YB1']),
@@ -763,7 +759,7 @@ class OptimizationCard(BaseWidget):
             width=430,
         )
         self.YB2 = pn.widgets.EditableRangeSlider(
-            name='YB2 range',
+            name='B2 range',
             start=0.2,
             end=2.0,
             value=tuple(method_conf['optimizer']['YB2']),
@@ -802,7 +798,7 @@ class OptimizationCard(BaseWidget):
             height=35
         )
         self.scan_area_A1_A2_B1_B2_only_used_for_specific_diaPASEF = pn.widgets.LiteralInput(
-            name='Scan area A1/A2/B1/B2 (only used for creating a specific dia-PASEF method)',
+            name='Scan area A1/A2/B1/B2',
             # value=method_conf['method_parameters']['scan_area_A1_A2_B1_B2_only_used_for_specific_diaPASEF'],
             value=[0,0,0,0],
             type=list,
@@ -825,11 +821,12 @@ class OptimizationCard(BaseWidget):
                     pn.WidgetBox(
                         pn.Row(
                             self.n_calls,
-                            self.n_start,
+                            #self.n_start,
+                            self.initial_points,
                             sizing_mode='stretch_width',
                         ),
                         pn.Row(
-                            self.initial_points,
+                            #self.initial_points,
                             self.evaluation_parameter,
                             sizing_mode='stretch_width'
                         ),
@@ -884,7 +881,7 @@ class OptimizationCard(BaseWidget):
 
         dependances = {
             self.n_calls: [self.update_parameters, 'value'],
-            self.n_start: [self.update_parameters, 'value'],
+            #self.n_start: [self.update_parameters, 'value'],
             self.initial_points: [self.update_parameters, 'value'],
             self.evaluation_parameter: [self.update_parameters, 'value'],
             self.YA1: [self.update_parameters, 'value'],
@@ -905,7 +902,7 @@ class OptimizationCard(BaseWidget):
         global method_conf
         convertion_dict = {
             self.n_calls.name: "n_calls",
-            self.n_start.name: "n_start",
+            #self.n_start.name: "n_start",
             self.initial_points: "initial_points",
             self.evaluation_parameter.name: "evaluation_parameter",
             self.YA1.name: "YA1",
@@ -1404,9 +1401,9 @@ class DiAIDPasefGUI(GUI):
             img_folder_path=IMG_PATH,
             github_url='https://github.com/MannLabs/pydiaid',
         )
-        self.project_description = """#### py_diAID uses an Automated Isolation Design to generate optimal dia-PASEF methods with respect to the peptide precursor density. It designs isolation windows with dynamic widths, which enable short acquisition cycles, while essentially covering the complete m/z-ion mobility-range."""
-        self.load_library_description = "#### Please load the library for the indicated analysis software’s to check the distribution of the precursors in the m/z-ion mobility plain."
-        self.specify_parameter_description = "####  We found a strong correlation between a high theoretical and empirical precursor coverage. This result suggests using a scan area with a wide m/z-range and a narrow ion mobility range. Specify the number of dia-PASEF scans, which depend on the chromatographic peak width, and the number of ion mobility windows per dia-PASEF scan. We recommend two ion mobility windows."
+        self.project_description = """#### py_diAID uses an Automated Isolation Design to generate optimal dia-PASEF methods with respect to the precursor density. It designs isolation windows with variable widths, which enable short acquisition cycles, while essentially covering the complete m/z-ion mobility-range."""
+        self.load_library_description = "#### Please load the library for the indicated analysis software’s to check the distribution of the precursors in the m/z-ion mobility plane."
+        self.specify_parameter_description = "####  We found a strong correlation between a high theoretical and empirical precursor coverage. This result suggests using a scan area with a wide m/z-range and a narrow ion mobility range. Specify the number of dia-PASEF scans, which depend on the chromatographic peak width, and the number of ion mobility windows per dia-PASEF scan. We recommend two ion mobility windows per dia-PASEF scan."
         self.optimization_description = "#### py_diAID uses a Bayesian optimization following a Gaussian process to find the optimal scan area."
         self.create_method_description = "#### Create a dia-PASEF method with an optimal or an individually specified scan area."
         self.evaluate_method_description = "#### Evaluate the optimal dia-PASEF method or confirm if an already existing dia-PASEF method is suitable for your experiment."
