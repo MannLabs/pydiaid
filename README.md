@@ -23,6 +23,7 @@ The [Mann Labs at the Max Planck Institute of Biochemistry](https://www.biochem.
 ## About
 
 Data-independent acquisition coupled with parallel accumulation – serial fragmentation (dia-PASEF) has gained increasing attention from proteomics researchers over the last years. dia-PASEF offers comprehensive proteome coverage, a high degree of reproducibility, and quantitative accuracy while using a much higher ion beam proportion than conventional DIA methods. Previous tools generated dia-PASEF methods with equidistant isolation widths and required a fitting of the window design to the precursor density cloud by hand. We present py_diAID, a Python-based package for Data-Independent Acquisition offering an Automated Isolation Design. py_diAID generates optimal dia-PASEF methods with variable isolation widths adjusted to the precursor density in m/z and automatically, optimally placed in the m/z – ion mobility (IM) plane. Variable isolation widths enable short acquisition cycles while covering the complete m/z-IM-range essentially. We found dia-PASEF methods, generated with py_diAID, beneficial for optimizing proteomics workflows based on cell lines (HeLa) or clinical samples such as CSF and Plasma and for studying post-translational modifications such as phosphorylation.
+
 We offer py_diAID as a Python module, command-line tool, and graphical user interface on all major operating systems under an Apache 2.0 license. py_diAID generates dia-PASEF methods with an optimal window design. It also allows for quality control of the precursors’ distribution of a dataset in the m/z-ion mobility plane and evaluating the suitability of already existing dia-PASEF methods for the individual experiment.
 
 py_diAID is an open-source Python package from the [Mann Labs at the Max Planck Institute of Biochemistry](https://www.biochem.mpg.de/mann).
@@ -141,15 +142,15 @@ The CLI can be run with the following command (after activating the `conda` envi
 pydiaid -h
 ```
 
-It is possible to get help about each function and their (required) parameters by using the `-h` flag. For instance, the command ```pydiaid create -h``` will produce the following output:
+It is possible to get help about each function and their (required) parameters by using the `-h` flag. For instance, the command ```pydiaid optimize -h``` will produce the following output:
 
 ```
 ******************
 * py_diAID 0.0.9 *
 ******************
-Usage: pydiaid create [OPTIONS]
+Usage: pydiaid optimize [OPTIONS]
 
-  Create a specific dia-PASEF method.
+  Optimize a dia-PASEF method.
 
 Options:
   -p TEXT     Parameter file (check out
@@ -159,13 +160,13 @@ Options:
 ```
 
 py_diAID provides several options:
-- charge    Evaluate a dia-PASEF method for multiple charged precursors.
-- create    Create a specific dia-PASEF method.
-- evaluate  Evaluate a dia-PASEF method.
-- gui       Start graphical user interface.
-- optimize  Optimize a dia-PASEF method.
+- charge: Evaluate a dia-PASEF method for multiple charged precursors.
+- create: Create a specific dia-PASEF method.
+- evaluate: Evaluate a dia-PASEF method.
+- gui: Start graphical user interface.
+- optimize: Optimize a dia-PASEF method.
 
-All options can be executed with ```pydiaid [option] -p [Text]```. All parameters are saved in a .json file and have to adjusted in this file. For instance, the command ```pydiaid optimize -p "d:\pydiaid\pydiaid\lib\default_parameters.json"``` will give following result:
+All options can be executed with ```pydiaid [option] -p [Text]```. All parameters are saved in a .json file and have to be adjusted in this file. For instance, the command ```pydiaid optimize -p "d:\pydiaid\pydiaid\lib\default_parameters.json"``` will execute one complete optimization process. py_diAID will create a folder at the location specified in the .json parameter file with all generated information and give following result in the terminal window:
 
 ```
 ******************
