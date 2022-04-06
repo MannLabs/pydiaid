@@ -1,9 +1,9 @@
 {
     "input": {
-        "save_at": "D:\\output_test2",
+        "save_at": "D:/output_test2",
         "PTM": "None",
-        "library_name": "D:\\Input_for_pydiaid\\library21min24fractions.tsv",
-        "analysis_software": "MS_Fragger",
+        "library_name": "D:/pydiaid/pydiaid/static/AlphaPept_results.csv",
+        "analysis_software": "AlphaPept",
         "diaPASEF_method_only_used_for_evaluate": "D:/pydiaid/pydiaid/static/DIAParameterspy3TC.txt"
     },
     "method_parameters": {
@@ -25,12 +25,6 @@
             0.9,
             1.3
         ],
-        "scan_area_A1_A2_B1_B2_only_used_for_specific_diaPASEF": [
-            0.5752575470522289,
-            0.7128990257352522,
-            1.4241557523881094,
-            1.6972373193612142
-        ]
     },
     "graphs": {
         "plot_mz": [
@@ -48,9 +42,7 @@
     },
     "optimizer": {
         "optimizer": "Gauss",
-        "n_random_starts": null,
         "n_calls": 5,
-        "n_start": 2,
         "initial_points": 2,
         "YA1": [
             0.5,
