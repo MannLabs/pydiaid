@@ -120,7 +120,7 @@ There are three ways to use py_diAID:
 * [**CLI**](#cli)
 * [**Python**](#python-and-jupyter-notebooks)
 
-NOTE: The first time you use a fresh installation of py_diAID, it is often relatively slow because some functions might still need compilation on your local operating system and architecture. Subsequent use should be a lot faster.
+NOTE: The first time you use a fresh installation of py_diAID, it is often relatively slow because some functions might still need compilation on your local operating system and architecture. Subsequent executions should be a lot faster.
 
 ### GUI
 
@@ -166,7 +166,7 @@ py_diAID provides several options:
 - gui: Start graphical user interface.
 - optimize: Optimize a dia-PASEF method.
 
-All options can be executed with ```pydiaid [option] -p [Text]```. The parameters are saved in a .json parameter file and have to be adjusted in this file. For instance, the command ```pydiaid optimize -p "d:\pydiaid\pydiaid\lib\default_parameters.json"``` will execute one complete optimization process. py_diAID will create a folder at the location specified in the .json parameter file with all generated information and give the following result in the terminal window:
+All options can be executed with ```pydiaid [option] -p [Text]```. The parameters are saved in a .json parameter file and have to be adjusted in this file. For instance, the command ```pydiaid optimize -p "d:\pydiaid\pydiaid\lib\default_parameters.json"``` will execute one complete optimization process. py_diAID will create a folder at the location specified in the .json parameter file with all generated information and print the following result in the terminal window:
 
 ```
 ******************
@@ -195,9 +195,9 @@ An ‘nbs’ folder in the GitHub repository contains several Jupyter Notebooks 
 ---
 ## Troubleshooting
 
-In case of issues, check out the following:
+In case of issues, check out the following links:
 
-* [Issues](https://github.com/MannLabs/pydiaid/issues): Try a few different search terms to find out if a similar problem has been encountered before
+* [Issues](https://github.com/MannLabs/pydiaid/issues): Try a few different search terms to find out if a similar problem has been encountered before.
 * [Discussions](https://github.com/MannLabs/pydiaid/discussions): Check if your problem or feature request has been discussed earlier.
 
 ---
