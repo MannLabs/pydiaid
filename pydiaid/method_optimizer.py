@@ -66,10 +66,10 @@ def optimization(
             optimizer_parameters["YB2"][1]-optimizer_parameters["YA1"][0]
             )
         ],
-        optimizer_parameters["n_random_starts"],
-        optimizer_parameters["n_calls"],  # n to test
-        optimizer_parameters["n_start"],  # random starts
-        optimizer_parameters["initial_points"],  # initial points
+        #n_random_starts = optimizer_parameters["n_random_starts"],
+        n_calls = optimizer_parameters["n_calls"],  # n to test
+        #optimizer_parameters["n_start"],  # random starts
+        n_initial_points = optimizer_parameters["initial_points"],  # initial points
         )
 
 
