@@ -95,7 +95,7 @@ def evaluate_diaPASEF_method(parameter_file_name,):
     library_plus_evaluate_method(method_conf)
 
 
-@run.command("charge", help="Evaluate a dia-PASEF method for multiple charged precursors.")
+@run.command("charge", help="Evaluate a dia-PASEF method for multiply charged precursors.")
 @click.option(
     "parameter_file_name",
     "-p",
