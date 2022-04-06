@@ -3,6 +3,7 @@ import pandas as pd
 import os
 import re
 
+
 def load_library(
     library_name: str,
     analysis_software: str,
@@ -31,11 +32,11 @@ def load_library(
             return __parse_alpha_pept(dataframe, ptm)
         if analysis_software == 'MaxQuant':
             return __parse_max_quant(dataframe, ptm)
-        if analysis_software == 'MS_Fragger':
+        if analysis_software == 'FragPipe':
             return __parse_ms_fragger(dataframe, ptm)
-        if analysis_software == 'Spectronaut_single-shot':
+        if analysis_software == 'Spectronaut single-run':
             return __parse_spectronaut_single_shot(dataframe, ptm)
-        if analysis_software == 'Spectronaut_library':
+        if analysis_software == 'Spectronaut library':
             return __parse_spectronaut_library(dataframe, ptm)
         raise Exception('Analysis software not supported.')
     except Exception as e:
