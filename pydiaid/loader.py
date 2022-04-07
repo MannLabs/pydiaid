@@ -41,7 +41,7 @@ def load_library(
         raise Exception('Analysis software not supported.')
     except Exception as e:
         print(e)
-        raise Exception("error while processing: Did you choose the correct analysis_software?")
+        raise Exception("error while processing: Did you choose the correct analysis_software and is the modification present in the dataset?")
 
 
 def __load_dataframe_from_file(
@@ -301,7 +301,12 @@ def library_loader(
         library[ptm] = library[modified_peptide].apply(
             lambda x: find_PTM(x, ptm)
         )
-        library_filtered = library[library[ptm] == True]
+        try:
+            library_filtered = library[library[ptm] == True]
+            raise Exception('Modification not in dataset.')
+        except Exception as e:
+            print(e)
+            raise Exception("Is this modification present in the dataset?")
         library_subset = library_filtered.drop_duplicates(
             [modified_peptide, charge]
         )
