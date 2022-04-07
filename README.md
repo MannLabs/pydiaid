@@ -26,9 +26,6 @@ Data-independent acquisition coupled with parallel accumulation – serial fragm
 
 We offer py_diAID as a Python module, command-line interface (CLI) tool, and Graphical User Interface (GUI) on all major operating systems under an Apache 2.0 license. py_diAID generates dia-PASEF methods with an optimal window design. It also allows for quality control of the precursors’ distribution of a dataset in the m/z-IM plane and evaluating the suitability of already existing dia-PASEF methods for the individual experiment.
 
-
-We offer py_diAID as a Python module, command-line tool, and graphical user interface on all major operating systems under an Apache 2.0 license. py_diAID generates dia-PASEF methods with an optimal window design. It also allows for quality control of the precursors’ distribution of a dataset in the m/z-ion mobility plane and evaluating the suitability of already existing dia-PASEF methods for the individual experiment.
-
 py_diAID is an open-source Python package from the [Mann Labs at the Max Planck Institute of Biochemistry](https://www.biochem.mpg.de/mann).
 
 ---
