@@ -8,8 +8,8 @@ import os
 
 
 def method_creation(
-    library_mz_values: list,  # todo or pd.Series?
-    method_parameters: dict,  # todo Is this correct?
+    library_mz_values: list,
+    method_parameters: dict,
     A1: float,
     A2: float,
     B1: float,
@@ -92,12 +92,12 @@ def method_creation(
 def calculate_diaPASEF_window_coordinates(
     num_steps: int,
     num_scans: int,
-    window_position: list,  # todo correct?
+    window_position: list,
     m_bottom: float,
     c_bottom: float,
     m_top: float,
     c_top: float,
-    x_splits: list,  # todo correct?
+    x_splits: list,
 ) -> pd.DataFrame:
     """This function calculates the diaPASEF window parameters. The x start and
         end coordinate of each window (= rectangle) is already defined in
@@ -225,7 +225,7 @@ def divide_mz_range_in_equally_filled_parts(
     x_series: list,
     mz_range: tuple,
     num_splits: int,
-) -> list:  # todo correct? how to describe it better?
+) -> list:
     """This function calculates the lower and upper m/z value of each ion
         mobility window equalizing the number of precursors per diaPASEF window
         across the m/z dimension.
@@ -266,9 +266,9 @@ def divide_mz_range_in_equally_filled_parts(
 
 
 def line_equation(
-    l1: tuple,  # todo (x,y) correct?
+    l1: tuple,
     l2: tuple,
-) -> float:  # todo m: float, c: float; how to write this with two output values?
+) -> float:
     """This function calculates the line equation of two coordinates.
     Parameters:
     l1 (tuple): x and y coordinate of the 1st point. Line encoded as l=(x,y).

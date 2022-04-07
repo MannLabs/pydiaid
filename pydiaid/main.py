@@ -12,10 +12,6 @@ import os
 # importing for scientific and numeric manipulations
 import numpy as np
 
-# todo: accelerate slow steps: loading of proteomics library, kernel density
-# estimation, Bayesian optimization
-# todo: change file locations to general solution
-
 
 def create_folder(
     paths: list,

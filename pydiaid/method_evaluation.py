@@ -117,7 +117,7 @@ def coverage(
 
 def boxes(
     df: pd.DataFrame,
-) -> int:  # todo: how to describe multiple values?
+) -> int:
     """This function calculates diaPASEF window specific information regarding
         the window size and creates two lists. One is for plotting the dia-PASEF
         window scheme on top of a kernel density estimation plot. The second is
