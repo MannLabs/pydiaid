@@ -20,7 +20,7 @@ cd release/one_click_windows_gui
 pip install "../../dist/pydiaid-0.0.12-py3-none-any.whl[stable]"
 
 # Creating the stand-alone pyinstaller folder
-pip install pyinstaller==4.2
+pip install pyinstaller==4.10
 pyinstaller ../pyinstaller/pydiaid.spec -y
 conda deactivate
 
