@@ -1,4 +1,4 @@
-# for data manipulation:
+# for data manipulation
 import pandas as pd
 
 # importing for scientific and numeric manipulations
@@ -27,7 +27,7 @@ warnings.filterwarnings('ignore')
 def kernel_density_calculation(
     library_subset: pd.DataFrame,
     nbins: int,
-) -> np.ndarray:  # todo: how to describe multiple values?
+) -> np.ndarray:
     """Calculate the kernel density estimation of a data frame representing a
         filtered proteomics library or single-shot measurement.
 
@@ -43,7 +43,7 @@ def kernel_density_calculation(
     x = library_subset['mz']
     y = library_subset['IM']
 
-    k = kde.gaussian_kde([x,y])
+    k = kde.gaussian_kde([x, y])
     xi, yi = np.mgrid[x.min():x.max():nbins*1j, y.min():y.max():nbins*1j]
     zi = k(np.vstack([xi.flatten(), yi.flatten()]))
 
@@ -63,16 +63,16 @@ def plot_density(
 
     Parameters:
     xi, yi, zi (numpy.ndarray): coordinates of the kernel density estimation,
-        where zi indicates the density
+        where zi indicates the density.
     plot_parameters (dict): dictionary, which contains all input parameters for
-        creating plots (e.g., displayed m/z-range, ion mobility-range)
+        creating plots (e.g., displayed m/z-range, ion mobility-range).
     file_name: file path and file name where the plot should be saved
     gui (bool): whether to use in the GUI or not. Defaults is False.
     """
     fig, ax = plt.subplots()
     plt.pcolormesh(
         xi, yi, zi.reshape(xi.shape),
-        vmax = 0.02,
+        vmax=0.02,
         cmap=plt.cm.viridis
     )
     ax.set_xlim(plot_parameters["plot_mz"][0], plot_parameters["plot_mz"][1])
@@ -101,7 +101,7 @@ def plot_precursor_distribution_as_histogram(
     library_subset (pd.DataFrame): pre-filtered data frame with unified column
         names.
     plot_parameters (dict): dictionary, which contains all input parameters for
-        creating plots (e.g., displayed m/z-range, ion mobility-range)
+        creating plots (e.g., displayed m/z-range, ion mobility-range).
     file_name: file path and file name where the plot should be saved
     gui (bool): whether to use in the GUI or not. Defaults is False.
     """
@@ -117,7 +117,7 @@ def plot_precursor_distribution_as_histogram(
         histtype='step',
         fill=True,
         alpha=0.5,
-        color = ['#267FA5', '#4EA7BB', '#7AC7C9'],
+        color=['#267FA5', '#4EA7BB', '#7AC7C9'],
         label=[
             'triply charged precursors',
             'doubly charged precursors',
@@ -128,7 +128,7 @@ def plot_precursor_distribution_as_histogram(
     plt.xlim([plot_parameters["plot_mz"][0], plot_parameters["plot_mz"][1]])
     plt.ylabel('No. of precursors')
     plt.legend(bbox_to_anchor=(0.8, 1.42))
-    plt.xlabel('$m/z$') # can be used as $some_text$ to make some_text italic
+    plt.xlabel('$m/z$')
     fig.savefig(file_name, bbox_inches='tight', pad_inches=0, dpi=300)
     if gui:
         plt.legend(
@@ -138,8 +138,6 @@ def plot_precursor_distribution_as_histogram(
         return fig
     else:
         plt.clf()
-
-
 
 
 def plot_density_and_method(
@@ -155,12 +153,12 @@ def plot_density_and_method(
 
     Parameters:
     df (pd.DataFrame): data frame that contains the scan type (PASEF), scan
-        number and the corresponding diaPASEF window coordinates for each
+        number and the corresponding di-aPASEF window coordinates for each
         window per scan.
     xi, yi, zi (numpy.ndarray): coordinates of the kernel density estimation,
         where zi indicates the density.
     plot_parameters (dict): dictionary, which contains all input parameters for
-        creating plots (e.g., displayed m/z-range, ion mobility-range)
+        creating plots (e.g., displayed m/z-range, ion mobility-range).
     file_name: file path and file name where the plot should be saved.
     """
 
@@ -194,7 +192,7 @@ def kernel_density_calculation_multiple_charge(
     library_subset: pd.DataFrame,
     nbins: int,
     charge_setting: int,
-) -> np.ndarray:  # todo: how to describe multiple values?
+) -> np.ndarray:
     """Calculate the kernel density estimation for specific multiple charged
         precursors.
 
@@ -210,7 +208,7 @@ def kernel_density_calculation_multiple_charge(
     x = library_subset['mz'][library_subset['Charge'] == charge_setting]
     y = library_subset['IM'][library_subset['Charge'] == charge_setting]
 
-    k = kde.gaussian_kde([x,y])
+    k = kde.gaussian_kde([x, y])
     xi, yi = np.mgrid[x.min():x.max():nbins*1j, y.min():y.max():nbins*1j]
     zi = k(np.vstack([xi.flatten(), yi.flatten()]))
 

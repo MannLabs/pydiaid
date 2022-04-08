@@ -1,4 +1,4 @@
-# for data manipulation:
+# for data manipulation
 import pandas as pd
 
 # importing for scientific and numeric manipulations
@@ -72,7 +72,7 @@ def coverage(
 
     Parameters:
     df (pd.DataFrame): data frame that contains the scan type (PASEF), scan
-        number, and the corresponding diaPASEF window coordinates for each
+        number, and the corresponding dia-PASEF window coordinates for each
         window per scan.
     library_subset (pd.DataFrame): a pre-filtered data frame with unified
         column names containing all required precursor information.
@@ -118,7 +118,7 @@ def coverage(
 def boxes(
     df: pd.DataFrame,
 ) -> int:
-    """This function calculates diaPASEF window specific information regarding
+    """This function calculates dia-PASEF window specific information regarding
         the window size and creates two lists. One is for plotting the dia-PASEF
         window scheme on top of a kernel density estimation plot. The second is
         to calculate the number of proteins and precursors covered by the
@@ -134,8 +134,8 @@ def boxes(
         windows on top of a kernel density estimation plot.
     border (list(tuples)): The list "borders" contains a list of tuples where
         each tuple represents the edge coordinates for each dia-PASEF window.
-    small_window (int): size of the smallest diaPASEF window [Da].
-    big_window (int): size of the biggest diaPASEF window [Da].
+    small_window (int): size of the smallest dia-PASEF window [Da].
+    big_window (int): size of the biggest dia-PASEF window [Da].
     mean_window (int): average dia-PASEF window size [Da].
     """
     rect = list()

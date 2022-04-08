@@ -1,4 +1,4 @@
-# for data manipulation:
+# for data manipulation
 import pandas as pd
 import os
 import re
@@ -153,24 +153,15 @@ def __parse_ms_fragger(
     Returns:
     pd.DataFrame: returns a pre-filtered data frame with unified column names.
     """
-    #dataframe["ModifiedPeptideSequence"] = dataframe.apply(
-    #    lambda x: combine_columns(x),
-    #    axis=1
-    #)
 
     library_subset = library_loader(
         dataframe,
         ptm,
-        #'Calibrated Observed M/Z',
-        #'Ion Mobility',
-        #'Charge',
-        #'Protein ID',
-        #"ModifiedPeptideSequence"
-         'PrecursorMz',
-         'PrecursorIonMobility',
-         'PrecursorCharge',
-         'ProteinId',
-         'ModifiedPeptideSequence'
+        'PrecursorMz',
+        'PrecursorIonMobility',
+        'PrecursorCharge',
+        'ProteinId',
+        'ModifiedPeptideSequence'
     )
     return library_subset
 
@@ -347,7 +338,8 @@ def get_file_names_from_directory(
     directory: str,
     extensions_list: list
 )-> list:
-    """Search for files with the specified extension in the repository and return a list of all file names with that extention.
+    """Search for files with the specified extension in the repository and
+    return a list of all file names with that extention.
 
     Parameters
     ----------
@@ -368,7 +360,8 @@ def get_file_names_from_directory(
 def create_opt_plot_df(
     filename: str
 )-> pd.DataFrame:
-    """Return the dataframe containing information about the optimized scan area coordinates and coverage based on the filename of the .png file.
+    """Return the dataframe containing information about the optimized scan
+    area coordinates and coverage based on the filename of the .png file.
 
     Parameters
     ----------
@@ -380,7 +373,8 @@ def create_opt_plot_df(
     pd.DataFrame
         The data frame contains several columns:
             - parameters: ['A1', 'A2', 'B1', 'B2', 'coverage'];
-            - values: showing the values for each parameter extracted from the filename.
+            - values: showing the values for each parameter extracted from the
+            filename.
 
     """
 

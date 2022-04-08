@@ -1,6 +1,5 @@
 #!python
 
-
 # external
 import click
 
@@ -10,7 +9,7 @@ from pydiaid import loader
 from pydiaid import main
 from pydiaid import method_optimizer
 
-# for data manipulation:
+# for data manipulation
 import pandas as pd
 
 # for saving input data as json:
@@ -116,10 +115,10 @@ def run_all(
     """This function carries out all sub-functions step by step: creating a
     folder for the output information, loading of the proteomics library,
     calculation of the kernel density estimation for the density plots,
-    Bayesian optimization of diaPASEF method parameters by trying multiple scan
+    Bayesian optimization of dia-PASEF method parameters by trying multiple scan
     area coordinates using a Gaussian process, writing all input and output
     information in json or csv files, creating final dia-PASEF method, plotting
-    diaPASEF windows on top of a kernel density estimation of precursors and
+    dia-PASEF windows on top of a kernel density estimation of precursors and
     calculating method evaluation information.
 
     Parameters:
@@ -142,7 +141,7 @@ def run_all(
 
     # save input parameters as json file for reusing
     out_file = open(save_at+"/input_parameters.json", "w")
-    json.dump(method_conf, out_file, indent = 4)
+    json.dump(method_conf, out_file, indent=4)
     out_file.close()
 
     xi, yi, zi, library = main.library_information(
@@ -194,7 +193,7 @@ def library_plus_evaluate_method(
     kernel density estimation for the density plots, writing all input and
     output information in json or csv files, plotting of the diaPASEF windows
     on top of a kernel density estimation of precursors, and calculating method
-    evaluation information
+    evaluation information.
 
     Parameters:
     method_conf (dict): this dictionary contains all input parameters for all
@@ -214,7 +213,7 @@ def library_plus_evaluate_method(
 
     # save input parameters as json file for reusing
     out_file = open(save_at+"/input_parameters.json", "w")
-    json.dump(method_conf, out_file, indent = 4)
+    json.dump(method_conf, out_file, indent=4)
     out_file.close()
 
     df_parameters_final = pd.read_csv(
@@ -270,7 +269,7 @@ def library_plus_create_methods(
 
     # save input parameters as json file for reusing
     out_file = open(save_at+"/input_parameters.json", "w")
-    json.dump(method_conf, out_file, indent = 4)
+    json.dump(method_conf, out_file, indent=4)
     out_file.close()
 
     library = loader.load_library(
@@ -299,7 +298,7 @@ def multiple_charged_prec(
     method_conf: dict
 ) -> None:
     """This function carries out all sub-functions required for method
-    evaluation of precursor with multiple charge state: creating a folder for
+    evaluation of precursor with multiple charge states: creating a folder for
     the output information, loading of the proteomics library, loading of the
     acquisition scheme, calculation of the kernel density estimation for the
     density plots depending on the charge state, writing all input information
@@ -322,7 +321,7 @@ def multiple_charged_prec(
 
     # save input parameters as json file for reusing
     out_file = open(save_at+"/input_parameters.json", "w")
-    json.dump(method_conf, out_file, indent = 4)
+    json.dump(method_conf, out_file, indent=4)
     out_file.close()
 
     df_parameters_final = pd.read_csv(

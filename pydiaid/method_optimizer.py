@@ -2,10 +2,10 @@ from pydiaid import method_creator
 from pydiaid import method_evaluation
 from pydiaid import graphs
 
-# for data manipulation:
+# for data manipulation
 import pandas as pd
 
-# importing for scientific and numeric manipulations:
+# importing for scientific and numeric manipulations
 import numpy as np
 import skopt
 
@@ -97,6 +97,7 @@ def optimization(
 
     # return opt_result
     return optimized_results
+
 
 def single_optimization_run(
     library: pd.DataFrame,

@@ -3,10 +3,10 @@ from pydiaid import method_creator
 from pydiaid import method_evaluation
 from pydiaid import graphs
 
-# for data manipulation:
+# for data manipulation
 import pandas as pd
 
-# for creating new folders:
+# for creating new folders
 import os
 
 # importing for scientific and numeric manipulations
@@ -101,7 +101,7 @@ def precursor_within_scan_area(
         names.
     method_conf (dict): this dictionary contains all input parameters for all
         sub-functions.
-    save_at (str): location, where all information shouldbe stored.
+    save_at (str): location, where all information should be stored.
     """
 
     # save parameters for method evaluation as .csv
@@ -127,7 +127,7 @@ def create_final_method(
     method_conf: dict,
 ) -> pd.DataFrame:
     """This function calculates the final dia-PASEF window scheme with the
-        optimized scan area coordinates and writes the .txt diaPASEF parameter
+        optimized scan area coordinates and writes the .txt dia-PASEF parameter
         file as input file for timsControl. By default, the scan area
         coordinates are up-shifted by 0.022 1/K0 since the quadrupole has a
         dead time at the beginning of the dia-PASEF window where no signal is
@@ -190,7 +190,7 @@ def final_method_information(
 
     Parameters:
     df_parameters_final (pd.DataFrame): data frame that contains the scan type
-        (PASEF), scan number, and the corresponding diaPASEF window coordinates
+        (PASEF), scan number, and the corresponding dia-PASEF window coordinates
         for each window per scan.
     xi, yi, zi (numpy.ndarray): coordinates of the kernel density estimation,
         where zi indicates the density.
@@ -200,7 +200,7 @@ def final_method_information(
     library (pd.DataFrame): a pre-filtered data frame with unified column names
         containing all required precursor information.
     method_parameters (dict): dictionary, which includes all input parameters
-        for creating a diaPASEF method.
+        for creating a dia-PASEF method.
     dim (list): y-coordinates of the scan area = A1, A2, B1, B2. x-coordinate
         for A1 and B1 is the lower m/z-range value, x-coordinate for A2 and B2
         is the upper m/z-range value.
@@ -261,11 +261,11 @@ def evaluate_for_multiple_charged_prec(
     Parameters:
     method_conf (dict): this dictionary contains all input parameters for all
             sub-functions.
-    save_at (str): location, where all information shouldbe stored.
+    save_at (str): location, where all information should be stored.
     library (pd.DataFrame): a pre-filtered data frame with unified column names
         containing all required precursor information.
     df_parameters_final (pd.DataFrame): data frame that contains the scan type
-        (PASEF), scan number, and the corresponding diaPASEF window coordinates
+        (PASEF), scan number, and the corresponding dia-PASEF window coordinates
         for each window per scan.
     """
 

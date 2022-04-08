@@ -1,4 +1,4 @@
-# for data manipulation:
+# for data manipulation
 import pandas as pd
 
 # importing for scientific and numeric manipulations
@@ -15,7 +15,7 @@ def method_creation(
     B1: float,
     B2: float,
 ) -> pd.DataFrame:
-    """This function calculates the diaPASEF window coordinates based on the
+    """This function calculates the dia-PASEF window coordinates based on the
         input parameters with dynamic isolation widths, adjusted to the
         precursor density in the m/z dimension. All dia-PASEF windows together
         add up to the dia-PASEF window scheme.
@@ -23,19 +23,19 @@ def method_creation(
     Parameters:
     library_mz_values (list): list of all mz precursor values.
     method_parameters (dict): dictionary, which contains all input parameters
-        for creating a diaPASEF method (e.g., m/z-range, ion mobility-range,
-        number of diaPASEF scans, number of ion mobility steps, the overlap of
+        for creating a dia-PASEF method (e.g., m/z-range, ion mobility-range,
+        number of dia-PASEF scans, number of ion mobility steps, the overlap of
         the diaPASEF windows, the shift of the final window scheme in the ion
         mobility axis to account for the blind spot of the changing quadrupole
-        at the top of each diaPASEF window)
+        at the top of each dia-PASEF window).
     A1 (float): bottom left y-coordinate of the rectangle, which defines the
-        scan area and the slope of the diaPASEF scan line.
+        scan area and the slope of the dia-PASEF scan line.
     A2 (float): bottom right y-coordinate of the rectangle, which defines the
-        scan area and the slope of the diaPASEF scan line.
+        scan area and the slope of the diaP-ASEF scan line.
     B1 (float): top left y-coordinate of the rectangle, which defines the scan
-        area and the slope of the diaPASEF scan line.
+        area and the slope of the dia-PASEF scan line.
     B2 (float): top right y-coordinate of the rectangle, which defines the scan
-        area and the slope of the diaPASEF scan line.
+        area and the slope of the dia-PASEF scan line.
 
     Returns:
     pd.DataFrame: data frame that contains the scan type (PASEF), scan number,
@@ -99,35 +99,35 @@ def calculate_diaPASEF_window_coordinates(
     c_top: float,
     x_splits: list,
 ) -> pd.DataFrame:
-    """This function calculates the diaPASEF window parameters. The x start and
+    """This function calculates the dia-PASEF window parameters. The x start and
         end coordinate of each window (= rectangle) is already defined in
         x_splits, and the y coordinates are calculated through the intersection
         point of the x coordinates with the respective line equation.
 
     Parameters:
-    num_steps (int): number of ion mobility windows per diaPASEF scan.
+    num_steps (int): number of ion mobility windows per dia-PASEF scan.
     num_scans (int): number of diaPASEF scans.
-    window_position (list(int)): position of diaPASEF windows for each diaPASEF
-        scan. E.g., 3 diaPASEF scans * 2 ion mobility windows per diaPASEF scan
-        = 6 diaPASEF windows: [[0,3],[1,4],[2,5]], the first list describes the
-        window positions of the first diaPASEF scan.
+    window_position (list(int)): position of dia-PASEF windows for each dia-PASEF
+        scan. E.g., 3 dia-PASEF scans * 2 ion mobility windows per dia-PASEF scan
+        = 6 dia-PASEF windows: [[0,3],[1,4],[2,5]], the first list describes the
+        window positions of the first dia-PASEF scan.
     m_bottom (float): the slope of the line equation formed by A1 and A2;
-        corresponds to the slope of the bottom diaPASEF window border of the
-        last ion mobility windows per diaPASEF scan.
+        corresponds to the slope of the bottom dia-PASEF window border of the
+        last ion mobility windows per dia-PASEF scan.
     c_bottom (float): y-axis intersection of the line equation formed by A1 and
         A2.
     m_top (float): the slope of the line equation formed by B1 and B2;
-        corresponds to the slope of the top diaPASEF window border of the first
-        ion mobility windows per diaPASEF scan.
+        corresponds to the slope of the top dia-PASEF window border of the first
+        ion mobility windows per dia-PASEF scan.
     c_top (float): y-axis intersection of the line equation formed by B1 and B2.
-    x_splits (list(float)): start and end m/z value of each diaPASEF window
-        sorted after diaPASEF window position.
+    x_splits (list(float)): start and end m/z value of each dia-PASEF window
+        sorted after dia-PASEF window position.
         E.g., [[408.2423383, 484.3129605], [484.3129605, 506.2626105],
         [506.2626105, 522.7934549], ...]
 
     Returns:
     pd.DataFrame: data frame containing the scan type (PASEF), scan number, and
-        the corresponding diaPASEF window coordinates for each window per scan.
+        the corresponding dia-PASEF window coordinates for each window per scan.
     """
     y_increments = dict()
     results = list()
@@ -174,22 +174,22 @@ def enhance_diaPASEF_windows_to_edges_of_IM_ranges(
     overlap: float,
 ) -> pd.DataFrame:
     """This function recalculates the upper border of the first ion mobility
-        windows per diaPASEF scan and the lower border of the last ion mobility
-        windows per diaPASEF scan to enhance the diapASEF windows to the
+        windows per dia-PASEF scan and the lower border of the last ion mobility
+        windows per dia-PASEF scan to enhance the dia-PASEF windows to the
         borders of the ion mobility range. This enhances the overall precursor
         coverage without loss in sensitivity or acquisition speed.
 
     Parameters:
     df_without_column_names (pd.DataFrame): data frame containing the scan type
-        (PASEF), scan number, and the corresponding diaPASEF window coordinates
+        (PASEF), scan number, and the corresponding dia-PASEF window coordinates
         for each window per scan.
     ion_mobility (tuple): lower and upper value of the ion mobility range.
-    overlap (float): this value indicates how much the diaPASEF windows should
+    overlap (float): this value indicates how much the dia-PASEF windows should
         overlap in the m/z dimension (unit: Da).
 
     Returns:
     pd.DataFrame: data frame that contains the scan type (PASEF), scan number,
-        and the corresponding diaPASEF window coordinates for each window per
+        and the corresponding dia-PASEF window coordinates for each window per
         scan extended to the ion mobility borders.
     """
     df = pd.DataFrame(
@@ -233,12 +233,12 @@ def divide_mz_range_in_equally_filled_parts(
     Parameters:
     x_series (list(float)): list of all m/z precursor values.
     mz_range (tuple): lower and upper value of the m/z range.
-    num_splits (int): number of diaPASEF windows. Calculated by multiplying the
-        number of diaPASEF scans with the number of ion mobility windows per
+    num_splits (int): number of dia-PASEF windows. Calculated by multiplying the
+        number of dia-PASEF scans with the number of ion mobility windows per
         diaPASEF scan.
 
     Returns:
-    list(float): start and end m/z value of each diaPASEF window sorted after
+    list(float): start and end m/z value of each dia-PASEF window sorted after
         diaPASEF window position. E.g., [[408.2423383, 484.3129605],
         [484.3129605, 506.2626105], [506.2626105, 522.7934549], ...]
     """
@@ -287,14 +287,14 @@ def create_parameter_dataframe(
     df_parameters_final: pd.DataFrame,
     file_name: str,
 ) -> None:
-    """This function writes the diaPASEF parameter file as .txt. This file
+    """This function writes the dia-PASEF parameter file as .txt. This file
         serves as input for the generation of new dia-PASEF methods with
         timsControl (timsTof Pro 2 control software).
     Parameters:
     df_parameters_final (pd.DataFrame): data frame that contains the scan type
-        (PASEF), scan number, and the corresponding diaPASEF window coordinates
+        (PASEF), scan number, and the corresponding dia-PASEF window coordinates
         for each window per scan extended to the ion mobility borders.
-    file_name (str): file path and file name where the diaPASEF parameter file
+    file_name (str): file path and file name where the dia-PASEF parameter file
         should be saved.
     """
     results_input = df_parameters_final.astype(str)
