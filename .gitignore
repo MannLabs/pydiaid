@@ -129,10 +129,9 @@ dmypy.json
 .pyre/
 
 # User defined:
-py_diaid/logs
+pydiaid/logs
 *.DS_Store
 *sandbox*
-py_diaid/input
-py_diaid/static
-py_diaid/lib
-output_py_diaid
+pydiaid/input
+pydiaid/static/AlphaPept_results.csv
+output_pydiaid

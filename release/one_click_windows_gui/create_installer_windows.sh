@@ -8,8 +8,8 @@ rm -rf dist
 rm -rf build
 
 # Creating a conda environment
-conda create -n py_installer python=3.8 -y
-conda activate py_diaid_installer
+conda create -n pydiaid_installer python=3.8 -y
+conda activate pydiaid_installer
 
 # Creating the wheel
 python setup.py sdist bdist_wheel
@@ -17,16 +17,16 @@ python setup.py sdist bdist_wheel
 # Setting up the local package
 cd release/one_click_windows_gui
 # Make sure you include the required extra packages and always use the stable or very-stable options!
-pip install "../../dist/py_diaid-0.0.3-py3-none-any.whl[stable]"
+pip install "../../dist/pydiaid-0.0.14-py3-none-any.whl[stable]"
 
 # Creating the stand-alone pyinstaller folder
-pip install pyinstaller==4.2
-pyinstaller ../pyinstaller/py_diaid.spec -y
+pip install pyinstaller==4.10
+pyinstaller ../pyinstaller/pydiaid.spec -y
 conda deactivate
 
 # If needed, include additional source such as e.g.:
-# cp ../../py_diaid/data/*.fasta dist/py_diaid/data
+# cp ../../pydiaid/data/*.fasta dist/pydiaid/data
 
 # Wrapping the pyinstaller folder in a .exe package
-"C:\Program Files (x86)\Inno Setup 6\ISCC.exe" py_diaid_innoinstaller.iss
+"C:\Program Files (x86)\Inno Setup 6\ISCC.exe" pydiaid_innoinstaller.iss
 # WARNING: this assumes a static location for innosetup

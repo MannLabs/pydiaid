@@ -8,7 +8,7 @@ assignees: ''
 ---
 
 **Describe the bug**
-Make sure your bug is not addressed in the [troubleshooting section](https://github.com/MannLabs/py_diaid#troubleshooting) or in [previous issues](https://github.com/MannLabs/py_diaid/issues?q=is%3Aissue). If not, provide a clear and concise description of what the bug is.
+Make sure your bug is not addressed in the [troubleshooting section](https://github.com/MannLabs/pydiaid#troubleshooting) or in [previous issues](https://github.com/MannLabs/pydiaid/issues?q=is%3Aissue). If not, provide a clear and concise description of what the bug is.
 
 **To Reproduce**
 Steps to reproduce the behavior:
@@ -37,7 +37,7 @@ If applicable, add screenshots to help explain your problem.
      - processor [e.g. i386]
      - cpu count [e.g. 8]
    - Python information:
-     - py_diaid version [e.g. 0.1.2]
+     - pydiaid version [e.g. 0.1.2]
      - [other packages]
 
 **Additional context**

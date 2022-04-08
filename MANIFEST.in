@@ -1,4 +1,4 @@
-recursive-include py_diaid *
+recursive-include pydiaid *
 include LICENSE.txt
 include README.md
-recursive-exclude py_diaid/logs *
+recursive-exclude pydiaid/logs *
