@@ -1087,7 +1087,7 @@ class CreateMethodCard(BaseWidget):
     def update_parameters(self, event):
         global method_conf
         convertion_dict = {
-            self.opt_widget.scan_area_A1_A2_B1_B2_only_used_for_specific_diaPASEF.name: "scan_area_A1_A2_B1_B2_only_used_for_specific_diaPASEF",
+            self.opt_widget.scan_area_A1_A2_B1_B2_only_used_for_specific_diaPASEF.name: "scan_area_A1_A2_B1_B2_only_used_for_create",
         }
         method_conf['method_parameters'][convertion_dict[event.obj.name]] = event.new
 
@@ -1250,7 +1250,7 @@ class EvaluateMethodCard(object):
             method_conf["input"]["save_at"],
             self.data.library,
             method_conf["method_parameters"],
-            method_conf["method_parameters"]["scan_area_A1_A2_B1_B2_only_used_for_specific_diaPASEF"]
+            method_conf["method_parameters"]["scan_area_A1_A2_B1_B2_only_used_for_create"]
         )
 
         # save parameters for method evaluation as .csv
@@ -1268,14 +1268,14 @@ class EvaluateMethodCard(object):
             **dict_precursors_coverage
         }
 
-        if method_conf["method_parameters"]["scan_area_A1_A2_B1_B2_only_used_for_specific_diaPASEF"][0] != int:
+        if method_conf["method_parameters"]["scan_area_A1_A2_B1_B2_only_used_for_create"][0] != int:
             next
         else:
             dict_evaluation_of_final_method["final A1, A2, B1, B2 values"] = str([
-                method_conf["method_parameters"]["scan_area_A1_A2_B1_B2_only_used_for_specific_diaPASEF"][0] + method_parameters["shift_of_final_method"],
-                method_conf["method_parameters"]["scan_area_A1_A2_B1_B2_only_used_for_specific_diaPASEF"][1] + method_parameters["shift_of_final_method"],
-                method_conf["method_parameters"]["scan_area_A1_A2_B1_B2_only_used_for_specific_diaPASEF"][2] + method_parameters["shift_of_final_method"],
-                method_conf["method_parameters"]["scan_area_A1_A2_B1_B2_only_used_for_specific_diaPASEF"][3] + method_parameters["shift_of_final_method"]]
+                method_conf["method_parameters"]["scan_area_A1_A2_B1_B2_only_used_for_create"][0] + method_parameters["shift_of_final_method"],
+                method_conf["method_parameters"]["scan_area_A1_A2_B1_B2_only_used_for_create"][1] + method_parameters["shift_of_final_method"],
+                method_conf["method_parameters"]["scan_area_A1_A2_B1_B2_only_used_for_create"][2] + method_parameters["shift_of_final_method"],
+                method_conf["method_parameters"]["scan_area_A1_A2_B1_B2_only_used_for_create"][3] + method_parameters["shift_of_final_method"]]
             )
         final_df = pd.DataFrame({
             "evaluation parameter": list(dict_evaluation_of_final_method.keys()),
