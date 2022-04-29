@@ -288,16 +288,12 @@ def library_loader(
     Returns:
     pd.DataFrame: returns a pre-filtered data frame with unified column names.
     """
+
     if ptm != 'None':
         library[ptm] = library[modified_peptide].apply(
             lambda x: find_PTM(x, ptm)
         )
-        try:
-            library_filtered = library[library[ptm] == True]
-            raise Exception('Modification not in dataset.')
-        except Exception as e:
-            print(e)
-            raise Exception("Is this modification present in the dataset?")
+        library_filtered = library[library[ptm] == True]
         library_subset = library_filtered.drop_duplicates(
             [modified_peptide, charge]
         )
