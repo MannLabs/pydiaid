@@ -205,7 +205,7 @@ In case of issues, check out the following links:
 ---
 ## Citations
 
-A manuscript is currently in preparation.
+Check out the [paper](https://doi.org/10.1101/2022.05.31.494163).
 
 ---
 ## How to contribute
