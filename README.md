@@ -205,7 +205,7 @@ In case of issues, check out the following links:
 ---
 ## Citations
 
-Check out the [paper](https://doi.org/10.1101/2022.05.31.494163).
+Check out the [paper](https://doi.org/10.1016/j.mcpro.2022.100279).
 
 ---
 ## How to contribute
