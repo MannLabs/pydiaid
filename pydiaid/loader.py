@@ -38,6 +38,10 @@ def load_library(
             return __parse_spectronaut_single_shot(dataframe, ptm)
         if analysis_software == 'Spectronaut library':
             return __parse_spectronaut_library(dataframe, ptm)
+        if analysis_software == 'DIANN library':
+            return __parse_diann_lib(dataframe, ptm)
+        if analysis_software == 'AlphaPeptDeep library':
+            return __parse_alphadeep_lib(dataframe, ptm)
         raise Exception('Analysis software not supported.')
     except Exception as e:
         print(e)
@@ -62,6 +66,66 @@ def __load_dataframe_from_file(
         return pd.read_csv(library_name, sep=',')
     else:
         return pd.read_csv(library_name, sep='\t')  # .xls, .tsv, .txt
+
+
+def __parse_alphadeep_lib(
+    dataframe: pd.DataFrame,
+    ptm: str,
+) -> pd.DataFrame:
+    """Filters a data frame depending on the software specific requirements to
+        only include valid precursors. Additionally, it parses the data frame
+        to library_loader to filter for specific modified peptides and to unify
+        the column names of the required columns.
+
+    Parameters:
+    dataframe (pd.DataFrame): imported output file from the analysis software
+        "AlphaPept". File format: .csv, required columns: "q_value", "decoy",
+        'mz', 'mobility', 'charge', 'protein', 'precursor'.
+    ptm (str): an identifier used for filtering a specific data frame column.
+
+    Returns:
+    pd.DataFrame: returns a pre-filtered data frame with unified column names.
+    """
+    library_subset = library_loader(
+        dataframe,
+        ptm,
+        'PrecursorMz',
+        'IonMobility',
+        'PrecursorCharge',
+        'ProteinID',
+        'ModifiedPeptide'
+    )
+    return library_subset
+
+
+def __parse_diann_lib(
+    dataframe: pd.DataFrame,
+    ptm: str,
+) -> pd.DataFrame:
+    """Filters a data frame depending on the software specific requirements to
+        only include valid precursors. Additionally, it parses the data frame
+        to library_loader to filter for specific modified peptides and to unify
+        the column names of the required columns.
+
+    Parameters:
+    dataframe (pd.DataFrame): imported output file from the analysis software
+        "AlphaPept". File format: .csv, required columns: "q_value", "decoy",
+        'mz', 'mobility', 'charge', 'protein', 'precursor'.
+    ptm (str): an identifier used for filtering a specific data frame column.
+
+    Returns:
+    pd.DataFrame: returns a pre-filtered data frame with unified column names.
+    """
+    library_subset = library_loader(
+        dataframe,
+        ptm,
+        'PrecursorMz',
+        'IonMobility',
+        'PrecursorCharge',
+        'ProteinName',
+        'ModifiedPeptide'
+    )
+    return library_subset
 
 
 def __parse_alpha_pept(
