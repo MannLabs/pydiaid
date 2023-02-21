@@ -72,7 +72,6 @@ def optimization(
         n_initial_points = optimizer_parameters["initial_points"],  # initial points
         )
 
-
     optimized_results = [opt_result.x[0],
         opt_result.x[0]+opt_result.x[1],
         opt_result.x[0]+opt_result.x[2],
