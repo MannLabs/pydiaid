@@ -341,7 +341,7 @@ class LoadLibraryCard(BaseWidget):
                         self.plot_mz,
                         self.plot_im,
                         sizing_mode='stretch_width',
-                    ),
+                 ),
                     pn.Row(
                         self.numbins,
                         self.window_transparency,
@@ -399,7 +399,6 @@ class LoadLibraryCard(BaseWidget):
             )
 
         return self.layout
-
 
     def update_parameters(self, event):
         global method_conf
@@ -588,7 +587,6 @@ class SpecifyParametersCard(BaseWidget):
             align='center',
             margin=(0, 0, 0, 0)
         )
-
 
     def create(self):
         self.layout = pn.Card(
@@ -1146,6 +1144,7 @@ class CreateMethodCard(BaseWidget):
             height=240,
         )
         self.trigger_dependancy()
+
 
 class EvaluateMethodCard(object):
     # TODO: docstring
