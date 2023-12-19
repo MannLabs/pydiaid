@@ -871,7 +871,7 @@ class GenerateMethodCard(BaseWidget):
                             self.scan_mode,
                             margin=(10, 30, 10, 10),
                         ),
-                        title='Additional Mehtod Settings',
+                        title='Additional Method Settings',
                         collapsed=True,
                         collapsible=True,
                         header_background='#eaeaea',
