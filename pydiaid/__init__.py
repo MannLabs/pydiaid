@@ -2,7 +2,7 @@
 
 
 __project__ = "pydiaid"
-__version__ = "0.0.1"
+__version__ = "0.0.19"
 __license__ = "Apache"
 __description__ = "An open-source Python package of the AlphaPept ecosystem"
 __author__ = "Mann Labs"
@@ -12,6 +12,13 @@ __keywords__ = [
     "bioinformatics",
     "software",
     "AlphaPept ecosystem",
+    "ms",
+    "mass spectrometry",
+    "bruker",
+    "timsTOF",
+    "proteomics",
+    "bioinformatics",
+    "diaPASEF",
 ]
 __python_version__ = ">=3.8,<3.10"
 __classifiers__ = [
