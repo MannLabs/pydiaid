@@ -480,7 +480,7 @@ class pydiaidGui(GUI):
             name="py_diAID",
             github_url='https://github.com/MannLabs/pydiaid',
         )
-        self.project_description = """#### py_diAID is a Python tool that optimally places dia-PASEF and Synchro-PASEF window schemes into the m/z and ion mobility space to cover the precursor cloud efficiently. It is based on pre-acquired precursor information. diAID: Data-Independent Acquisition + Automated Isolation Design. Please cite: \n Skowronek, … , Mann, MCP, 2022 for dia-PASEF and \n Skowronek, … , Mann, MCP, 2023 for synchro-PASEF."""
+        self.project_description = """#### py_diAID is a Python tool that optimally places dia-PASEF and synchro-PASEF window schemes into the m/z and ion mobility space to cover the precursor cloud efficiently. It is based on pre-acquired precursor information. diAID: Data-Independent Acquisition + Automated Isolation Design. Please cite: \n Skowronek, … , Mann, MCP, 2022 for dia-PASEF and Skowronek, … , Willems, Raether, Mann, MCP, 2023 for synchro-PASEF."""
         self.manual_path = os.path.join(
             DOCS_PATH,
             "manual.pdf"

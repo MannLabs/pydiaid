@@ -2,7 +2,7 @@
 ![GUI and PyPi releases](https://github.com/MannLabs/pydiaid/workflows/Publish%20on%20PyPi%20and%20release%20on%20GitHub/badge.svg)
 
 # py_diAID
-The [Mann Labs at the Max Planck Institute of Biochemistry](https://www.biochem.mpg.de/mann) developed py_diAID generating dia-PASEF methods with an optimal window design. py_diAID stands for an open-source Python package for Data-Independent Acquisition with an Automated Isolation Design. To enable all hyperlinks in this document, please view it on [GitHub](https://github.com/MannLabs/pydiaid).
+The [Mann Labs at the Max Planck Institute of Biochemistry](https://www.biochem.mpg.de/mann) developed py_diAID, a tool that facilitates the generation of dia-PASEF and synchro-PASEF methods with an optimal window design. py_diAID, an abbreviation for Data-Independent Acquisition with an Automated Isolation Design, is available as an open-source Python and Graphical User Interface (GUI) package. To access all the hyperlinks in this document, please view it on [GitHub](https://github.com/MannLabs/pydiaid).
 
 * [**About**](#about)
 * [**License**](#license)
@@ -22,11 +22,11 @@ The [Mann Labs at the Max Planck Institute of Biochemistry](https://www.biochem.
 ---
 ## About
 
-Data-independent acquisition coupled with parallel accumulation – serial fragmentation (dia-PASEF) has been gaining increasing traction, amongst proteomics researchers over the last years. dia-PASEF offers comprehensive proteome coverage, a high degree of reproducibility, and quantitative accuracy while using a much higher ion beam proportion than conventional DIA methods. Previous tools generated dia-PASEF methods with equidistant isolation widths and necessitated manual adjustment of the window design to the precursor density cloud. We present py_diAID, a Python-based package for Data-Independent Acquisition offering an Automated Isolation Design. py_diAID generates optimal dia-PASEF methods with variable isolation widths adjusted to the precursor density in m/z and automatically, optimally placed in the m/z – ion mobility (IM) plane. Variable isolation widths enable short acquisition cycles while covering essentially the complete m/z-IM-range. We found that the dia-PASEF methods, generated with py_diAID, are beneficial for optimizing proteomics workflows based on cell lines (HeLa) or clinical samples such as CSF and Plasma, as well as for studying post-translational modifications such as phosphorylation.
+Over the last few years, Data-Independent Acquisition (DIA) coupled with Parallel Accumulation – Serial Fragmentation (PASEF) has been gaining interest among proteomics researchers. The scan mode dia-PASEF offers comprehensive proteome coverage, a high degree of reproducibility, and quantitative accuracy while utilizing a much larger ion beam proportion than conventional DIA methods. Its successor, synchro-PASEF, enables the creation of methods with even shorter cycle times, improving quantitative accuracy while also being highly specific due to the linking of fragment signals with precursor masses. Existing tools generate dia-PASEF and synchro-PASEF methods with equidistant isolation widths and necessitate manual adjustment of the window design to the precursor density cloud.
 
-We offer py_diAID as a Python module, command-line interface (CLI) tool, and Graphical User Interface (GUI) on all major operating systems under an Apache 2.0 license. py_diAID generates dia-PASEF methods with an optimal window design. It also allows for quality control of the precursors’ distribution of a dataset in the m/z-IM plane and evaluating the suitability of already existing dia-PASEF methods for the individual experiment.
+We present py_diAID, a Python-based package for Data-Independent Acquisition providing Automated Isolation Design. py_diAID optimally generates dia-PASEF and synchro-PASEF methods and places them optimally within the m/z – ion mobility (IM) plane. Additionally, it can generate variable isolation widths aligned to the precursor density in m/z, facilitating short acquisition cycles while covering virtually the entire m/z-IM-range. Our findings indicate that methods created with py_diAID are advantageous for studying deep proteomes from cell lines, clinical samples with regular and very low sample input, as well as for exploring post-translational modifications such as phosphorylation.
 
-py_diAID is an open-source Python package from the [Mann Labs at the Max Planck Institute of Biochemistry](https://www.biochem.mpg.de/mann).
+py_diAID is an open-source Python package and also offers a Graphical User Interface (GUI). It was developed by the [Mann Labs at the Max Planck Institute of Biochemistry](https://www.biochem.mpg.de/mann). py_diAID is designed to generate dia-PASEF and synchro-PASEF methods with an optimal window design. Furthermore, it aids in quality control by assessing the precursor distribution in the m/z-IM plane and evaluating existing dia-PASEF and synchro-PASEF methods.
 
 ---
 ## License
@@ -36,7 +36,7 @@ py_diAID was developed by the [Mann Labs at the Max Planck Institute of Biochemi
 ---
 ## Installation
 
-py_diAID can be installed and used on all major operating systems (Windows, macOS, and Linux).
+py_diAID can be installed and used on the Windows operating system.
 There are three different types of installation possible:
 
 * [**One-click GUI installer:**](#one-click-gui) Choose this installation if you only want the GUI and/or keep things simple.
@@ -45,15 +45,13 @@ There are three different types of installation possible:
 
 ### One-click GUI
 
-The GUI of py_diAID is a stand-alone tool that requires no knowledge of Python or CLI tools. Click on one of the links below to download the latest release for:
+The GUI of py_diAID is a stand-alone tool that requires no knowledge of Python or CLI tools. Click on the link below to download the latest release for:
 
 * [**Windows**](https://github.com/MannLabs/pydiaid/releases/latest/download/pydiaid_gui_installer_windows.exe)
-* [**macOS**](https://github.com/MannLabs/pydiaid/releases/latest/download/pydiaid_gui_installer_macos.pkg)
-* [**Linux**](https://github.com/MannLabs/pydiaid/releases/latest/download/pydiaid_gui_installer_linux.deb)
 
 Older releases remain available on the [release page](https://github.com/MannLabs/pydiaid/releases), but no backward compatibility is guaranteed.
 
-**IMPORTANT: Please refer to the [GUI manual](https://github.com/MannLabs/pydiaid/blob/development/pydiaid/docs/manual.pdf) for detailed instructions on installing, troubleshooting, and using the stand-alone py_diAID GUI.**
+**IMPORTANT: Please refer to the [GUI manual](https://github.com/MannLabs/pydiaid/blob/development/pydiaid/docs/manual.pdf) for detailed instructions on installing and using the stand-alone py_diAID GUI.**
 
 
 ### Pip
@@ -115,10 +113,9 @@ By default this installs loose dependancies (no explicit versioning), although i
 ---
 ## Usage
 
-There are three ways to use py_diAID:
+There are two ways to use py_diAID:
 
 * [**GUI**](#gui)
-* [**CLI**](#cli)
 * [**Python**](#python-and-jupyter-notebooks)
 
 NOTE: The first time you use a fresh installation of py_diAID, it is often relatively slow because some functions might still need compilation on your local operating system and architecture. Subsequent executions should be a lot faster.
@@ -135,77 +132,32 @@ Note that this needs to be prepended with a `!` when you want to run this from w
 
 **IMPORTANT: Please refer to the [GUI manual](https://github.com/MannLabs/pydiaid/blob/development/pydiaid/docs/manual.pdf) for detailed instructions on installing, troubleshooting, and using the stand-alone py_diAID GUI.**
 
-### CLI
-
-The CLI can be run with the following command (after activating the `conda` environment with `conda activate pydiaid` or if an alias was set to the pydiaid executable):
-
-```bash
-pydiaid -h
-```
-
-It is possible to get help with each function and its (required) parameters by using the `-h` flag. For instance, the command ```pydiaid optimize -h``` will produce the following output:
-
-```
-******************
-* py_diAID 0.0.9 *
-******************
-Usage: pydiaid optimize [OPTIONS]
-
-  Optimize a dia-PASEF method.
-
-Options:
-  -p TEXT     Parameter file (check out
-              d:\pydiaid\pydiaid\lib\default_parameters.json for an example)
-              [required]
-  -h, --help  Show this message and exit.
-```
-
-py_diAID provides several options:
-- charge: Evaluate a dia-PASEF method for multiply charged precursors.
-- create: Create a specific dia-PASEF method.
-- evaluate: Evaluate a dia-PASEF method.
-- gui: Start graphical user interface.
-- optimize: Optimize a dia-PASEF method.
-
-All options can be executed with ```pydiaid [option] -p [Text]```. The parameters are saved in a .json parameter file and have to be adjusted in this file. For instance, the command ```pydiaid optimize -p "d:\pydiaid\pydiaid\lib\default_parameters.json"``` will execute one complete optimization process. py_diAID will create a folder at the location specified in the .json parameter file with all generated information and print the following result in the terminal window:
-
-```
-******************
-* py_diAID 0.0.9 *
-******************
-Using parameter file d:\pydiaid\pydiaid\lib\default_parameters.json
-{'precursors within m/z-range [%]': 97.59}
-RUN WITH: [0.7435820751492209, 0.9789579174732773, 1.73455196349983, 1.5945652845606708] | RESULT: 10823.0
-RUN WITH: [0.7468616079634967, 0.8864876711590428, 1.6545030790686948, 1.6033036772717069] | RESULT: 11168.0
-RUN WITH: [0.7346248237666703, 0.8734794138726382, 1.5853169071713897, 1.6400014924345845] | RESULT: 11138.0
-RUN WITH: [0.8118354704659128, 0.9634373141944189, 1.7636724593721786, 1.5662199385632] | RESULT: 10794.0
-RUN WITH: [0.8150009805616482, 1.0092137143383832, 1.274205264719582, 1.5310500464391847] | RESULT: 11918.0
-########
-BEST RESULT
-INPUT: [0.8150009805616482, 1.0092137143383832, 1.274205264719582, 1.5310500464391847]
-OUTPUT: 11918.0
-########
-```
-
 ### Python and Jupyter notebooks
 
 py_diAID can be imported as a Python package into any Python script or notebook with the command `import pydiaid`.
 
-An ‘nbs’ folder in the GitHub repository contains several Jupyter Notebooks as tutorials on using py_diAID as a Python package.  
+An ‘nbs’ folder in the GitHub repository contains Jupyter Notebooks as tutorials on using py_diAID as a Python package.  
 
 ---
 ## Troubleshooting
 
 In case of issues, check out the following links:
 
+* [FAQ](https://github.com/MannLabs/pydiaid#faq): This section provides answers to issues of general interest.
 * [Issues](https://github.com/MannLabs/pydiaid/issues): Try a few different search terms to find out if a similar problem has been encountered before.
 * [Discussions](https://github.com/MannLabs/pydiaid/discussions): Check if your problem or feature request has been discussed earlier.
 
+---
+## FAQ
+- Where to find test libraries? The py_diAID package includes test libraries for quick workflow testing. These can be found at: py_diAID installation directory\pydiaid\diapasef\static\AlphaPept_results.csv for dia-PASEF and py_diAID installation directory\pydiaid\synchropasef\static\evidence_MaxQuant_270223.txt for synchro-PASEF.
+- What is the best input for py_diAID method generation? In general, the best input for py_diAID method generation is dda-PASEF acquired with a wide ion mobility range, for instance, from 0.6-1.6. It provides a complete and unbiased view of the precursor cloud in m/z and the ion mobility plane. In contrast, the data collected with dia-PASEF will present a precursor cloud that is influenced by the position of their isolation windows. The dda-PASEF runs may be an analysis of a single-run representative of the study, or a fractionated peptide library. Both these approaches have yielded comparable isolation window schemes. Regardless of the strategy used, the most critical aspect is a precise ion mobility calibration.
+- Using DIA-NN results as input for py_diAID: Regular DIA-NN output information, which does not contain m/z information for precursors, is not suitable as an input for py_diAID. However, we have now included an option to load DIA-NN libraries. These libraries, generated during the analysis of single-runs, can serve as possible input for py_diAID.
+- How to specify multiple PTMs? The initial versions of py_diAID could only process one PTM or string input at a time. We have now updated it to allow for filtering of the input library for multiple PTMs. To do this, all PTMs need to be specified in a list of strings, for instance ["STY", "GlyGly"].
 
 ---
 ## Citations
 
-Check out the [paper](https://doi.org/10.1016/j.mcpro.2022.100279).
+Check out the [dia-PASEF publication](https://doi.org/10.1016/j.mcpro.2022.100279) and [synchro-PASEF publication](https://doi.org/10.1016/j.mcpro.2022.100489).
 
 ---
 ## How to contribute

@@ -124,7 +124,7 @@ class LoadLibraryCard(BaseWidget):
             margin=(15, 15, 0, 15)
         )
         self.ptm = pn.widgets.LiteralInput(
-            name='Specify the PTM:',
+            name='Specify the PTM: for example, [“STY”]',
             value=method_conf["input"]["PTM"],
             placeholder="['Phospho']",
             width=680,
@@ -339,7 +339,7 @@ class LoadLibraryCard(BaseWidget):
             method_conf["input"]["analysis_software"],
             method_conf["input"]["PTM"]
         )
-        self.upload_progress.active = False
+
         folder_paths = [
             self.path_save_folder.value,
             os.path.join(
@@ -768,14 +768,12 @@ class OptimizationCard(BaseWidget):
             align='center',
             margin=(0, 0, 0, 0)
         )
-        self.optimize_spinner = pn.indicators.LoadingSpinner(
-            value=False,
-            bgcolor='light',
-            color='secondary',
+        self.optimize_progress = pn.indicators.Progress(
+            active=False,
+            bar_color='light',
+            width=250,
             align='center',
-            margin=(0, 40, 0, 10),
-            width=35,
-            height=35
+            margin=(0, 0, 30, 0)
         )
         self.scan_area_A1_A2_B1_B2_only_used_for_specific_diaPASEF = pn.widgets.LiteralInput(
             name='Scan area A1/A2/B1/B2',
@@ -820,16 +818,16 @@ class OptimizationCard(BaseWidget):
                             self.YB2,
                             sizing_mode='stretch_width'
                         ),
+                        margin=(20, 30, 30, 10),
                         sizing_mode='fixed',
-                        margin=(10, 30, 10, 10),
                         height=270
                     ),
                 ),
                 pn.Spacer(sizing_mode='stretch_width'),
-                pn.Row(
+                pn.Column(
                     self.optimize_button,
-                    self.optimize_spinner,
-                    align='start',
+                    self.optimize_progress,
+                    align='center',
                     margin=(0, 40, 0, 0),
                 ),
             ),
@@ -895,7 +893,7 @@ class OptimizationCard(BaseWidget):
             method_conf['optimizer'][convertion_dict[event.obj.name]] = event.new
 
     def run_optimization(self, *args):
-        self.optimize_spinner.value = True
+        self.optimize_progress.active = True
 
         self.folder_path = [
             os.path.join(
@@ -964,7 +962,7 @@ class OptimizationCard(BaseWidget):
         )
 
         self.trigger_dependancy()
-        self.optimize_spinner.value = False
+        self.optimize_progress.active = False
 
     def update_kde_plot_df(self, event):
         self.kde_plot_table.value = loader.create_opt_plot_df(
@@ -1277,10 +1275,10 @@ class EvaluateMethodCard(object):
             next
         else:
             dict_evaluation_of_final_method["final A1, A2, B1, B2 values"] = str([
-                method_conf["method_parameters"]["scan_area_A1_A2_B1_B2_only_used_for_create"][0] + method_parameters["shift_of_final_method"],
-                method_conf["method_parameters"]["scan_area_A1_A2_B1_B2_only_used_for_create"][1] + method_parameters["shift_of_final_method"],
-                method_conf["method_parameters"]["scan_area_A1_A2_B1_B2_only_used_for_create"][2] + method_parameters["shift_of_final_method"],
-                method_conf["method_parameters"]["scan_area_A1_A2_B1_B2_only_used_for_create"][3] + method_parameters["shift_of_final_method"]]
+                method_conf["method_parameters"]["scan_area_A1_A2_B1_B2_only_used_for_create"][0] + method_conf['method_parameters']["shift_of_final_method"],
+                method_conf["method_parameters"]["scan_area_A1_A2_B1_B2_only_used_for_create"][1] + method_conf['method_parameters']["shift_of_final_method"],
+                method_conf["method_parameters"]["scan_area_A1_A2_B1_B2_only_used_for_create"][2] + method_conf['method_parameters']["shift_of_final_method"],
+                method_conf["method_parameters"]["scan_area_A1_A2_B1_B2_only_used_for_create"][3] + method_conf['method_parameters']["shift_of_final_method"]]
             )
         final_df = pd.DataFrame({
             "evaluation parameter": list(dict_evaluation_of_final_method.keys()),

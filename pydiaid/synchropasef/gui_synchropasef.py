@@ -129,7 +129,7 @@ class LoadLibraryCard(BaseWidget):
             margin=(15, 15, 0, 15)
         )
         self.ptm = pn.widgets.LiteralInput(
-            name='Specify the PTM:',
+            name='Specify the PTM: for example, [“STY”]',
             value=method_conf["input"]["PTM"], # TODO comment out
             placeholder="['Phospho']",
             width=680,
@@ -139,7 +139,7 @@ class LoadLibraryCard(BaseWidget):
         self.analysis_software = pn.widgets.Select(
             name='Analysis software',
             value=method_conf["input"]["analysis_software"],
-            options=['AlphaPept', 'AlphaDIA', 'MaxQuant', 'FragPipe', 'Spectronaut single-run', 'Spectronaut library'],
+            options=['AlphaPept', 'AlphaDIA', 'MaxQuant', 'FragPipe', 'Spectronaut single-run', 'Spectronaut library', 'DIANN library', 'AlphaPeptDeep library'],
             width=200,
             margin=(15, 15, 15, 15)
         )
@@ -296,7 +296,6 @@ class LoadLibraryCard(BaseWidget):
             method_conf["input"]["analysis_software"],
             method_conf["input"]["PTM"]
         )
-        self.upload_progress.active = False
         folder_paths = [
             self.path_save_folder.value,
             os.path.join(
@@ -447,7 +446,7 @@ class DefineScanAreaCard(BaseWidget):
             # width=460
         )
         self.scan_area_width = pn.widgets.IntInput(
-            name='Scan area width (horizontal)',
+            name='Scan area width (horizontal) [m/z]',
             start=0,
             end=500,
             value=method_conf["scan_area"]["scan_area_width"],
@@ -741,7 +740,7 @@ class GenerateMethodCard(BaseWidget):
             width=430
         )
         self.scan_mode = pn.widgets.Select(
-            name='Scan mode',
+            name='Acquisition scheme',
             value=method_conf["method_parameters"]["scan_mode"],
             options=[
                 "classical_synchro-PASEF",
@@ -826,14 +825,12 @@ class GenerateMethodCard(BaseWidget):
             sizing_mode='stretch_width',
             margin=(15, 15, 0, 15)
         )
-        self.method_creation_spinner = pn.indicators.LoadingSpinner(
-            value=False,
-            bgcolor='light',
-            color='secondary',
+        self.method_creation_progress = pn.indicators.Progress(
+            active=False,
+            bar_color='light',
+            width=250,
             align='center',
-            margin=(0, 40, 0, 10),
-            width=35,
-            height=35
+            margin=(0, 0, 30, 0)
         )
 
     def create_layout(self):
@@ -857,7 +854,7 @@ class GenerateMethodCard(BaseWidget):
                             self.window_overlap,
                             margin=(10, 30, 10, 10),
                         ),
-                        sizing_mode='fixed',
+                        sizing_mode='stretch_width',
                         margin=(20, 10, 30, 10), 
                     ),
                     pn.Card(
@@ -867,8 +864,8 @@ class GenerateMethodCard(BaseWidget):
                             margin=(10, 30, 10, 10),
                         ),
                         pn.Row(
-                            self.window_pattern,
                             self.scan_mode,
+                            self.window_pattern,
                             margin=(10, 30, 10, 10),
                         ),
                         title='Additional Method Settings',
@@ -885,10 +882,8 @@ class GenerateMethodCard(BaseWidget):
                 ),
                 pn.Spacer(sizing_mode='stretch_width'),
                 pn.Column(
-                    pn.Row(
-                        self.generate_method_button,
-                        self.method_creation_spinner,
-                    ),
+                    self.generate_method_button,
+                    self.method_creation_progress,
                     None,
                     align='center',
                     margin=(0, 40, 0, 0),
@@ -955,12 +950,12 @@ class GenerateMethodCard(BaseWidget):
         method_conf["method_parameters_general"][convertion_dict[event.obj.name]] = event.new
 
     def run_generation(self, *args):
-        self.method_creation_spinner.value = True
+        self.method_creation_progress.active = True
         self.layout[3] = pn.Row("")
         if (self.window_type.value!="equidistant") or (self.scan_mode.value !="classical_synchro-PASEF"):
-            self.layout[1][2][1] = self.method_error
+            self.layout[1][2][2]= self.method_error
         else:
-            self.layout[1][2][1] = None
+            self.layout[1][2][2] = None
 
         self.scan_ratio.value, self.scans.value = method_creator.create_method(
             self.data.path_save_folder.value+'/final_method',
@@ -986,11 +981,11 @@ class GenerateMethodCard(BaseWidget):
         final_method_path = os.path.join(
             self.data.path_save_folder.value,
             'final_method',
-            'synchroScan.txt'
+            'synchroPasef.txt'
         )
         self.path_method.value = final_method_path
         self.trigger_dependancy()
-        self.method_creation_spinner.value = False
+        self.method_creation_progress.active = False
 
 
 class LoadMethodCard(BaseWidget):
@@ -1045,7 +1040,7 @@ class LoadMethodCard(BaseWidget):
                             margin=(10, 70, 10, 10),
                         ),
                     ),
-                    sizing_mode='fixed',
+                    sizing_mode='stretch_width',
                     height=110,
                     margin=(20, 10, 30, 10), 
                 ),
@@ -1061,7 +1056,7 @@ class LoadMethodCard(BaseWidget):
             pn.Row(
                 None
             ),
-            title='Load a Synchro-PASEF Method',
+            title='Load synchro-PASEF Method',
             collapsed=False,
             collapsible=True,
             header_background='#eaeaea',
@@ -1439,10 +1434,10 @@ class MakeGifCard(object):
             width=430,
         )
         self.scans_plotted_at_once = pn.widgets.IntInput(
-            name='Tof triggers highlighted at once',
+            name='TOF triggers highlighted at once',
             start=0,
             end=20,
-            value=3,
+            value=1,
             step=1,
             margin=(15, 15, 0, 15),
             width=430,
@@ -1530,11 +1525,10 @@ class MakeGifCard(object):
             if file_name.endswith('.png'):
                 file_path = os.path.join(save_at+"/", file_name)
                 images.append(iio.imread(file_path))
-        print(images)
-        iio.imwrite(save_at + '/SynchroScan_single_windows.gif', images, duration = self.gif_duration.value, loop = 0)
+        iio.imwrite(save_at + '/SynchroPasef_single_windows.gif', images, duration = self.gif_duration.value, loop = 0)
 
         self.layout[3][1] = pn.pane.GIF(
-            save_at+"/" + 'SynchroScan_single_windows.gif',
+            save_at+"/" + 'SynchroPasef_single_windows.gif',
             alt_text="Sorry, please try using a different browser",
             width=640, height=360
         )
@@ -1577,7 +1571,7 @@ class SynchroCardWidget(object):
         self.scan_area_description = "#### Define the scan area dependent on the precursor density."
         self.generate_method_description = "#### Generated a synchro-PASEF method with individual method design."
         self.load_method_description = "#### Load a synchro-PASEF method from a txt file or directly from the raw file."
-        self.evaluate_method_description = "#### Evaluate a synchro-PASEF method based on a pre-acquired library. Specify the ramp time and IM limits of the method above."
+        self.evaluate_method_description = "#### Evaluate a synchro-PASEF method based on a pre-acquired library. Optionally specify the ion mobility limits and TIMS ramp time of the method above."
         self.make_gif_description = "#### Visualize the synchro scan movement of your method with a GIF."
 
         self.data = LoadLibraryCard(self.load_library_description)

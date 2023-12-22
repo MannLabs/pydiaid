@@ -515,7 +515,7 @@ def create_method_file(
     header ='type, mobility pos.1 [1/K0], mass pos.1 start [m/z], mass pos.1 end [m/z], mobility pos.2 [1/K0], mass pos.2 start [m/z] \n'       
     content_new.insert(0, header)  
     final_content = content_new + content_method_settings
-    with open(save_at+'/synchroScan.txt', 'w') as filehandle:
+    with open(save_at+'/synchroPasef.txt', 'w') as filehandle:
             filehandle.writelines(final_content)
 
 
@@ -609,7 +609,6 @@ def create_basic_scheme_with_scans(
     'highly_accurate_synchropasef_staggered', 'individual_synchropasef'.
     """
     dict_isolation_windows_temp = dict()
-
     if scan_mode == 'classical_synchro-PASEF':
         if window_modification == 'None':
             dict_isolation_windows = classic_synchropasef(
@@ -617,7 +616,7 @@ def create_basic_scheme_with_scans(
                 scans,
                 window_overlap = 0.0
             )
-        elif window_modification == 'window_overlap':
+        elif window_modification == 'overlap':
             dict_isolation_windows = classic_synchropasef(
                 dict_isolation_windows_temp,
                 scans,
@@ -636,7 +635,7 @@ def create_basic_scheme_with_scans(
                 scans,
                 window_overlap = 0.0
             )
-        elif window_modification == 'window_overlap':
+        elif window_modification == 'overlap':
             dict_isolation_windows = highly_accurate_synchropasef(
                 dict_isolation_windows_temp,
                 scans,

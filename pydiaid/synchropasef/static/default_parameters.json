@@ -19,7 +19,7 @@
         
     },
     "method_parameters": {
-        "scans": 3,
+        "scans": 4,
         "window_type": "equidistant",
         "scan_ratio": [1, 1, 1],
         "scan_mode": "classical_synchro-PASEF",
@@ -30,7 +30,7 @@
     },
     "method_parameters_general": {
         "MS1_positions": [1],
-        "dict_im_limits": {"low_limit_IM": 0.700, "up_limit_IM": 1.323}
+        "dict_im_limits": {"low_limit_IM": 0.700, "up_limit_IM": 1.3}
     },
     "graphs": {
         "plot_mz": [
