@@ -118,6 +118,9 @@ jobs:
       - name: Conda info
         shell: bash -l {0}
         run: conda info
+      - name: Install openssl
+        shell: bash -l {0}
+        run: conda install conda-forge::openssl
       - name: Creating installer for Windows
         shell: bash -l {0}
         run: |
