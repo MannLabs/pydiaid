@@ -20,7 +20,7 @@ python setup.py sdist bdist_wheel
 
 # Setting up the local package
 cd release/one_click_macos_gui
-pip install "../../dist/pydiaid-0.0.20-py3-none-any.whl[stable]"
+pip install "../../dist/pydiaid-0.0.21-py3-none-any.whl[stable]"
 
 # Creating the stand-alone pyinstaller folder
 pip install pyinstaller==4.7
