@@ -1,0 +1,10 @@
+#Method creation settings: 
+#dict scan areas: [(-267.5, 0.38776857932457387), (1692.5, 1.6800081671134246), (-142.5, 0.38776857932457387), (1817.5, 1.6800081671134246)],
+#dict method parameters: {'scans': 3, 'window_type': 'equidistant', 'scan_ratio': [1, 1, 1], 'scan_mode': 'classical_synchro-PASEF', 'window_modification': 'None', 'window_overlap': 0.2, 'no_of_combined_scans': 3, 'window_pattern': [[0, 2], [3, 5], [6, 8], [9, 12], [12, 14]]},
+#dict method parameters general: {'MS1_positions': [1], 'dict_im_limits': {'low_limit_IM': 0.7, 'up_limit_IM': 1.323}}
+
+type, mobility pos.1 [1/K0], mass pos.1 start [m/z], mass pos.1 end [m/z], mobility pos.2 [1/K0], mass pos.2 start [m/z] 
+ms, -, -, -, -, - 
+vista,0.7, 206.1, 247.7, 1.323, 1151.0 
+vista,0.7, 247.7, 289.4, 1.323, 1192.7 
+vista,0.7, 289.4, 331.1, 1.323, 1234.3 

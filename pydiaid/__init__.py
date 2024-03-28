@@ -2,10 +2,10 @@
 
 
 __project__ = "pydiaid"
-__version__ = "0.0.19"
+__version__ = "0.0.23"
 __license__ = "Apache"
 __description__ = "An open-source Python package of the AlphaPept ecosystem"
-__author__ = "Patricia Skowronek, Sander Willems, Eugenia Voytik"
+__author__ = "Mann Labs"
 __author_email__ = "opensource@alphapept.com"
 __github__ = "https://github.com/MannLabs/pydiaid"
 __keywords__ = [
@@ -40,6 +40,7 @@ __console_scripts__ = [
 ]
 __urls__ = {
     "Mann Labs at MPIB": "https://www.biochem.mpg.de/mann",
+    "Mann Labs at CPR": "https://www.cpr.ku.dk/research/proteomics/mann/",
     "GitHub": __github__,
     # "ReadTheDocs": None,
     # "PyPi": None,
