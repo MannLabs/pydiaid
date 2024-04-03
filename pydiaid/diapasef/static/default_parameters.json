@@ -1,0 +1,65 @@
+{
+    "input": {
+        "save_at": "D:/dia_pasef_test",
+        "PTM": "None",
+        "library_name": "D:/synchroscan/synchroscan/diapasef/static/AlphaPept_results.csv",
+        "analysis_software": "AlphaPept",
+        "diaPASEF_method_only_used_for_evaluate": "D:/synchroscan/synchroscan/diapasef/static/diaPASEF_method.txt"
+    },
+    "method_parameters": {
+        "mz": [
+            300,
+            1200
+        ],
+        "ion_mobility": [
+            0.7,
+            1.3
+        ],
+        "num_dia_pasef_scans": 12,
+        "im_steps": 2,
+        "overlap": 0,
+        "shift_of_final_method": 0.012,
+        "scan_area_A1_A2_B1_B2_only_used_for_create": [
+            0.68,
+            1.04,
+            0.9,
+            1.3
+        ]
+    },
+    "graphs": {
+        "plot_mz": [
+            250,
+            1250
+        ],
+        "plot_IM": [
+            0.6,
+            1.6
+        ],
+        "numbins": 100,
+        "window_frame_color": "black",
+        "window_color": "white",
+        "window_transparency": 0.5
+    },
+    "optimizer": {
+        "optimizer": "Gauss",
+        "n_calls": 100,
+        "initial_points": 20,
+        "YA1": [
+            0.4,
+            0.9
+        ],
+        "YA2": [
+            0.5,
+            1.0
+        ],
+        "YB1": [
+            0.8,
+            1.5
+        ],
+        "YB2": [
+            0.9,
+            1.8
+        ],
+        "evaluation_parameter": "No. of covered precursors"
+    }
+}
