@@ -117,6 +117,32 @@ def process_tables_depending_on_search_software(
                     file_name
                 )
             num += 1
+
+        # filter AlphaDIA peptide dataframe
+        if ("mod_seq_hash" in df.columns) & ("base_width_mobility" not in df.columns):
+            file_type = "alphadia_peptides"
+            unique_ID_column = "mod_seq_hash"
+            df_filtered = df.copy()
+            column_indicators = ["Intensity"]
+
+            for column_indicator in column_indicators:
+                df_filtered, column_indicator, selected_columns = filter_alphadia_output_for_column_indicator(df)
+
+                dict_results, list_dfs_only_with_intensity_columns, list_dfs = filter_tables_and_make_correlation_plots(
+                    df_filtered, 
+                    dict_results,
+                    column_indicator, 
+                    percentage_of_missing_values,
+                    selected_columns,
+                    unique_ID_column,
+                    save_output_here,
+                    file_type,
+                    labels[num],
+                    list_dfs_only_with_intensity_columns,
+                    list_dfs,
+                    file_name
+                )
+            num += 1
             
         # filter AlphaDIA precursor dataframe
         if "mod_seq_charge_hash" in df.columns:
@@ -197,9 +223,10 @@ def process_tables_depending_on_search_software(
             num += 1
             
         # filter spectronaut protein dataframe
-        elif "PG.ProteinAccessions" in df.columns:
+        elif "PG.ProteinGroups" in df.columns:
             file_type = "spectronaut_proteins"
-            unique_ID_column = "PG.ProteinAccessions"
+            unique_ID_column = "PG.ProteinGroups"
+            # unique_ID_column = "PG.ProteinAccessions"
             df_filtered = df.copy()
             column_indicators = ["Intensity"]
             
@@ -254,6 +281,7 @@ def process_tables_depending_on_search_software(
 
     return column_indicators, dict_results, file_type, file_names, list_dfs_only_with_intensity_columns, list_dfs
 
+import math
 
 def make_plots(
     column_indicators,
@@ -279,8 +307,11 @@ def make_plots(
         df_results_filtered_for_column_indicator = df_results.iloc[list_filtered_for_column_indicator]
         print(df_results_filtered_for_column_indicator)
 
-        print(np.median(df_results_filtered_for_column_indicator["CV"].iloc[0]),
-              np.median(df_results_filtered_for_column_indicator["CV"].iloc[1]),
+        # print([x for x in df_results_filtered_for_column_indicator["CV"].iloc[0] if not math.isnan(x)])
+
+        print(np.median([x for x in df_results_filtered_for_column_indicator["CV"].iloc[0] if not math.isnan(x)]),
+              np.median([x for x in df_results_filtered_for_column_indicator["CV"].iloc[1] if not math.isnan(x)]),
+            #   np.median(df_results_filtered_for_column_indicator["CV"].iloc[2]),
              )
 
         make_bar_bar_plot(
@@ -553,6 +584,7 @@ def find_y_label(file_type):
         "mq_proteins": "# protein groups",
         'mq_peptides': "# peptides",
         'alphadia_proteins': "# protein groups",
+        "alphadia_peptides": "# peptides",
         "alphadia_precursors": "# precursors",
         'diann_proteins': "# protein groups",
         'diann_precursors': "# precursors",
@@ -673,6 +705,7 @@ def bar_missing_value(
 ):
     list_dfs_temp = list()
     x_pos_pep = range(len(labels))
+
     # print(df_results_filtered_for_column_indicator)
     for x in x_pos_pep:
         #create joined data frame
@@ -682,15 +715,17 @@ def bar_missing_value(
         df_temp["Type"] = labels[x]
         list_dfs_temp.append(df_temp)
 
-    df = pd.concat(list_dfs_temp).reset_index(drop=True)
+    df = pd.concat(list_dfs_temp).reset_index(drop=True).fillna(0)
+    print(df)
+    columns_selected = sorted([column for column in df.columns if type(column) != str])
 
     save_name = save_output_here + "/bar_plot_missing_values_"+ file_type + "_" + column_indicator
     ylabel = find_y_label(file_type) # Name of the y axis for the bar plot
     xlabel = 'Type' # Name or topic of all the columns
-    label_box = df.columns[:-1]*len(df_results_filtered_for_column_indicator["IDs_per_run"].iloc[0])
+    label_box = columns_selected*len(df_results_filtered_for_column_indicator["IDs_per_run"].iloc[0])
 
     bar_plot(
-        df[df.columns[:-1]],
+        df[columns_selected],
         labels,
         save_name,
         ylabel,
@@ -1116,7 +1151,7 @@ def filter_DIANN_output_for_column_indicator(df):
 
 def filter_alphadia_output_for_column_indicator(df):
     column_indicator = "Intensity"
-    selected_columns = [col for col in df.columns if (not "pg" in col) & (not 'mod_seq_charge_hash' in col) & (not 'precursor' in col)]
+    selected_columns = [col for col in df.columns if (not "pg" in col) & (not 'mod_seq_charge_hash' in col) & (not 'mod_seq_hash' in col)& (not 'precursor' in col)]
     for column in selected_columns:
         df[column][df[column] == 0] = np.nan
 
