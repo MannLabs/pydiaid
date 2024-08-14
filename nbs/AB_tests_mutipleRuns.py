@@ -1,287 +1,622 @@
 # Author: Patricia Skowronek, Max Planck Institute of Biochemistry
 
-import pandas as pd
-import numpy as np
+# Standard library imports
+import math
+import re
+from difflib import SequenceMatcher
+from typing import List, Dict, Any, Tuple, Callable, Union
 
-from matplotlib import rc
-import seaborn as sns
+# Data manipulation and analysis
+import numpy as np
+import pandas as pd
+
+## Visualization libraries
+### Matplotlib and related
 import matplotlib.pyplot as plt
+from matplotlib import cm
+from matplotlib_venn import venn2, venn3
+
+### Seaborn
+import seaborn as sns
+
+### Plotly
+import plotly.express as px
+from plotly.express.colors import sample_colorscale
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
+
+### Other visualization tools
+import datashader as ds
+from upsetplot import plot as upset_plot
+
+# Matplotlib configuration
 plt.rcParams.update({'font.size': 16.5})
 plt.rcParams['pdf.fonttype'] = 42
 plt.rcParams['font.family'] = 'Arial'
 
-from difflib import SequenceMatcher
+# Citation for UpSet plot
+# Alexander Lex, Nils Gehlenborg, Hendrik Strobelt, Romain Vuillemot, Hanspeter Pfister,
+# UpSet: Visualization of Intersecting Sets, IEEE Transactions on Visualization and Computer Graphics (InfoVis '14),
+# vol. 20, no. 12, pp. 1983–1992, 2014. doi: doi.org/10.1109/TVCG.2014.2346248
 
-import re
-from plotly.subplots import make_subplots
-from upsetplot import plot as upset_plot #Alexander Lex, Nils Gehlenborg, Hendrik Strobelt, Romain Vuillemot, Hanspeter Pfister, UpSet: Visualization of Intersecting Sets, IEEE Transactions on Visualization and Computer Graphics (InfoVis ‘14), vol. 20, no. 12, pp. 1983–1992, 2014. doi: doi.org/10.1109/TVCG.2014.2346248
-from matplotlib_venn import venn2, venn3
-from matplotlib import cm
-import datashader as ds
-import plotly.graph_objects as go
-import plotly.express as px
-from plotly.express.colors import sample_colorscale
+def process_proteomics_data(
+    file_paths: List[str],
+    min_data_completeness: float,
+    output_directory: str,
+    dataset_labels: List[str]
+) -> Tuple[List[str], Dict[str, List[Any]], str, List[str], List[pd.DataFrame], List[pd.DataFrame]]:
+    analysis_results: Dict[str, List[Any]] = {
+        "totalIDs": [],
+        "CV20Percent": [],
+        "CV10Percent": [],
+        "CV5Percent": [],
+        "IDs_per_run": [],
+        "CV": [],
+        "DataCompleteness": []
+    }
+    intensity_only_dataframes: List[pd.DataFrame] = []
+    full_dataframes: List[pd.DataFrame] = []
 
-import warnings
-warnings.filterwarnings('ignore')
-
-def process_tables_depending_on_search_software(
-    file_names,
-    percentage_of_missing_values,
-    save_output_here,
-    labels,
-    list_dfs_only_with_intensity_columns,
-    list_dfs,
-    dict_results,
-):
-
-    num = 0
-    for file_name in file_names:
+    for index, file_path in enumerate(file_paths):
+        df: pd.DataFrame = pd.read_csv(file_path, sep='\t')
+        data_source: str = identify_data_source(df)
         
-        df = pd.read_csv(file_name, sep='\t')  # .xls, .tsv, .txt
+        if data_source:
+            column_types, analysis_results, intensity_only_dataframes, full_dataframes = analyze_dataframe(
+                df=df,
+                analysis_results=analysis_results,
+                min_data_completeness=min_data_completeness,
+                output_directory=output_directory,
+                data_source=data_source,
+                dataset_label=dataset_labels[index],
+                intensity_only_dataframes=intensity_only_dataframes,
+                full_dataframes=full_dataframes,
+                file_path=file_path
+            )
+
+    return column_types, analysis_results, data_source, file_paths, intensity_only_dataframes, full_dataframes
+
+def identify_data_source(df: pd.DataFrame) -> str:
+    """
+    Identify the data source based on the DataFrame columns.
+
+    Args:
+    df (pd.DataFrame): Input DataFrame.
+
+    Returns:
+    str: Identified data source.
+    """
+    data_source_indicators: Dict[str, bool] = {
+        "maxquant_proteins": ("Only identified by site" in df.columns),
+        "maxquant_peptides": ("A Count" in df.columns),
+        "alphadia_proteins": ("pg" in df.columns and "base_width_mobility" not in df.columns),
+        "alphadia_peptides": ("mod_seq_hash" in df.columns and "base_width_mobility" not in df.columns),
+        "alphadia_precursors": ("mod_seq_charge_hash" in df.columns),
+        "diann_proteins": ("First.Protein.Description" in df.columns and "Stripped.Sequence" not in df.columns),
+        "diann_precursors": ("First.Protein.Description" in df.columns and "Stripped.Sequence" in df.columns),
+        "spectronaut_proteins_1": ("PG.ProteinGroups" in df.columns),
+        "spectronaut_proteins_2": ("PG.ProteinAccessions" in df.columns),
+        "spectronaut_precursors": ("EG.PrecursorId" in df.columns)
+    }
+    
+    for data_source, condition in data_source_indicators.items():
+        if condition:
+            return data_source
+    
+    return ""
+
+def analyze_dataframe(
+    df: pd.DataFrame,
+    data_source: str,
+    analysis_results: Dict[str, List[Any]],
+    min_data_completeness: float,
+    output_directory: str,
+    dataset_label: str,
+    intensity_only_dataframes: List[pd.DataFrame],
+    full_dataframes: List[pd.DataFrame],
+    file_path: str
+) -> Tuple[List[str], Dict[str, List[Any]], List[pd.DataFrame], List[pd.DataFrame]]:
+    """
+    Analyze a single DataFrame and update analysis results.
+
+    Args:
+    df (pd.DataFrame): Input DataFrame to analyze.
+    data_source (str): Identified data source.
+    analysis_results (Dict[str, List[Any]]): Current analysis results to update.
+    min_data_completeness (float): Minimum data completeness threshold.
+    output_directory (str): Directory to save output files.
+    dataset_label (str): Label for the current dataset.
+    intensity_only_dataframes (List[pd.DataFrame]): List of intensity-only DataFrames to update.
+    full_dataframes (List[pd.DataFrame]): List of full DataFrames to update.
+    file_path (str): Path of the current file being processed.
+
+    Returns:
+    Tuple containing:
+    - List of column types
+    - Updated dictionary of analysis results
+    - Updated list of intensity-only DataFrames
+    - Updated list of full DataFrames
+    """
+    config: Dict[str, Union[str, List[str]]] = get_data_source_config(data_source)
+    id_column: str = config["id_column"]
+    column_types: List[str] = config["column_types"]
+    
+    for column_type in column_types:
+        df_filtered, intensity_columns = preprocess_columns(df, column_type, data_source)
         
-        # filter MaxQuant protein groups dataframe
-        if "Only identified by site" in df.columns:
-            file_type = "mq_proteins"
-            unique_ID_column = "Protein IDs"
-            df_filtered = df[(df["Only identified by site"]!="+") & (df["Reverse"]!="+") & (df["Potential contaminant"]!="+")]
-            column_indicators = ["Intensity", "iBAQ",  "LFQ intensity"]
-            
-            for column_indicator in column_indicators:
-                df_filtered, column_indicator, selected_columns = filter_MaxQuant_output_for_column_indicator(df_filtered, column_indicator)
-                
-                dict_results, list_dfs_only_with_intensity_columns, list_dfs = filter_tables_and_make_correlation_plots(
-                    df_filtered, 
-                    dict_results,
-                    column_indicator, 
-                    percentage_of_missing_values,
-                    selected_columns,
-                    unique_ID_column,
-                    save_output_here,
-                    file_type,
-                    labels[num],
-                    list_dfs_only_with_intensity_columns,
-                    list_dfs,
-                    file_name
-                ) 
-            num += 1
-            
-        # filter MaxQuant peptides dataframe
-        elif "A Count" in df.columns:
-            file_type = "mq_peptides"
-            unique_ID_column = "Sequence"
-            df_filtered = df[(df["Reverse"]!="+") & (df["Potential contaminant"]!="+")]
-            column_indicators = ["Intensity", "LFQ intensity"]
-            
-            for column_indicator in column_indicators:
-                df_filtered, column_indicator, selected_columns = filter_MaxQuant_output_for_column_indicator(df_filtered, column_indicator)
-                
-                dict_results, list_dfs_only_with_intensity_columns, list_dfs = filter_tables_and_make_correlation_plots(
-                    df_filtered, 
-                    dict_results,
-                    column_indicator, 
-                    percentage_of_missing_values,
-                    selected_columns,
-                    unique_ID_column,
-                    save_output_here,
-                    file_type,
-                    labels[num],
-                    list_dfs_only_with_intensity_columns,
-                    list_dfs,
-                    file_name
-                )
-            num += 1
-            
-        # filter AlphaDIA protein groups dataframe
-        if ("pg" in df.columns) & ("base_width_mobility" not in df.columns):
-            file_type = "alphadia_proteins"
-            unique_ID_column = "pg"
-            df_filtered = df.copy()
-            column_indicators = ["Intensity"]
+        analysis_results, intensity_only_dataframes, full_dataframes = analyze_and_filter_data(
+            df_filtered, analysis_results, column_type, min_data_completeness,
+            intensity_columns, id_column, output_directory, data_source,
+            dataset_label, intensity_only_dataframes, full_dataframes, file_path
+        )
+    
+    return column_types, analysis_results, intensity_only_dataframes, full_dataframes
 
-            for column_indicator in column_indicators:
-                df_filtered, column_indicator, selected_columns = filter_alphadia_output_for_column_indicator(df)
+def get_data_source_config(data_source: str) -> Dict[str, Union[str, List[str]]]:
+    """
+    Get configuration for a specific data source.
 
-                dict_results, list_dfs_only_with_intensity_columns, list_dfs = filter_tables_and_make_correlation_plots(
-                    df_filtered, 
-                    dict_results,
-                    column_indicator, 
-                    percentage_of_missing_values,
-                    selected_columns,
-                    unique_ID_column,
-                    save_output_here,
-                    file_type,
-                    labels[num],
-                    list_dfs_only_with_intensity_columns,
-                    list_dfs,
-                    file_name
-                )
-            num += 1
+    Args:
+    data_source (str): Identified data source.
 
-        # filter AlphaDIA peptide dataframe
-        if ("mod_seq_hash" in df.columns) & ("base_width_mobility" not in df.columns):
-            file_type = "alphadia_peptides"
-            unique_ID_column = "mod_seq_hash"
-            df_filtered = df.copy()
-            column_indicators = ["Intensity"]
+    Returns:
+    Dict[str, Union[str, List[str]]]: Configuration dictionary for the data source.
+    """
+    data_source_config: Dict[str, Dict[str, Union[str, List[str]]]] = {
+        "maxquant_proteins": {"id_column": "Protein IDs", "column_types": ["Intensity", "iBAQ", "LFQ intensity"]},
+        "maxquant_peptides": {"id_column": "Sequence", "column_types": ["Intensity", "LFQ intensity"]},
+        "alphadia_proteins": {"id_column": "pg", "column_types": ["Intensity"]},
+        "alphadia_peptides": {"id_column": "mod_seq_hash", "column_types": ["Intensity"]},
+        "alphadia_precursors": {"id_column": "mod_seq_charge_hash", "column_types": ["Intensity"]},
+        "diann_proteins": {"id_column": "Protein.Group", "column_types": ["Intensity"]},
+        "diann_precursors": {"id_column": "Precursor.Id", "column_types": ["Intensity"]},
+        "spectronaut_proteins_1": {"id_column": "PG.ProteinGroups", "column_types": ["Intensity"]},
+        "spectronaut_proteins_2": {"id_column": "PG.ProteinAccessions", "column_types": ["Intensity"]},
+        "spectronaut_precursors": {"id_column": "EG.PrecursorId", "column_types": ["Intensity"]}
+    }
+    return data_source_config[data_source]
 
-            for column_indicator in column_indicators:
-                df_filtered, column_indicator, selected_columns = filter_alphadia_output_for_column_indicator(df)
+def preprocess_columns(df: pd.DataFrame, column_type: str, data_source: str) -> Tuple[pd.DataFrame, List[str]]:
+    """
+    Preprocess columns based on the data source and column type.
 
-                dict_results, list_dfs_only_with_intensity_columns, list_dfs = filter_tables_and_make_correlation_plots(
-                    df_filtered, 
-                    dict_results,
-                    column_indicator, 
-                    percentage_of_missing_values,
-                    selected_columns,
-                    unique_ID_column,
-                    save_output_here,
-                    file_type,
-                    labels[num],
-                    list_dfs_only_with_intensity_columns,
-                    list_dfs,
-                    file_name
-                )
-            num += 1
-            
-        # filter AlphaDIA precursor dataframe
-        if "mod_seq_charge_hash" in df.columns:
-            file_type = "alphadia_precursors"
-            unique_ID_column = "mod_seq_charge_hash"
-            df_filtered = df.copy()
-            column_indicators = ["Intensity"]
+    Args:
+    df (pd.DataFrame): Input DataFrame.
+    column_type (str): Type of column to process.
+    data_source (str): Identified data source.
 
-            for column_indicator in column_indicators:
-                df_filtered, column_indicator, selected_columns = filter_alphadia_output_for_column_indicator(df)
+    Returns:
+    Tuple containing:
+    - Processed DataFrame
+    - List of intensity column names
+    """
+    return filter_and_rename_columns(df, data_source, column_type)
 
-                dict_results, list_dfs_only_with_intensity_columns, list_dfs = filter_tables_and_make_correlation_plots(
-                    df_filtered, 
-                    dict_results,
-                    column_indicator, 
-                    percentage_of_missing_values,
-                    selected_columns,
-                    unique_ID_column,
-                    save_output_here,
-                    file_type,
-                    labels[num],
-                    list_dfs_only_with_intensity_columns,
-                    list_dfs,
-                    file_name
-                )
-            num += 1
+def select_and_rename_columns(df: pd.DataFrame, selection_criteria: Callable[[str], bool], prefix: str = "") -> Tuple[pd.DataFrame, List[str]]:
+    """
+    Select and rename columns based on given criteria.
 
-        # filter DIA-NN protein dataframe
-        elif ("First.Protein.Description" in df.columns) & ("Stripped.Sequence" not in df.columns):
-            file_type = "diann_proteins"
-            unique_ID_column = "Protein.Group"
-            df_filtered = df.copy()
-            column_indicators = ["Intensity"]
-            
-            for column_indicator in column_indicators:
-                df_filtered, column_indicator, selected_columns = filter_DIANN_output_for_column_indicator(df)
-                
-                dict_results, list_dfs_only_with_intensity_columns, list_dfs = filter_tables_and_make_correlation_plots(
-                    df_filtered, 
-                    dict_results,
-                    column_indicator, 
-                    percentage_of_missing_values,
-                    selected_columns,
-                    unique_ID_column,
-                    save_output_here,
-                    file_type,
-                    labels[num],
-                    list_dfs_only_with_intensity_columns,
-                    list_dfs,
-                    file_name
-                )
-            num += 1
-            
-        # filter DIA-NN precursors dataframe
-        elif ("First.Protein.Description" in df.columns) & ("Stripped.Sequence" in df.columns):
-            file_type = "diann_precursors"
-            unique_ID_column = "Precursor.Id"
-            df_filtered = df.copy()
-            column_indicators = ["Intensity"]
-            
-            for column_indicator in column_indicators:
-                df_filtered, column_indicator, selected_columns = filter_DIANN_output_for_column_indicator(df)
-                
-                dict_results, list_dfs_only_with_intensity_columns, list_dfs = filter_tables_and_make_correlation_plots(
-                    df_filtered, 
-                    dict_results,
-                    column_indicator, 
-                    percentage_of_missing_values,
-                    selected_columns,
-                    unique_ID_column,
-                    save_output_here,
-                    file_type,
-                    labels[num],
-                    list_dfs_only_with_intensity_columns,
-                    list_dfs,
-                    file_name
-                )
-            num += 1
-            
-        # filter spectronaut protein dataframe
-        elif "PG.ProteinGroups" in df.columns:
-            file_type = "spectronaut_proteins"
-            unique_ID_column = "PG.ProteinGroups"
-            # unique_ID_column = "PG.ProteinAccessions"
-            df_filtered = df.copy()
-            column_indicators = ["Intensity"]
-            
-            for column_indicator in column_indicators:
-                df_filtered, column_indicator, selected_columns = filter_spectronaut_output_for_column_indicator(df)
-                dict_results, list_dfs_only_with_intensity_columns, list_dfs = filter_tables_and_make_correlation_plots(
-                    df_filtered, 
-                    dict_results,
-                    column_indicator, 
-                    percentage_of_missing_values,
-                    selected_columns,
-                    unique_ID_column,
-                    save_output_here,
-                    file_type,
-                    labels[num],
-                    list_dfs_only_with_intensity_columns,
-                    list_dfs,
-                    file_name
-                )
-            num += 1
-        # filter spectronaut peptides dataframe
-        elif "EG.PrecursorId" in df.columns:
-            file_type = "spectronaut_precursors"
-            unique_ID_column = "EG.PrecursorId"
-            df_filtered = df.copy()
-            column_indicators = ["Intensity"]
-            
-            for column_indicator in column_indicators:
-                df_filtered, column_indicator, selected_columns = filter_spectronaut_output_for_column_indicator(df)
-                df_filtered_w_nan = df_filtered.replace('Filtered',np.NaN)
-                df_filtered_floats = df_filtered_w_nan[selected_columns].astype(float)
-                df_filtered_floats["EG.PrecursorId"] = df_filtered_w_nan["EG.PrecursorId"]
-                
-                dict_results, list_dfs_only_with_intensity_columns, list_dfs = filter_tables_and_make_correlation_plots(
-                    df_filtered_floats, 
-                    dict_results,
-                    column_indicator, 
-                    percentage_of_missing_values,
-                    selected_columns,
-                    unique_ID_column,
-                    save_output_here,
-                    file_type,
-                    labels[num],
-                    list_dfs_only_with_intensity_columns,
-                    list_dfs,
-                    file_name
-                )
-            num += 1
-            
+    Args:
+    df (pd.DataFrame): Input DataFrame.
+    selection_criteria (Callable[[str], bool]): Function to select columns.
+    prefix (str, optional): Prefix for new column names. Defaults to "".
+
+    Returns:
+    Tuple containing:
+    - DataFrame with selected and renamed columns
+    - List of new column names
+    """
+    selected_columns: List[str] = [col for col in df.columns if selection_criteria(col)]
+    print(f"Selected columns: {selected_columns}")
+    new_column_names: List[str] = [f"{prefix}{i+1}" for i in range(len(selected_columns))]
+    df[new_column_names] = df[selected_columns]
+    df[new_column_names] = df[new_column_names].replace(0, np.nan)
+    print(f"New column names: {new_column_names}")
+    return df, new_column_names
+
+def filter_and_rename_columns(df: pd.DataFrame, data_source: str, column_type: str) -> Tuple[pd.DataFrame, List[str]]:
+    """
+    Filter and rename columns based on the data source and column type.
+
+    Args:
+    df (pd.DataFrame): Input DataFrame.
+    data_source (str): Identified data source.
+    column_type (str): Type of column to process.
+
+    Returns:
+    Tuple containing:
+    - DataFrame with filtered and renamed columns
+    - List of new column names
+    """
+    if data_source.startswith('maxquant_'):
+        selection_criteria = lambda col: column_type in col and col not in ['iBAQ peptides', 'iBAQ', 'Intensity']
+        return select_and_rename_columns(df, selection_criteria)
+    elif data_source.startswith('alphadia_'):
+        selection_criteria = lambda col: not any(x in col for x in ['pg', 'mod_seq_charge_hash', 'mod_seq_hash', 'precursor'])
+        return select_and_rename_columns(df, selection_criteria, "Intensity_")
+    elif data_source.startswith('diann_'):
+        selection_criteria = lambda col: ".d" in col
+        return select_and_rename_columns(df, selection_criteria, "Intensity_")
+    elif data_source.startswith('spectronaut_'):
+        selection_criteria = lambda col: ("[" in col) and ("PG.Quantity" not in col) if "EG.PrecursorId" in df.columns else "[" in col
+        df, new_columns = select_and_rename_columns(df, selection_criteria, "Intensity_")
+        for col in new_columns:
+            df[col] = pd.to_numeric(df[col].replace('Filtered', np.nan), errors='coerce')
+        return df, new_columns
     else:
-        next
+        raise ValueError(f"Unknown data source: {data_source}")
 
-    return column_indicators, dict_results, file_type, file_names, list_dfs_only_with_intensity_columns, list_dfs
+def prepare_intensity_dataframe(df_filtered: pd.DataFrame, intensity_columns: List[str], id_column: str, dataset_label: str) -> pd.DataFrame:
+    """
+    Prepare intensity DataFrame with unique identifiers.
 
-import math
+    Args:
+    df_filtered (pd.DataFrame): Filtered input DataFrame.
+    intensity_columns (List[str]): List of intensity column names.
+    id_column (str): Name of the ID column.
+    dataset_label (str): Label for the current dataset.
+
+    Returns:
+    pd.DataFrame: Prepared intensity DataFrame.
+    """
+    intensity_df: pd.DataFrame = df_filtered[intensity_columns].add_prefix(dataset_label + "_")
+    intensity_df["unique_id"] = df_filtered[id_column]
+    return intensity_df
+
+def analyze_and_filter_data(
+    df_filtered: pd.DataFrame,
+    analysis_results: Dict[str, List[Any]],
+    column_type: str,
+    min_data_completeness: float,
+    intensity_columns: List[str],
+    id_column: str,
+    output_directory: str,
+    data_source: str,
+    dataset_label: str,
+    intensity_only_dataframes: List[pd.DataFrame],
+    full_dataframes: List[pd.DataFrame],
+    file_path: str
+) -> Tuple[Dict[str, List[Any]], List[pd.DataFrame], List[pd.DataFrame]]:
+    """
+    Analyze and filter data, update analysis results, and generate plots.
+
+    Args:
+    df_filtered (pd.DataFrame): Filtered input DataFrame.
+    analysis_results (Dict[str, List[Any]]): Current analysis results to update.
+    column_type (str): Type of column being processed.
+    min_data_completeness (float): Minimum data completeness threshold.
+    intensity_columns (List[str]): List of intensity column names.
+    id_column (str): Name of the ID column.
+    output_directory (str): Directory to save output files.
+    data_source (str): Identified data source.
+    dataset_label (str): Label for the current dataset.
+    intensity_only_dataframes (List[pd.DataFrame]): List of intensity-only DataFrames to update.
+    full_dataframes (List[pd.DataFrame]): List of full DataFrames to update.
+    file_path (str): Path of the current file being processed.
+
+    Returns:
+    Tuple containing:
+    - Updated dictionary of analysis results
+    - Updated list of intensity-only DataFrames
+    - Updated list of full DataFrames
+    """
+    analysis_results, df_filtered = calculate_statistics(
+        df_filtered, analysis_results, column_type, min_data_completeness,
+        intensity_columns, id_column
+    )
+    
+    try:
+        generate_correlation_plots(df_filtered, output_directory, data_source, column_type, dataset_label, intensity_columns)
+    except Exception as e:
+        print(f"Error processing {file_path}: {str(e)}")
+        print("Please ensure experiment names end with 1, 2, 3, 4, ...")
+
+    intensity_df: pd.DataFrame = prepare_intensity_dataframe(df_filtered, intensity_columns, id_column, dataset_label)
+    
+    intensity_only_dataframes.append(intensity_df)
+    full_dataframes.append(df_filtered)
+
+    return analysis_results, intensity_only_dataframes, full_dataframes
+
+def calculate_statistics(
+    df_filtered: pd.DataFrame,
+    analysis_results: Dict[str, List[Any]],
+    column_type: str,
+    min_data_completeness: float,
+    intensity_columns: List[str],
+    id_column: str
+) -> Tuple[Dict[str, List[Any]], pd.DataFrame]:
+    """
+    Calculate statistics for the filtered DataFrame and update analysis results.
+
+    Args:
+    df_filtered (pd.DataFrame): Filtered input DataFrame.
+    analysis_results (Dict[str, List[Any]]): Current analysis results to update.
+    column_type (str): Type of column being processed.
+    min_data_completeness (float): Minimum data completeness threshold.
+    intensity_columns (List[str]): List of intensity column names.
+    id_column (str): Name of the ID column.
+
+    Returns:
+    Tuple containing:
+    - Updated dictionary of analysis results
+    - Filtered and processed DataFrame
+    """
+    non_numeric: pd.DataFrame = df_filtered[intensity_columns].applymap(lambda x: not pd.api.types.is_numeric_dtype(pd.Series([x])))
+    if non_numeric.any().any():
+        print("Warning: Non-numeric values found in columns:", intensity_columns)
+        print(df_filtered[intensity_columns][non_numeric.any(axis=1)])
+    
+    df_filtered[f"CV_{column_type}"] = df_filtered[intensity_columns].apply(lambda x: calculate_cv(x), axis=1)
+    
+    df_filtered[f"data_completeness_{column_type}"] = df_filtered[intensity_columns].notna().sum(axis=1) / len(intensity_columns)
+    
+    required_columns: List[str] = [id_column, f"CV_{column_type}", f"data_completeness_{column_type}"] + intensity_columns
+    df_filtered = df_filtered[required_columns][df_filtered[f"data_completeness_{column_type}"] >= min_data_completeness]
+    df_filtered_nonzero: pd.DataFrame = df_filtered[df_filtered[f"data_completeness_{column_type}"] > 0]
+    
+    analysis_results = update_analysis_results(df_filtered, column_type, intensity_columns, analysis_results)
+    
+    return analysis_results, df_filtered
+
+def update_analysis_results(df_filtered: pd.DataFrame, column_type: str, intensity_columns: List[str], analysis_results: Dict[str, List[Any]]) -> Dict[str, List[Any]]:
+    """
+    Update analysis results based on the filtered DataFrame.
+
+    Args:
+    df_filtered (pd.DataFrame): Filtered input DataFrame.
+    column_type (str): Type of column being processed.
+    intensity_columns (List[str]): List of intensity column names.
+    analysis_results (Dict[str, List[Any]]): Current analysis results to update.
+
+    Returns:
+    Dict[str, List[Any]]: Updated dictionary of analysis results.
+    """
+    analysis_results["totalIDs"].append(len(df_filtered))
+    for cv_threshold in [0.2, 0.1, 0.05]:
+        key = f"CV{int(cv_threshold*100)}Percent"
+        analysis_results[key].append(len(df_filtered[df_filtered[f"CV_{column_type}"] <= cv_threshold]))
+
+    ids_per_run: List[int] = [len(df_filtered[column].dropna()) for column in intensity_columns]
+    analysis_results["IDs_per_run"].append(ids_per_run)
+    analysis_results["CV"].append(list(df_filtered[f"CV_{column_type}"]))
+
+    data_completeness_values: List[float] = sorted(set(df_filtered[f"data_completeness_{column_type}"]))
+    ids_above_threshold: List[int] = [len(df_filtered[df_filtered[f"data_completeness_{column_type}"] >= value]) for value in data_completeness_values]
+    analysis_results["DataCompleteness"].append([data_completeness_values, ids_above_threshold])
+
+    return analysis_results
+
+def calculate_cv(x: pd.Series) -> float:
+    """
+    Calculate the coefficient of variation for a given series.
+
+    Args:
+    x (pd.Series): Input series of numeric values.
+
+    Returns:
+    float: Calculated coefficient of variation or NaN if all values are NaN.
+    """
+    x_numeric: pd.Series = pd.to_numeric(x, errors='coerce')
+    if x_numeric.isna().all():
+        return np.nan
+    return np.nanstd(x_numeric, ddof=1) / np.nanmean(x_numeric)
+
+def generate_correlation_plots(
+    df_filtered: pd.DataFrame,
+    output_directory: str,
+    data_source: str,
+    column_type: str,
+    dataset_label: str,
+    intensity_columns: List[str]
+) -> None:
+    """
+    Generate correlation plots for the filtered DataFrame.
+
+    Args:
+    df_filtered (pd.DataFrame): Filtered input DataFrame.
+    output_directory (str): Directory to save output files.
+    data_source (str): Identified data source.
+    column_type (str): Type of column being processed.
+    dataset_label (str): Label for the current dataset.
+    intensity_columns (List[str]): List of intensity column names.
+    """
+    common_prefix: str = find_common_prefix(intensity_columns)
+    
+    plot_sample_correlations(
+        df_filtered,
+        output_directory,
+        data_source,
+        column_type,
+        dataset_label,
+        data_columns=common_prefix + str(list(range(len(intensity_columns) + 1))),
+        font_size=12
+    )
+
+def find_common_prefix(column_names: List[str]) -> str:
+    """
+    Find the common prefix among a list of column names.
+
+    Args:
+    column_names (List[str]): List of column names.
+
+    Returns:
+    str: Common prefix found among the column names.
+    """
+    if not column_names:
+        return ""
+    
+    reference_name: str = column_names[0]
+    for i in range(1, len(column_names)):
+        current_name: str = column_names[i]
+        match: SequenceMatcher.Match = SequenceMatcher(None, reference_name, current_name).find_longest_match(0, len(reference_name), 0, len(current_name))
+        reference_name = reference_name[match.a: match.a + match.size]
+    
+    return reference_name
+
+def create_correlation_plot(df_subset: pd.DataFrame, plot_type: str, correlation_function: Callable, binning: int, font_size: int) -> go.Figure:
+    """ 
+    Create a correlation plot based on the specified plot type.
+
+    Args:
+    df_subset (pd.DataFrame): Subset of the DataFrame to plot.
+    plot_type (str): Type of plot to create ('scatter' or 'heatmap').
+    correlation_function (Callable): Function to calculate correlation.
+    binning (int): Number of bins for the plot.
+    font_size (int): Font size for the plot.
+
+    Returns:
+    go.Figure: Created correlation plot.
+    """
+    if plot_type == "scatter":
+        fig = create_scatter_correlation_plot(df_subset, correlation_function, binning)
+    elif plot_type == "heatmap":
+        fig = create_heatmap_correlation_plot(df_subset, correlation_function)
+    else:
+        raise ValueError("Invalid plot_type. Choose either 'scatter' or 'heatmap'.")
+
+    fig.update_layout(template="simple_white", coloraxis2=dict(showscale=False, colorscale=["black", "black"]),
+                      coloraxis1=dict(showscale=False), font_size=font_size)
+    return fig
+
+def create_scatter_correlation_plot(df_subset: pd.DataFrame, correlation_function: Callable, binning: int) -> go.Figure:
+    """
+    Create a scatter correlation plot.
+
+    Args:
+    df_subset (pd.DataFrame): Subset of the DataFrame to plot.
+    correlation_function (Callable): Function to calculate correlation.
+    binning (int): Number of bins for the plot.
+
+    Returns:
+    go.Figure: Created scatter correlation plot.
+    """
+    fig = make_subplots(rows=len(df_subset.columns), cols=len(df_subset.columns), start_cell='bottom-left',
+                        shared_yaxes=True, shared_xaxes=True, horizontal_spacing=0.03, vertical_spacing=0.03)
+    value_range = (np.floor(np.nanmin(df_subset)), np.ceil(np.nanmax(df_subset))+1/binning)
+    plot_width = plot_height = int((value_range[1]-value_range[0]-1/binning)*binning+1)
+
+    for i, col_i in enumerate(df_subset.columns):
+        for j, col_j in enumerate(df_subset.columns):
+            canvas = ds.Canvas(plot_width=plot_width, plot_height=plot_height, x_range=value_range, y_range=value_range)
+            df_pair = df_subset[[col_i, col_j]].dropna() if i!=j else pd.DataFrame(df_subset[col_i].dropna())
+            agg = canvas.points(df_pair, x=col_i, y=col_j)
+            agg.values = agg.values.astype(float)
+            agg.values[agg.values == 0] = np.nan
+
+            fig.add_trace(go.Heatmap(z=agg, coloraxis="coloraxis1" if i!=j else "coloraxis2"), row=j+1, col=i+1)
+
+            if j == 0:
+                fig.update_xaxes(title_text=col_i, row=j+1, col=i+1, tickvals=list(range(0,plot_width,binning)),
+                                 ticktext=np.round(agg[col_j].values[0:plot_width:binning]))
+            if i == 0:
+                fig.update_yaxes(title_text=col_j, row=j+1, col=i+1, tickvals=list(range(0,plot_height,binning)),
+                                 ticktext=np.round(agg[col_i].values[0:plot_height:binning]))
+            if i!=j:
+                fig.add_annotation(dict(text=str(np.round(np.min(correlation_function(df_subset[[col_i,col_j]].dropna())),4)),
+                                        x=binning, y=plot_height, showarrow=False), row=j+1, col=i+1)
+    return fig
+
+def create_heatmap_correlation_plot(df_subset: pd.DataFrame, correlation_function: Callable) -> go.Figure:
+    """
+    Create a heatmap correlation plot.
+
+    Args:
+    df_subset (pd.DataFrame): Subset of the DataFrame to plot.
+    correlation_function (Callable): Function to calculate correlation.
+
+    Returns:
+    go.Figure: Created heatmap correlation plot.
+    """
+    correlation_matrix = np.ones((len(df_subset.columns), len(df_subset.columns)))
+    for i, col_i in enumerate(df_subset.columns):
+        for j, col_j in enumerate(df_subset.columns):
+            if i!=j:
+                # print(col_i,col_j)
+                # print(df_subset[[col_i,col_j]].head())
+                # print(correlation_function(df_subset[[col_i,col_j]].dropna()))
+                correlation_matrix[i,j] = np.round(np.min(correlation_function(df_subset[[col_i,col_j]].dropna())),4)
+    fig = go.Figure(data=go.Heatmap(z=correlation_matrix))
+    fig.update_xaxes(tickvals=list(range(len(df_subset.columns))), ticktext=list(df_subset.columns))
+    fig.update_yaxes(tickvals=list(range(len(df_subset.columns))), ticktext=list(df_subset.columns))
+    return fig
+
+
+def plot_sample_correlations(
+    df: pd.DataFrame,
+    output_directory: str,
+    data_source: str,
+    column_type: str,
+    dataset_label: str = "",
+    data_columns: str = "Intensity (.*)",
+    correlation_function: Callable[[pd.DataFrame], np.ndarray] = lambda x: np.corrcoef(x.T),
+    plot_type: str = "scatter",
+    log_transform: bool = True,
+    binning: int = 10,
+    font_size: int = 10,
+) -> go.Figure:
+    """
+    Plot sample correlations and save the resulting figure.
+
+    Args:
+    df (pd.DataFrame): Input DataFrame.
+    output_directory (str): Directory to save output files.
+    data_source (str): Identified data source.
+    column_type (str): Type of column being processed.
+    dataset_label (str, optional): Label for the current dataset. Defaults to "".
+    data_columns (str, optional): Regex pattern to select data columns. Defaults to "Intensity (.*)".
+    correlation_function (Callable, optional): Function to calculate correlation. Defaults to Pearson correlation.
+    plot_type (str, optional): Type of plot to create ('scatter' or 'heatmap'). Defaults to "scatter".
+    log_transform (bool, optional): Whether to apply log transformation. Defaults to True.
+    binning (int, optional): Number of bins for the plot. Defaults to 10.
+    font_size (int, optional): Font size for the plot. Defaults to 10.
+
+    Returns:
+    go.Figure: Created correlation plot.
+    """
+    df_subset = df[[col for col in df.columns if re.match(data_columns, col)]].copy()
+    if log_transform:
+        df_subset = df_subset.apply(np.log10)
+    df_subset = df_subset.replace([np.inf, -np.inf], np.nan)
+    df_subset.columns = [re.findall(data_columns, col)[0] for col in df_subset.columns]
+
+    fig = create_correlation_plot(df_subset, plot_type, correlation_function, binning, font_size)
+    
+    if plot_type == "scatter":
+        fig.update_layout(width=len(df_subset.columns)*200+100, height=len(df_subset.columns)*200+50, title=dataset_label)
+        fig.write_image(f"{output_directory}/correlation_plots_pearson_{dataset_label}_{data_source}_{column_type}.pdf")
+    else:
+        fig.update_layout(width=500, height=500, title="Pearson Correlation")
+        fig.write_image(f"{output_directory}/correlation_plots_heatmap_{data_source}_{column_type}.pdf")
+    
+    fig.show()
+    return fig
+
+
+
+
+
+
+# --------------------------------------------------------------------------------------------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+
+
+
+
+
 
 def make_plots(
     column_indicators,
@@ -352,14 +687,19 @@ def make_plots(
         )
 
         # correlation heatmap
-
         dfs_intensity_for_column_indicator = pd.DataFrame()
-        dfs_intensity_for_column_indicator["unique_ID_column"] = []
+        dfs_intensity_for_column_indicator["unique_id"] = []
         for df_temp in list_dfs_only_with_intensity_columns:
             column_list = [col for col in df_temp.columns if column_indicator in col]
-            column_list.append("unique_ID_column")
+            column_list.append("unique_id")
             df_selected = df_temp[column_list]
-            dfs_intensity_for_column_indicator = dfs_intensity_for_column_indicator.merge(df_selected, left_on="unique_ID_column", right_on="unique_ID_column", how='outer')
+            df_selected['unique_id'] = df_selected['unique_id'].astype(str)
+
+            dfs_intensity_for_column_indicator = dfs_intensity_for_column_indicator.merge(
+                df_selected, 
+                on="unique_id", 
+                how='outer'
+            )
 
         # function form Julia P. Schessner, Eugenia Voytik, Isabell Bludau,  https://doi.org/10.1002/pmic.202100103
         cross_corr2 = plot_sample_correlations(
@@ -368,178 +708,117 @@ def make_plots(
             file_type,
             column_indicator,
             data_columns="(.*)"+column_indicator+"(.*)", 
-            mode="heatmap",
+            plot_type="heatmap",  # Changed from mode to plot_type
             font_size=12
         )
 
-        # abundance range illustrated as rank plot
-        rank_plot(
-            list_dfs, 
-            labels,
-            column_indicator,
-            save_output_here,
-            file_type,
-        )
+    #     # abundance range illustrated as rank plot
+    #     rank_plot(
+    #         list_dfs, 
+    #         labels,
+    #         column_indicator,
+    #         save_output_here,
+    #         file_type,
+    #     )
 
-        # abundance range illustrated as rank plot
-        rank_plot_static(
-            list_dfs, 
-            labels,
-            column_indicator,
-            save_output_here,
-            file_type,
-        )
+    #     # abundance range illustrated as rank plot
+    #     rank_plot_static(
+    #         list_dfs, 
+    #         labels,
+    #         column_indicator,
+    #         save_output_here,
+    #         file_type,
+    #     )
 
-    #     # CV values illustrated as rank plot
-        list_scatter_plot_index = rank_plot_static(
-            list_dfs, 
-            labels,
-            column_indicator,
-            save_output_here,
-            file_type,
-            x_value="index",
-            y_value= "CV_"+column_indicator,
-        )
+    # #     # CV values illustrated as rank plot
+    #     list_scatter_plot_index = rank_plot_static(
+    #         list_dfs, 
+    #         labels,
+    #         column_indicator,
+    #         save_output_here,
+    #         file_type,
+    #         x_value="index",
+    #         y_value= "CV_"+column_indicator,
+    #     )
 
-        scatter_density_plot(
-            list_scatter_plot_index,
-            labels,
-            column_indicator,
-            save_output_here,
-            file_type,
-            x_value="index",
-            y_value= "CV_"+column_indicator,
-    #         kde=True
-        )
+    #     scatter_density_plot(
+    #         list_scatter_plot_index,
+    #         labels,
+    #         column_indicator,
+    #         save_output_here,
+    #         file_type,
+    #         x_value="index",
+    #         y_value= "CV_"+column_indicator,
+    # #         kde=True
+    #     )
 
-        # missing value illustrated as rank plot
-        list_scatter_plot_missing_index = rank_plot_static(
-            list_dfs, 
-            labels,
-            column_indicator,
-            save_output_here,
-            file_type,
-            x_value="index",
-            y_value= "missing_value_"+column_indicator,
-        )
-        scatter_density_plot(
-            list_scatter_plot_missing_index,
-            labels,
-            column_indicator,
-            save_output_here,
-            file_type,
-            x_value="index",
-            y_value= "missing_value_"+column_indicator,
-        )
+    #     # missing value illustrated as rank plot
+    #     list_scatter_plot_missing_index = rank_plot_static(
+    #         list_dfs, 
+    #         labels,
+    #         column_indicator,
+    #         save_output_here,
+    #         file_type,
+    #         x_value="index",
+    #         y_value= "data_completeness_"+column_indicator,
+    #     )
+    #     scatter_density_plot(
+    #         list_scatter_plot_missing_index,
+    #         labels,
+    #         column_indicator,
+    #         save_output_here,
+    #         file_type,
+    #         x_value="index",
+    #         y_value= "data_completeness_"+column_indicator,
+    #     )
 
-        # CV illustrated along log2_median
-        list_scatter_plot_log2 = rank_plot_static(
-            list_dfs, 
-            labels,
-            column_indicator,
-            save_output_here,
-            file_type,
-            x_value="log2_median",
-            y_value= "CV_"+column_indicator,
-        )
-        scatter_density_plot(
-            list_scatter_plot_log2,
-            labels,
-            column_indicator,
-            save_output_here,
-            file_type,
-            x_value="log2_median",
-            y_value= "CV_"+column_indicator,
-    #         kde=True
-        )
+    #     # CV illustrated along log2_median
+    #     list_scatter_plot_log2 = rank_plot_static(
+    #         list_dfs, 
+    #         labels,
+    #         column_indicator,
+    #         save_output_here,
+    #         file_type,
+    #         x_value="log2_median",
+    #         y_value= "CV_"+column_indicator,
+    #     )
+    #     scatter_density_plot(
+    #         list_scatter_plot_log2,
+    #         labels,
+    #         column_indicator,
+    #         save_output_here,
+    #         file_type,
+    #         x_value="log2_median",
+    #         y_value= "CV_"+column_indicator,
+    # #         kde=True
+    #     )
 
-        # missing value illustrated along log2_median
-        list_scatter_plot_missing_log2 = rank_plot_static(
-            list_dfs, 
-            labels,
-            column_indicator,
-            save_output_here,
-            file_type,
-            x_value="log2_median",
-            y_value= "missing_value_"+column_indicator,
-        )
-        scatter_density_plot(
-            list_scatter_plot_missing_log2,
-            labels,
-            column_indicator,
-            save_output_here,
-            file_type,
-            x_value="log2_median",
-            y_value= "missing_value_"+column_indicator,
-        )
+    #     # missing value illustrated along log2_median
+    #     list_scatter_plot_missing_log2 = rank_plot_static(
+    #         list_dfs, 
+    #         labels,
+    #         column_indicator,
+    #         save_output_here,
+    #         file_type,
+    #         x_value="log2_median",
+    #         y_value= "data_completeness_"+column_indicator,
+    #     )
+    #     scatter_density_plot(
+    #         list_scatter_plot_missing_log2,
+    #         labels,
+    #         column_indicator,
+    #         save_output_here,
+    #         file_type,
+    #         x_value="log2_median",
+    #         y_value= "data_completeness_"+column_indicator,
+    #     )
 
-        # Venn diagram or upset plot to show shared IDs
-        make_venn_or_upset_plot(
-            list_dfs_only_with_intensity_columns,
-            column_indicator,
-            save_output_here
-        )
-
-
-def calc_cv(x):
-    cv = np.nanstd(x, ddof=1) / np.nanmean(x)
-    return cv
-
-def filter_MaxQuant_output_for_column_indicator(df_filtered, column_indicator):
-    selected_columns = [col for col in df_filtered.columns if column_indicator in col]
-
-    if column_indicator == "iBAQ":
-        selected_columns.remove('iBAQ peptides')
-        selected_columns.remove('iBAQ')
-    elif column_indicator == "Intensity":
-        selected_columns.remove('Intensity')
-    else:
-        next
-    for column in selected_columns:
-        df_filtered[column][df_filtered[column] == 0] = np.nan
-
-    return df_filtered, column_indicator, selected_columns
-
-def filter_dataframe_for_results(df_prefiltered, column_indicator, selected_columns, dict_results):
-
-    dict_results["totalIDs"].append(len(df_prefiltered))
-    dict_results["CV20"].append(len(df_prefiltered[df_prefiltered["CV_"+column_indicator]<=0.2]))
-    dict_results["CV10"].append(len(df_prefiltered[df_prefiltered["CV_"+column_indicator]<=0.1]))
-    dict_results["CV5"].append(len(df_prefiltered[df_prefiltered["CV_"+column_indicator]<=0.05]))
-
-    list_IDs_per_run = list()
-    for column in selected_columns:
-        list_IDs_per_run.append(len(df_prefiltered[column].dropna()))
-    dict_results["IDs_per_run"].append(list_IDs_per_run)
-    dict_results["CV"].append(list(df_prefiltered["CV_"+column_indicator]))
-
-    missing_values = sorted(list(set(df_prefiltered["missing_value_"+column_indicator])))
-    missing_values_total_list = list()
-    for value in missing_values:
-        missing_values_total_list.append(len(df_prefiltered[df_prefiltered["missing_value_"+column_indicator]>=value]))
-    #dict_results["missing_values"].append(missing_values)
-    dict_results["missing_values"].append([missing_values, missing_values_total_list])
-
-    return dict_results
-
-def filter_results_according_to_column_indicator(
-    df_filtered,
-    dict_results,
-    column_indicator,
-    percentage_of_missing_values,
-    selected_columns,
-    unique_ID_column
-):
-
-    df_filtered["CV_"+column_indicator] = df_filtered[selected_columns].apply(lambda x: calc_cv(x), axis = 1)
-    df_filtered["missing_value_"+column_indicator] = df_filtered[selected_columns].apply(lambda x: len(x.dropna())/len(selected_columns), axis = 1)
-    needed_columns = [unique_ID_column, "CV_"+column_indicator,"missing_value_"+column_indicator]+selected_columns
-    df_prefiltered = df_filtered[needed_columns][df_filtered["missing_value_"+column_indicator]>=percentage_of_missing_values]
-    df_prefiltered_2 = df_prefiltered[df_prefiltered["missing_value_"+column_indicator]>0]
-    dict_results = filter_dataframe_for_results(df_prefiltered_2, column_indicator, selected_columns, dict_results)
-    dict_results.update(dict_results)
-
-    return dict_results, df_prefiltered_2
+    #     # Venn diagram or upset plot to show shared IDs
+    #     make_venn_or_upset_plot(
+    #         list_dfs_only_with_intensity_columns,
+    #         column_indicator,
+    #         save_output_here
+    #     )
 
 def bar_plot(
     df,
@@ -608,7 +887,7 @@ def make_bar_bar_plot(
 
 
     bar_plot(
-        df_results_filtered_for_column_indicator[['totalIDs', 'CV20', 'CV10', 'CV5']],
+        df_results_filtered_for_column_indicator[['totalIDs', 'CV20Percent', 'CV10Percent', 'CV5Percent']],
         labels,
         save_name,
         ylabel,
@@ -709,7 +988,7 @@ def bar_missing_value(
     # print(df_results_filtered_for_column_indicator)
     for x in x_pos_pep:
         #create joined data frame
-        list_filtered = df_results_filtered_for_column_indicator["missing_values"].iloc[x]
+        list_filtered = df_results_filtered_for_column_indicator["DataCompleteness"].iloc[x]
         df_temp = pd.DataFrame(np.array([list_filtered[1]]),
                                columns=list_filtered[0])
         df_temp["Type"] = labels[x]
@@ -719,7 +998,7 @@ def bar_missing_value(
     print(df)
     columns_selected = sorted([column for column in df.columns if type(column) != str])
 
-    save_name = save_output_here + "/bar_plot_missing_values_"+ file_type + "_" + column_indicator
+    save_name = save_output_here + "/bar_plot_DataCompleteness_"+ file_type + "_" + column_indicator
     ylabel = find_y_label(file_type) # Name of the y axis for the bar plot
     xlabel = 'Type' # Name or topic of all the columns
     label_box = columns_selected*len(df_results_filtered_for_column_indicator["IDs_per_run"].iloc[0])
@@ -733,131 +1012,6 @@ def bar_missing_value(
         column_indicator,
         label_box
     )
-
-
-def find_common_string(selected_columns):
-    # https://stackoverflow.com/questions/58585052/find-most-common-substring-in-a-list-of-strings
-    string2 = selected_columns[0]
-    for i in range(1, len(selected_columns)):
-        string1 = string2
-        string2 = selected_columns[i]
-        match = SequenceMatcher(None, string1, string2).find_longest_match(0, len(string1), 0, len(string2))
-
-    return string1[match.a: match.a + match.size]
-
-
-# This funciton is taken form https://github.com/MannLabs/ProteomicsVisualization: Notebook Figure4
-# A practical guide to interpreting and generating bottom-up proteomics data visualizations,
-# Julia Patricia Schessner, Eugenia Voytik, Isabell Bludau,  https://doi.org/10.1002/pmic.202100103
-
-def plot_sample_correlations(
-    df: pd.DataFrame,
-    save_output_here,
-    file_type,
-    column_indicator,
-    label="",
-    data_columns: str = "Intensity (.*)",
-    correlation_function: callable = lambda x: np.corrcoef(x.T),
-    mode: str = "scatter", log10: bool = True, binning: int = 10,
-    font_size=10,
-
-    ):
-    """
-    Generates either a grid of paired scatter plots, or a heatmap of pairwise correlation values.
-
-    Parameters
-    ----------
-    df: pandas DataFrame
-    data_columns: regular expression string, default = "Intensity (.*)"
-        Regular expression matching to columns containing data and a capture group for sample labels.
-    correlation_function: callable, default = lambda x: np.corrcoef(x.T)
-        Callable function to calculate correlation between samples.
-    mode: str, default = "scatter"
-        One of 'scatter' and 'heatmap' to swtich modes.
-    log10: bool = True
-        If True, data is log10 transformed prior to analysis
-    binning: int = 10
-        Only relevant in scatter mode. Number of bins per full axis unit (e.g. 1e10 Intensity)
-        used for datashader density rendering.
-
-    Returns
-    -------
-    a plotly Figure
-        either a subplotted, or a single heatmap depending on the mode
-    """
-    # pick and process data
-    df_sub = df[[el for el in df.columns if re.match(data_columns, el)]].copy()
-    if log10:
-        df_sub = df_sub.apply(np.log10)
-    df_sub = df_sub.replace([np.inf, -np.inf], np.nan)
-    df_sub.columns = [re.findall(data_columns, el)[0] for el in df_sub.columns]
-
-    if mode == "scatter":
-        # setup subplots and axes
-        fig = make_subplots(rows=len(df_sub.columns), cols=len(df_sub.columns), start_cell='bottom-left',
-                            shared_yaxes=True, shared_xaxes=True, horizontal_spacing=0.03, vertical_spacing=0.03)
-        i_range = (np.floor(np.nanmin(df_sub)), np.ceil(np.nanmax(df_sub))+1/binning)
-        j_range = (np.floor(np.nanmin(df_sub)), np.ceil(np.nanmax(df_sub))+1/binning)
-        i_width = int((i_range[1]-i_range[0]-1/binning)*binning+1)
-        j_width = int((j_range[1]-j_range[0]-1/binning)*binning+1)
-
-        # fill plots
-        for i,ni in enumerate(df_sub.columns):
-            for j,nj in enumerate(df_sub.columns):
-                # apply datashader
-                dc = ds.Canvas(plot_width=i_width, plot_height=j_width, x_range=i_range, y_range=j_range)
-                df_ij = df_sub[[ni,nj]].dropna() if i!=j else pd.DataFrame(df_sub[ni].dropna())
-                da = dc.points(df_ij, x=ni, y=nj)
-                zero_mask = da.values == 0
-                da.values = da.values.astype(float)
-                da.values[zero_mask] = np.nan
-
-                # add trace
-                fig.add_trace(
-                    go.Heatmap(z=da,coloraxis="coloraxis1" if i!=j else "coloraxis2"),
-                    row=j+1, col=i+1
-                )
-
-                # add annotations
-                if j == 0:
-                    fig.update_xaxes(title_text=ni, row=j+1, col=i+1, tickvals=list(range(0,i_width,binning)),
-                                     ticktext=np.round(da[nj].values[0:i_width:binning]))
-                if i == 0:
-                    fig.update_yaxes(title_text=nj, row=j+1, col=i+1, tickvals=list(range(0,j_width,binning)),
-                                     ticktext=np.round(da[ni].values[0:j_width:binning]))
-                if i!=j:
-                    fig.add_annotation(dict(text=str(np.round(np.min(correlation_function(df_sub[[ni,nj]].dropna())),4)),
-                                            x=binning, y=j_width, showarrow=False), row=j+1, col=i+1)
-
-        # layout figure
-        fig.update_layout(template="simple_white", coloraxis2=dict(showscale=False, colorscale=["black", "black"]),
-                          width=i*200+100, height=j*200+50, title=label)
-        fig.update_layout(coloraxis1=dict(showscale=False), font_size=font_size)
-        fig.write_image(save_output_here + "/correlation_plots_pearson_"+ label + "_" +file_type + "_" + column_indicator + ".pdf")
-        fig.show()
-
-    elif mode=="heatmap":
-        da = np.ones((len(df_sub.columns), len(df_sub.columns)))
-        for i,ni in enumerate(df_sub.columns):
-            for j,nj in enumerate(df_sub.columns):
-                # filter data and store correlation values
-                df_ij = df_sub[[ni,nj]].dropna() if i!=j else pd.DataFrame(df_sub[ni].dropna())
-                if i!=j:
-                    da[i,j] = np.round(np.min(correlation_function(df_sub[[ni,nj]].dropna())),4)
-        # create figure and label axes
-        fig = go.Figure(data=go.Heatmap(z=da))
-        fig.update_xaxes(tickvals=list(range(0,i+1,1)),
-                          ticktext=list(df_sub.columns))
-        fig.update_yaxes(tickvals=list(range(0,j+1,1)),
-                          ticktext=list(df_sub.columns))
-        fig.update_layout(template="simple_white", width=i*50+100, height=j*50+100, title="pearson correlation")
-        fig.update_layout(coloraxis1=dict(showscale=False), font_size=font_size, width=500, height=500)
-        fig.write_image(save_output_here + "/correlation_plots_heatmap_"+ file_type + "_" + column_indicator + ".pdf")
-        fig.show()
-    else:
-        raise ValueError
-    return fig
-
 
 def rank_plot(
     list_dfs,
@@ -885,7 +1039,7 @@ def rank_plot(
 
             dict_labels = {
                 "index": "Rank", "log10_median": "Median Intensities (log10)",
-                "CV_"+column_indicator: "CV", "missing_value_"+column_indicator: "missing value ratio"
+                "CV_"+column_indicator: "CV", "data_completeness_"+column_indicator: "missing value ratio"
             }
             x_axis_label = dict_labels[x_value]
             y_axis_label = dict_labels[y_value]
@@ -953,7 +1107,6 @@ def rank_plot(
     return fig1
 
 
-
 def rank_plot_static(
     list_dfs,
     labels,
@@ -996,7 +1149,7 @@ def rank_plot_static(
             next
     dict_labels = {
         "index": "Rank", "log10_median": "Median Intensities (log10)", "log2_median": "Median Intensities (log2)",
-        "CV_"+column_indicator: "CV", "missing_value_"+column_indicator: "missing value ratio"
+        "CV_"+column_indicator: "CV", "data_completeness_"+column_indicator: "missing value ratio"
     }
     x_axis_label = dict_labels[x_value]
     y_axis_label = dict_labels[y_value]
@@ -1025,7 +1178,7 @@ def scatter_density_plot(
 ):
     dict_labels = {
         "index": "Rank", "log10_median": "Median Intensities (log10)", "log2_median": "Median Intensities (log2)",
-        "CV_"+column_indicator: "CV", "missing_value_"+column_indicator: "missing value ratio"
+        "CV_"+column_indicator: "CV", "data_completeness_"+column_indicator: "missing value ratio"
     }
     x_axis_label = dict_labels[x_value]
     y_axis_label = dict_labels[y_value]
@@ -1048,7 +1201,6 @@ def scatter_density_plot(
         plt.show()
 
 
-
 def make_venn_or_upset_plot(list_dfs_only_with_intensity_columns, column_indicator, save_output_here):
 
     set_all = set()
@@ -1057,7 +1209,7 @@ def make_venn_or_upset_plot(list_dfs_only_with_intensity_columns, column_indicat
     for df_temp in list_dfs_only_with_intensity_columns:
         if True in df_temp.columns.str.contains(column_indicator):
             label = df_temp.columns[0].split(column_indicator)[0]
-            set_temp = set(df_temp["unique_ID_column"])
+            set_temp = set(df_temp["unique_id"])
             set_all = set_all.union(set_temp)
             dict_set[label] = set_temp
         else:
@@ -1131,112 +1283,5 @@ def make_upset_plot(dict_set, set_all, save_output_here, column_indicator):
     plt.savefig(save_output_here + "/upset_plot_"+ column_indicator + ".pdf", bbox_inches='tight', pad_inches=0,dpi=300)
     plt.show()
 
-def filter_DIANN_output_for_column_indicator(df):
-    column_indicator = "Intensity"
-    selected_columns = [col for col in df.columns if ".d" in col]
-
-    ind = 0
-    new_selected_columns = []
-    for intensity_column in selected_columns:
-        str_new = column_indicator+"_"+str(ind+1)
-        new_selected_columns.append(str_new)
-        df[str_new] = df[intensity_column]
-        ind += 1
-    print("Column_names changed from:")
-    print(selected_columns)
-    print("to:")
-    print(new_selected_columns)
-    return df, column_indicator, new_selected_columns
 
 
-def filter_alphadia_output_for_column_indicator(df):
-    column_indicator = "Intensity"
-    selected_columns = [col for col in df.columns if (not "pg" in col) & (not 'mod_seq_charge_hash' in col) & (not 'mod_seq_hash' in col)& (not 'precursor' in col)]
-    for column in selected_columns:
-        df[column][df[column] == 0] = np.nan
-
-    ind = 0
-    new_selected_columns = []
-    for intensity_column in selected_columns:
-        str_new = column_indicator+"_"+str(ind+1)
-        new_selected_columns.append(str_new)
-        df[str_new] = df[intensity_column]
-        ind += 1
-    print("Column_names changed from:")
-    print(selected_columns)
-    print("to:")
-    print(new_selected_columns)
-    return df, column_indicator, new_selected_columns
-
-
-def filter_spectronaut_output_for_column_indicator(df):
-    column_indicator = "Intensity"
-    if "EG.PrecursorId" in df.columns:
-        selected_columns = [col for col in df.columns if ("[" in col) & ("PG.Quantity" not in col)]
-    else:
-        selected_columns = [col for col in df.columns if "[" in col]
-    ind = 0
-    new_selected_columns = []
-    for intensity_column in selected_columns:
-        str_new = column_indicator+"_"+str(ind+1)
-        new_selected_columns.append(str_new)
-        df[str_new] = df[intensity_column]
-        ind += 1
-    print("Column_names changed from:")
-    print(selected_columns)
-    print("to:")
-    print(new_selected_columns)
-    return df, column_indicator, new_selected_columns
-
-def filter_tables_and_make_correlation_plots(
-    df_filtered,
-    dict_results,
-    column_indicator,
-    percentage_of_missing_values,
-    selected_columns,
-    unique_ID_column,
-    save_output_here,
-    file_type,
-    label,
-    list_dfs_only_with_intensity_columns,
-    list_dfs,
-    file_name
-
-):
-    # Here starts the general part, which is not specific for MaxQuant
-    dict_results, df_prefiltered = filter_results_according_to_column_indicator(
-        df_filtered,
-        dict_results,
-        column_indicator,
-        percentage_of_missing_values,
-        selected_columns,
-        unique_ID_column
-    )
-    # pearson correlation plots
-    error_files = []
-    try:
-        common_string = find_common_string(selected_columns)
-
-        # function form Julia Patricia Schessner, Eugenia Voytik, Isabell Bludau,  https://doi.org/10.1002/pmic.202100103
-        cross_corr = plot_sample_correlations(
-            df_prefiltered,
-            save_output_here,
-            file_type,
-            column_indicator,
-            label,
-            data_columns=common_string+str(list(range(len(selected_columns)+1))),
-        #     font_size=12
-        )
-    except Exception as e:
-        print(e)
-        error_files.append(file_name)
-        print("error processing: {}".format(file_name))
-        print("Did you name the experiments ending with 1, 2, 3, 4, ...?")
-
-    df_prefiltered_mod = df_prefiltered[selected_columns].add_prefix(label)
-    df_prefiltered_mod["unique_ID_column"] = df_prefiltered[unique_ID_column]
-
-    list_dfs_only_with_intensity_columns.append(df_prefiltered_mod)
-    list_dfs.append(df_prefiltered)
-
-    return dict_results, list_dfs_only_with_intensity_columns, list_dfs
