@@ -712,113 +712,113 @@ def make_plots(
             font_size=12
         )
 
-    #     # abundance range illustrated as rank plot
-    #     rank_plot(
-    #         list_dfs, 
-    #         labels,
-    #         column_indicator,
-    #         save_output_here,
-    #         file_type,
-    #     )
+        # abundance range illustrated as rank plot
+        rank_plot(
+            list_dfs, 
+            labels,
+            column_indicator,
+            save_output_here,
+            file_type,
+        )
 
-    #     # abundance range illustrated as rank plot
-    #     rank_plot_static(
-    #         list_dfs, 
-    #         labels,
-    #         column_indicator,
-    #         save_output_here,
-    #         file_type,
-    #     )
+        # abundance range illustrated as rank plot
+        rank_plot_static(
+            list_dfs, 
+            labels,
+            column_indicator,
+            save_output_here,
+            file_type,
+        )
 
-    # #     # CV values illustrated as rank plot
-    #     list_scatter_plot_index = rank_plot_static(
-    #         list_dfs, 
-    #         labels,
-    #         column_indicator,
-    #         save_output_here,
-    #         file_type,
-    #         x_value="index",
-    #         y_value= "CV_"+column_indicator,
-    #     )
+    #     # CV values illustrated as rank plot
+        list_scatter_plot_index = rank_plot_static(
+            list_dfs, 
+            labels,
+            column_indicator,
+            save_output_here,
+            file_type,
+            x_value="index",
+            y_value= "CV_"+column_indicator,
+        )
 
-    #     scatter_density_plot(
-    #         list_scatter_plot_index,
-    #         labels,
-    #         column_indicator,
-    #         save_output_here,
-    #         file_type,
-    #         x_value="index",
-    #         y_value= "CV_"+column_indicator,
-    # #         kde=True
-    #     )
+        scatter_density_plot(
+            list_scatter_plot_index,
+            labels,
+            column_indicator,
+            save_output_here,
+            file_type,
+            x_value="index",
+            y_value= "CV_"+column_indicator,
+    #         kde=True
+        )
 
-    #     # missing value illustrated as rank plot
-    #     list_scatter_plot_missing_index = rank_plot_static(
-    #         list_dfs, 
-    #         labels,
-    #         column_indicator,
-    #         save_output_here,
-    #         file_type,
-    #         x_value="index",
-    #         y_value= "data_completeness_"+column_indicator,
-    #     )
-    #     scatter_density_plot(
-    #         list_scatter_plot_missing_index,
-    #         labels,
-    #         column_indicator,
-    #         save_output_here,
-    #         file_type,
-    #         x_value="index",
-    #         y_value= "data_completeness_"+column_indicator,
-    #     )
+        # missing value illustrated as rank plot
+        list_scatter_plot_missing_index = rank_plot_static(
+            list_dfs, 
+            labels,
+            column_indicator,
+            save_output_here,
+            file_type,
+            x_value="index",
+            y_value= "data_completeness_"+column_indicator,
+        )
+        scatter_density_plot(
+            list_scatter_plot_missing_index,
+            labels,
+            column_indicator,
+            save_output_here,
+            file_type,
+            x_value="index",
+            y_value= "data_completeness_"+column_indicator,
+        )
 
-    #     # CV illustrated along log2_median
-    #     list_scatter_plot_log2 = rank_plot_static(
-    #         list_dfs, 
-    #         labels,
-    #         column_indicator,
-    #         save_output_here,
-    #         file_type,
-    #         x_value="log2_median",
-    #         y_value= "CV_"+column_indicator,
-    #     )
-    #     scatter_density_plot(
-    #         list_scatter_plot_log2,
-    #         labels,
-    #         column_indicator,
-    #         save_output_here,
-    #         file_type,
-    #         x_value="log2_median",
-    #         y_value= "CV_"+column_indicator,
-    # #         kde=True
-    #     )
+        # CV illustrated along log2_median
+        list_scatter_plot_log2 = rank_plot_static(
+            list_dfs, 
+            labels,
+            column_indicator,
+            save_output_here,
+            file_type,
+            x_value="log2_median",
+            y_value= "CV_"+column_indicator,
+        )
+        scatter_density_plot(
+            list_scatter_plot_log2,
+            labels,
+            column_indicator,
+            save_output_here,
+            file_type,
+            x_value="log2_median",
+            y_value= "CV_"+column_indicator,
+    #         kde=True
+        )
 
-    #     # missing value illustrated along log2_median
-    #     list_scatter_plot_missing_log2 = rank_plot_static(
-    #         list_dfs, 
-    #         labels,
-    #         column_indicator,
-    #         save_output_here,
-    #         file_type,
-    #         x_value="log2_median",
-    #         y_value= "data_completeness_"+column_indicator,
-    #     )
-    #     scatter_density_plot(
-    #         list_scatter_plot_missing_log2,
-    #         labels,
-    #         column_indicator,
-    #         save_output_here,
-    #         file_type,
-    #         x_value="log2_median",
-    #         y_value= "data_completeness_"+column_indicator,
-    #     )
+        # missing value illustrated along log2_median
+        list_scatter_plot_missing_log2 = rank_plot_static(
+            list_dfs, 
+            labels,
+            column_indicator,
+            save_output_here,
+            file_type,
+            x_value="log2_median",
+            y_value= "data_completeness_"+column_indicator,
+        )
+        scatter_density_plot(
+            list_scatter_plot_missing_log2,
+            labels,
+            column_indicator,
+            save_output_here,
+            file_type,
+            x_value="log2_median",
+            y_value= "data_completeness_"+column_indicator,
+        )
 
-    #     # Venn diagram or upset plot to show shared IDs
-    #     make_venn_or_upset_plot(
-    #         list_dfs_only_with_intensity_columns,
-    #         column_indicator,
-    #         save_output_here
-    #     )
+        # Venn diagram or upset plot to show shared IDs
+        make_venn_or_upset_plot(
+            list_dfs_only_with_intensity_columns,
+            column_indicator,
+            save_output_here
+        )
 
 def bar_plot(
     df,
