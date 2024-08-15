@@ -3,8 +3,9 @@
 # Standard library imports
 import math
 import re
+import os
 from difflib import SequenceMatcher
-from typing import List, Dict, Any, Tuple, Callable, Union
+from typing import List, Dict, Any, Tuple, Callable, Union, Set, Optional
 
 # Data manipulation and analysis
 import numpy as np
@@ -43,8 +44,44 @@ def process_proteomics_data(
     file_paths: List[str],
     min_data_completeness: float,
     output_directory: str,
-    dataset_labels: List[str]
+    dataset_labels: List[str],
+    filter_columns: List[str] = None
 ) -> Tuple[List[str], Dict[str, List[Any]], str, List[str], List[pd.DataFrame], List[pd.DataFrame]]:
+    """
+    Process proteomics data from multiple files and perform analysis.
+
+    This function reads proteomics data from the provided file paths, identifies the data source,
+    analyzes the data, and compiles the results. It can optionally filter the data based on
+    specified columns.
+
+    Args:
+        file_paths (List[str]): A list of file paths to the proteomics data files.
+        min_data_completeness (float): The minimum data completeness threshold for filtering.
+        output_directory (str): The directory where output files will be saved.
+        dataset_labels (List[str]): Labels for each dataset corresponding to the file paths.
+        filter_columns (List[str], optional): Columns to use for filtering the data. Defaults to None.
+
+    Returns:
+        Tuple[List[str], Dict[str, List[Any]], str, List[str], List[pd.DataFrame], List[pd.DataFrame]]:
+            - List[str]: Types of columns identified in the data.
+            - Dict[str, List[Any]]: Analysis results containing various metrics.
+            - str: Identified data source type.
+            - List[str]: List of processed file paths.
+            - List[pd.DataFrame]: List of DataFrames containing only intensity data.
+            - List[pd.DataFrame]: List of full DataFrames with all processed data.
+
+    The analysis_results dictionary contains the following keys:
+        - "totalIDs": Total number of identifications.
+        - "CV20Percent": Number of identifications with CV <= 20%.
+        - "CV10Percent": Number of identifications with CV <= 10%.
+        - "CV5Percent": Number of identifications with CV <= 5%.
+        - "IDs_per_run": Number of identifications per run.
+        - "CV": Coefficient of variation values.
+        - "DataCompleteness": Data completeness metrics.
+
+    Each file is processed individually, and the results are aggregated. If filter_columns
+    are provided, the analysis is performed for each filter condition separately.
+    """
     analysis_results: Dict[str, List[Any]] = {
         "totalIDs": [],
         "CV20Percent": [],
@@ -62,17 +99,32 @@ def process_proteomics_data(
         data_source: str = identify_data_source(df)
         
         if data_source:
-            column_types, analysis_results, intensity_only_dataframes, full_dataframes = analyze_dataframe(
-                df=df,
-                analysis_results=analysis_results,
-                min_data_completeness=min_data_completeness,
-                output_directory=output_directory,
-                data_source=data_source,
-                dataset_label=dataset_labels[index],
-                intensity_only_dataframes=intensity_only_dataframes,
-                full_dataframes=full_dataframes,
-                file_path=file_path
-            )
+            if filter_columns:
+                for filter_condition in filter_columns:
+                    column_types, analysis_results, intensity_only_dataframes, full_dataframes = analyze_dataframe(
+                        df=df,
+                        analysis_results=analysis_results,
+                        min_data_completeness=min_data_completeness,
+                        output_directory=output_directory,
+                        data_source=data_source,
+                        dataset_label=f"{dataset_labels[index]}_{filter_condition}",
+                        intensity_only_dataframes=intensity_only_dataframes,
+                        full_dataframes=full_dataframes,
+                        file_path=file_path,
+                        filter_columns=filter_condition
+                    )
+            else:
+                column_types, analysis_results, intensity_only_dataframes, full_dataframes = analyze_dataframe(
+                    df=df,
+                    analysis_results=analysis_results,
+                    min_data_completeness=min_data_completeness,
+                    output_directory=output_directory,
+                    data_source=data_source,
+                    dataset_label=dataset_labels[index],
+                    intensity_only_dataframes=intensity_only_dataframes,
+                    full_dataframes=full_dataframes,
+                    file_path=file_path
+                )
 
     return column_types, analysis_results, data_source, file_paths, intensity_only_dataframes, full_dataframes
 
@@ -114,7 +166,8 @@ def analyze_dataframe(
     dataset_label: str,
     intensity_only_dataframes: List[pd.DataFrame],
     full_dataframes: List[pd.DataFrame],
-    file_path: str
+    file_path: str,
+    filter_columns: str = None  
 ) -> Tuple[List[str], Dict[str, List[Any]], List[pd.DataFrame], List[pd.DataFrame]]:
     """
     Analyze a single DataFrame and update analysis results.
@@ -129,6 +182,7 @@ def analyze_dataframe(
     intensity_only_dataframes (List[pd.DataFrame]): List of intensity-only DataFrames to update.
     full_dataframes (List[pd.DataFrame]): List of full DataFrames to update.
     file_path (str): Path of the current file being processed.
+    filter_columns (str): str to filter column names for.
 
     Returns:
     Tuple containing:
@@ -140,14 +194,15 @@ def analyze_dataframe(
     config: Dict[str, Union[str, List[str]]] = get_data_source_config(data_source)
     id_column: str = config["id_column"]
     column_types: List[str] = config["column_types"]
-    
+
     for column_type in column_types:
-        df_filtered, intensity_columns = preprocess_columns(df, column_type, data_source)
+        df_filtered, intensity_columns = preprocess_columns(df, column_type, data_source, filter_columns) 
         
         analysis_results, intensity_only_dataframes, full_dataframes = analyze_and_filter_data(
             df_filtered, analysis_results, column_type, min_data_completeness,
             intensity_columns, id_column, output_directory, data_source,
-            dataset_label, intensity_only_dataframes, full_dataframes, file_path
+            dataset_label, intensity_only_dataframes, full_dataframes, file_path,
+            filter_columns 
         )
     
     return column_types, analysis_results, intensity_only_dataframes, full_dataframes
@@ -176,7 +231,7 @@ def get_data_source_config(data_source: str) -> Dict[str, Union[str, List[str]]]
     }
     return data_source_config[data_source]
 
-def preprocess_columns(df: pd.DataFrame, column_type: str, data_source: str) -> Tuple[pd.DataFrame, List[str]]:
+def preprocess_columns(df: pd.DataFrame, column_type: str, data_source: str, filter_columns: str = None) -> Tuple[pd.DataFrame, List[str]]:
     """
     Preprocess columns based on the data source and column type.
 
@@ -184,13 +239,14 @@ def preprocess_columns(df: pd.DataFrame, column_type: str, data_source: str) -> 
     df (pd.DataFrame): Input DataFrame.
     column_type (str): Type of column to process.
     data_source (str): Identified data source.
+    filter_columns (str): str to filter column names for.
 
     Returns:
     Tuple containing:
     - Processed DataFrame
     - List of intensity column names
     """
-    return filter_and_rename_columns(df, data_source, column_type)
+    return filter_and_rename_columns(df, data_source, column_type, filter_columns)
 
 def select_and_rename_columns(df: pd.DataFrame, selection_criteria: Callable[[str], bool], prefix: str = "") -> Tuple[pd.DataFrame, List[str]]:
     """
@@ -214,7 +270,7 @@ def select_and_rename_columns(df: pd.DataFrame, selection_criteria: Callable[[st
     print(f"New column names: {new_column_names}")
     return df, new_column_names
 
-def filter_and_rename_columns(df: pd.DataFrame, data_source: str, column_type: str) -> Tuple[pd.DataFrame, List[str]]:
+def filter_and_rename_columns(df: pd.DataFrame, data_source: str, column_type: str, filter_columns: str = None) -> Tuple[pd.DataFrame, List[str]]:
     """
     Filter and rename columns based on the data source and column type.
 
@@ -222,6 +278,7 @@ def filter_and_rename_columns(df: pd.DataFrame, data_source: str, column_type: s
     df (pd.DataFrame): Input DataFrame.
     data_source (str): Identified data source.
     column_type (str): Type of column to process.
+    filter_columns (str): str to filter column names for.
 
     Returns:
     Tuple containing:
@@ -229,16 +286,16 @@ def filter_and_rename_columns(df: pd.DataFrame, data_source: str, column_type: s
     - List of new column names
     """
     if data_source.startswith('maxquant_'):
-        selection_criteria = lambda col: column_type in col and col not in ['iBAQ peptides', 'iBAQ', 'Intensity']
+        selection_criteria = lambda col: column_type in col and col not in ['iBAQ peptides', 'iBAQ', 'Intensity'] and (filter_columns is None or filter_columns in col)
         return select_and_rename_columns(df, selection_criteria)
     elif data_source.startswith('alphadia_'):
-        selection_criteria = lambda col: not any(x in col for x in ['pg', 'mod_seq_charge_hash', 'mod_seq_hash', 'precursor'])
+        selection_criteria = lambda col: not any(x in col for x in ['pg', 'mod_seq_charge_hash', 'mod_seq_hash', 'precursor']) and (filter_columns is None or filter_columns in col)
         return select_and_rename_columns(df, selection_criteria, "Intensity_")
     elif data_source.startswith('diann_'):
-        selection_criteria = lambda col: ".d" in col
+        selection_criteria = lambda col: ".d" in col and (filter_columns is None or filter_columns in col)
         return select_and_rename_columns(df, selection_criteria, "Intensity_")
     elif data_source.startswith('spectronaut_'):
-        selection_criteria = lambda col: ("[" in col) and ("PG.Quantity" not in col) if "EG.PrecursorId" in df.columns else "[" in col
+        selection_criteria = lambda col: ("[" in col) and ("PG.Quantity" not in col) and (filter_columns is None or filter_columns in col) if "EG.PrecursorId" in df.columns else "[" in col and (filter_columns is None or filter_columns in col)
         df, new_columns = select_and_rename_columns(df, selection_criteria, "Intensity_")
         for col in new_columns:
             df[col] = pd.to_numeric(df[col].replace('Filtered', np.nan), errors='coerce')
@@ -275,7 +332,8 @@ def analyze_and_filter_data(
     dataset_label: str,
     intensity_only_dataframes: List[pd.DataFrame],
     full_dataframes: List[pd.DataFrame],
-    file_path: str
+    file_path: str,
+    filter_columns: str = None 
 ) -> Tuple[Dict[str, List[Any]], List[pd.DataFrame], List[pd.DataFrame]]:
     """
     Analyze and filter data, update analysis results, and generate plots.
@@ -293,6 +351,7 @@ def analyze_and_filter_data(
     intensity_only_dataframes (List[pd.DataFrame]): List of intensity-only DataFrames to update.
     full_dataframes (List[pd.DataFrame]): List of full DataFrames to update.
     file_path (str): Path of the current file being processed.
+    filter_columns (str): str to filter column names for.
 
     Returns:
     Tuple containing:
@@ -306,7 +365,7 @@ def analyze_and_filter_data(
     )
     
     try:
-        generate_correlation_plots(df_filtered, output_directory, data_source, column_type, dataset_label, intensity_columns)
+        generate_correlation_plots(df_filtered, output_directory, data_source, column_type, dataset_label, intensity_columns)  
     except Exception as e:
         print(f"Error processing {file_path}: {str(e)}")
         print("Please ensure experiment names end with 1, 2, 3, 4, ...")
@@ -408,8 +467,9 @@ def generate_correlation_plots(
     data_source: str,
     column_type: str,
     dataset_label: str,
-    intensity_columns: List[str]
+    intensity_columns: List[str],
 ) -> None:
+
     """
     Generate correlation plots for the filtered DataFrame.
 
@@ -430,7 +490,7 @@ def generate_correlation_plots(
         column_type,
         dataset_label,
         data_columns=common_prefix + str(list(range(len(intensity_columns) + 1))),
-        font_size=12
+        font_size=12,
     )
 
 def find_common_prefix(column_names: List[str]) -> str:
@@ -596,7 +656,6 @@ def plot_sample_correlations(
 
 
 
-
 # --------------------------------------------------------------------------------------------------------------------------------------------------------------
 # --------------------------------------------------------------------------------------------------------------------------------------------------------------
 # --------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -613,253 +672,276 @@ def plot_sample_correlations(
 
 
 
+def generate_all_plots(
+    data_column_identifiers: List[str],
+    results_dictionary: Dict[str, Any],
+    labels: List[str],
+    output_directory: str,
+    data_file_type: str,
+    file_names: List[str],
+    intensity_data_frames: List[pd.DataFrame],
+    all_data_frames: List[pd.DataFrame],
+    filter_columns: List[str] = None
+) -> None:
+    """
+    Generate all plots for the given data.
 
+    Args:
+        data_column_identifiers (List[str]): List of column identifiers.
+        results_dictionary (Dict[str, Any]): Dictionary containing results data.
+        labels (List[str]): List of labels for the data.
+        output_directory (str): Directory to save output files.
+        data_file_type (str): Type of data file being analyzed.
+        file_names (List[str]): List of file names.
+        intensity_data_frames (List[pd.DataFrame]): List of DataFrames with intensity data.
+        all_data_frames (List[pd.DataFrame]): List of all DataFrames.
+        filter_columns (List[str], optional): List of columns to filter by. Defaults to None.
 
+    Returns:
+        None
+    """
+    os.makedirs(output_directory, exist_ok=True)
 
+    for column_identifier in data_column_identifiers:
+        labels2: List[str] = [f"{label}_{filter_col}" for label in labels for filter_col in (filter_columns or [])] or labels
 
+        results_df: pd.DataFrame = pd.DataFrame(results_dictionary)
+        print(labels2, results_df)
+        column_identifier_index: int = data_column_identifiers.index(column_identifier)
 
-def make_plots(
-    column_indicators,
-    dict_results,
-    labels,
-    save_output_here, 
-    file_type,
-    file_names,
-    list_dfs_only_with_intensity_columns,
-    list_dfs
-    ):
-
-    for column_indicator in column_indicators:
-
-        # bar plots with CVs
-        df_results = pd.DataFrame(dict_results)
-        index_column_indicator = column_indicators.index(column_indicator)
-
-        list_filtered_for_column_indicator = list()
-        for file_num in range(len(file_names)):
-            list_filtered_for_column_indicator.append(index_column_indicator + len(column_indicators) * file_num)
-
-        df_results_filtered_for_column_indicator = df_results.iloc[list_filtered_for_column_indicator]
-        print(df_results_filtered_for_column_indicator)
-
-        # print([x for x in df_results_filtered_for_column_indicator["CV"].iloc[0] if not math.isnan(x)])
-
-        print(np.median([x for x in df_results_filtered_for_column_indicator["CV"].iloc[0] if not math.isnan(x)]),
-              np.median([x for x in df_results_filtered_for_column_indicator["CV"].iloc[1] if not math.isnan(x)]),
-            #   np.median(df_results_filtered_for_column_indicator["CV"].iloc[2]),
-             )
-
-        make_bar_bar_plot(
-            df_results_filtered_for_column_indicator,
-            labels,
-            save_output_here, 
-            file_type,
-            column_indicator,
+        filtered_indices: List[int] = _get_filtered_indices(
+            column_identifier_index, len(data_column_identifiers), len(file_names), filter_columns
         )
 
-        print("The following plot requires an equal number of replicates in all analysis output files")
-        bar_missing_value(
-            df_results_filtered_for_column_indicator,
-            labels,
-            save_output_here,
-            file_type,
-            column_indicator    
+        filtered_results_df: pd.DataFrame = results_df.iloc[filtered_indices]
+
+        # Calculate and print median CV values
+        print_median_cv_values(filtered_results_df, labels2)
+
+        generate_and_save_individual_plots(
+            filtered_results_df, labels2, output_directory, data_file_type, column_identifier, 
+            intensity_data_frames, all_data_frames
         )
 
-        # bar plot with error bar per run and average ID rates
-        plot_IDs_per_run(
-            df_results_filtered_for_column_indicator,
-            labels,
-            save_output_here,
-            file_type,
-            column_indicator,
-            dotsize = 10,
-            capsize = 22
-        )
+def print_median_cv_values(filtered_results_df: pd.DataFrame, labels: List[str]) -> None:
+    """
+    Print median CV values for each sample in the filtered results DataFrame.
 
-        # Violin plots of CVs
-        generate_violin_plots(
-            df_results_filtered_for_column_indicator,
-            labels,
-            save_output_here,
-            file_type,
-            column_indicator
-        )
+    Args:
+        filtered_results_df (pd.DataFrame): DataFrame containing filtered results.
+        labels (List[str]): List of labels for each sample.
 
-        # correlation heatmap
-        dfs_intensity_for_column_indicator = pd.DataFrame()
-        dfs_intensity_for_column_indicator["unique_id"] = []
-        for df_temp in list_dfs_only_with_intensity_columns:
-            column_list = [col for col in df_temp.columns if column_indicator in col]
-            column_list.append("unique_id")
-            df_selected = df_temp[column_list]
-            df_selected['unique_id'] = df_selected['unique_id'].astype(str)
+    Returns:
+        None
+    """
+    print("Median CV values:")
+    for i, label in enumerate(labels):
+        if i < len(filtered_results_df["CV"]):
+            cv_values = filtered_results_df["CV"].iloc[i]
+            if isinstance(cv_values, list):
+                median_cv = np.median([x for x in cv_values if not np.isnan(x)])
+                print(f"Sample {label}: {median_cv}")
+            else:
+                print(f"Sample {label}: CV data is not in the expected list format")
+        else:
+            print(f"Sample {label}: No CV data available")
+    print()  # Add a blank line for better readability
 
-            dfs_intensity_for_column_indicator = dfs_intensity_for_column_indicator.merge(
-                df_selected, 
-                on="unique_id", 
-                how='outer'
-            )
+def generate_and_save_individual_plots(
+    filtered_results_df: pd.DataFrame,
+    labels: List[str],
+    output_directory: str,
+    data_file_type: str,
+    column_identifier: str,
+    intensity_data_frames: List[pd.DataFrame],
+    all_data_frames: List[pd.DataFrame]
+) -> None:
+    """
+    Generate and save individual plots for the given data.
 
-        # function form Julia P. Schessner, Eugenia Voytik, Isabell Bludau,  https://doi.org/10.1002/pmic.202100103
-        cross_corr2 = plot_sample_correlations(
-            dfs_intensity_for_column_indicator,
-            save_output_here,
-            file_type,
-            column_indicator,
-            data_columns="(.*)"+column_indicator+"(.*)", 
-            plot_type="heatmap",  # Changed from mode to plot_type
+    Args:
+        filtered_results_df (pd.DataFrame): DataFrame containing filtered results.
+        labels (List[str]): List of labels for the data.
+        output_directory (str): Directory to save output files.
+        data_file_type (str): Type of data file being analyzed.
+        column_identifier (str): Identifier for the current column.
+        intensity_data_frames (List[pd.DataFrame]): List of DataFrames with intensity data.
+        all_data_frames (List[pd.DataFrame]): List of all DataFrames.
+
+    Returns:
+        None
+    """
+    create_cv_bar_plot(filtered_results_df, labels, output_directory, data_file_type, column_identifier)
+    plot_identifications_per_run(filtered_results_df, labels, output_directory, data_file_type, column_identifier)
+    plot_missing_value_bars(filtered_results_df, labels, output_directory, data_file_type, column_identifier)
+    generate_violin_plots(filtered_results_df, labels, output_directory, data_file_type, column_identifier)
+    
+    if intensity_data_frames:
+        combined_df = merge_intensity_dataframes(intensity_data_frames)
+        plot_sample_correlations(
+            combined_df,
+            output_directory,
+            data_file_type,
+            column_identifier,
+            data_columns="(.*)"+column_identifier+"(.*)", 
+            plot_type="heatmap",
             font_size=12
         )
+    else:
+        print("No data available for correlation plot.")
 
-        # abundance range illustrated as rank plot
-        rank_plot(
-            list_dfs, 
-            labels,
-            column_indicator,
-            save_output_here,
-            file_type,
-        )
+    create_interactive_rank_plot(all_data_frames, labels, column_identifier, output_directory, data_file_type)
+    create_static_rank_plot(all_data_frames, labels, column_identifier, output_directory, data_file_type)
+    create_venn_or_upset_plot(intensity_data_frames, column_identifier, output_directory)
+    # create_scatter_density_plot(all_data_frames, labels, column_identifier, output_directory, data_file_type, x_value="index", y_value="CV")
+    # create_scatter_density_plot(all_data_frames, labels, column_identifier, output_directory, data_file_type, x_value="index", y_value="missing_value_ratio")
+    create_scatter_density_plot(all_data_frames, labels, column_identifier, output_directory, data_file_type, x_value="log2_median", y_value="CV")
+    # create_scatter_density_plot(all_data_frames, labels, column_identifier, output_directory, data_file_type, x_value="log2_median", y_value="missing_value_ratio")
 
-        # abundance range illustrated as rank plot
-        rank_plot_static(
-            list_dfs, 
-            labels,
-            column_indicator,
-            save_output_here,
-            file_type,
-        )
+def merge_intensity_dataframes(intensity_data_frames: List[pd.DataFrame]) -> pd.DataFrame:
+    """
+    Merge multiple intensity dataframes based on the 'unique_id' column.
 
-    #     # CV values illustrated as rank plot
-        list_scatter_plot_index = rank_plot_static(
-            list_dfs, 
-            labels,
-            column_indicator,
-            save_output_here,
-            file_type,
-            x_value="index",
-            y_value= "CV_"+column_indicator,
-        )
+    This function takes a list of pandas DataFrames, each containing intensity data
+    and a 'unique_id' column. It merges these dataframes on the 'unique_id' column,
+    keeping all unique IDs even if they don't appear in all dataframes.
 
-        scatter_density_plot(
-            list_scatter_plot_index,
-            labels,
-            column_indicator,
-            save_output_here,
-            file_type,
-            x_value="index",
-            y_value= "CV_"+column_indicator,
-    #         kde=True
-        )
+    Args:
+        intensity_data_frames (List[pd.DataFrame]): A list of pandas DataFrames
+            containing intensity data. Each DataFrame must have a 'unique_id' column.
 
-        # missing value illustrated as rank plot
-        list_scatter_plot_missing_index = rank_plot_static(
-            list_dfs, 
-            labels,
-            column_indicator,
-            save_output_here,
-            file_type,
-            x_value="index",
-            y_value= "data_completeness_"+column_indicator,
-        )
-        scatter_density_plot(
-            list_scatter_plot_missing_index,
-            labels,
-            column_indicator,
-            save_output_here,
-            file_type,
-            x_value="index",
-            y_value= "data_completeness_"+column_indicator,
-        )
+    Returns:
+        pd.DataFrame: A merged DataFrame containing all intensity columns from all
+            input dataframes, with rows aligned based on the 'unique_id'.
 
-        # CV illustrated along log2_median
-        list_scatter_plot_log2 = rank_plot_static(
-            list_dfs, 
-            labels,
-            column_indicator,
-            save_output_here,
-            file_type,
-            x_value="log2_median",
-            y_value= "CV_"+column_indicator,
-        )
-        scatter_density_plot(
-            list_scatter_plot_log2,
-            labels,
-            column_indicator,
-            save_output_here,
-            file_type,
-            x_value="log2_median",
-            y_value= "CV_"+column_indicator,
-    #         kde=True
-        )
+    Note:
+        If a unique_id is not present in one of the dataframes, the corresponding
+        intensity values will be NaN in the merged DataFrame.
+    """
+    if not intensity_data_frames:
+        return pd.DataFrame()
 
-        # missing value illustrated along log2_median
-        list_scatter_plot_missing_log2 = rank_plot_static(
-            list_dfs, 
-            labels,
-            column_indicator,
-            save_output_here,
-            file_type,
-            x_value="log2_median",
-            y_value= "data_completeness_"+column_indicator,
-        )
-        scatter_density_plot(
-            list_scatter_plot_missing_log2,
-            labels,
-            column_indicator,
-            save_output_here,
-            file_type,
-            x_value="log2_median",
-            y_value= "data_completeness_"+column_indicator,
-        )
+    # Convert 'unique_id' to string in all dataframes
+    for df in intensity_data_frames:
+        df['unique_id'] = df['unique_id'].astype(str)
 
-        # Venn diagram or upset plot to show shared IDs
-        make_venn_or_upset_plot(
-            list_dfs_only_with_intensity_columns,
-            column_indicator,
-            save_output_here
-        )
+    # Start with the first dataframe
+    merged_df: pd.DataFrame = intensity_data_frames[0]
 
-def bar_plot(
-    df,
-    names,
-    save_name,
-    ylabel,
-    xlabel,
-    titel,
-    label_box
-):
+    # Merge with the rest of the dataframes
+    for df in intensity_data_frames[1:]:
+        merged_df = pd.merge(merged_df, df, on='unique_id', how='outer')
 
-    # colors = ['lightgrey', '#7AC7C9','#4EA7BB','#267FA5', 'lightgrey']
-    colors = plt.cm.viridis(np.linspace(0,1,len(label_box)+1))
+    return merged_df
 
-    r = list(range(0,len(df)))
+def _get_filtered_indices(column_identifier_index: int, num_identifiers: int, num_files: int, filter_columns: List[str]) -> List[int]:
+    """
+    Get filtered indices based on the given parameters.
 
-    barWidth = 0.5
+    Args:
+        column_identifier_index (int): Index of the column identifier.
+        num_identifiers (int): Number of identifiers.
+        num_files (int): Number of files.
+        filter_columns (List[str]): List of columns to filter by.
 
-    # Create brown bars
-    ctr=0
-    for m in list(df.columns):
-        bars =list(df[m].values)
+    Returns:
+        List[int]: List of filtered indices.
+    """
+    if filter_columns:
+        indices = [column_identifier_index + i 
+                   for i in range(len(filter_columns) * num_files)]
+        return indices
+    indices = [column_identifier_index + num_identifiers * file_num 
+               for file_num in range(num_files)]
+    return indices
 
-        # Create brown bars
-        plt.bar(r, bars, label=label_box[ctr], color=colors[ctr], edgecolor='white', width=barWidth,alpha=0.4)
-        ctr+=1
+def get_viridis_colors(n_colors: int) -> List[Tuple[float, float, float, float]]:
+    """
+    Get a list of colors from the Viridis colormap.
 
-    plt.xticks(r, names, fontweight='bold')##rotation='vertical')
-    #plt.legend(loc="lower right")
-    plt.legend(loc="lower right", bbox_to_anchor=(1.55, 0.75), ncol=1)
-    plt.ylabel(ylabel)
-    plt.xlabel(xlabel)
-    plt.xticks(rotation=90)
-    plt.title(titel)
-    plt.savefig(save_name+".pdf", bbox_inches='tight', pad_inches=0,dpi=300)
-    plt.savefig(save_name+".png", bbox_inches='tight', pad_inches=0,dpi=300)
+    Args:
+        n_colors (int): Number of colors to generate.
+
+    Returns:
+        List[Tuple[float, float, float, float]]: List of RGBA color tuples.
+    """
+    viridis = cm.get_cmap('viridis')
+    return [viridis(i / (n_colors - 1)) for i in range(n_colors)]
+
+def create_stacked_bar_plot(
+    df: pd.DataFrame,
+    names: List[str],
+    save_name: str,
+    ylabel: str,
+    xlabel: str,
+    title: str,
+    label_box: List[str]
+) -> None:
+    """
+    Create a stacked bar plot.
+
+    Args:
+        df (pd.DataFrame): DataFrame containing the data to plot.
+        names (List[str]): List of names for x-axis categories.
+        save_name (str): Name to use when saving the plot.
+        ylabel (str): Label for y-axis.
+        xlabel (str): Label for x-axis.
+        title (str): Title of the plot.
+        label_box (List[str]): List of labels for each segment in the stacked bar.
+
+    Returns:
+        None
+    """
+    n_colors = len(label_box)
+    plot_colors: List[Tuple[float, float, float, float]] = get_viridis_colors(n_colors)
+    
+    fig, ax = plt.subplots(figsize=(12, 6))
+
+    bottom: np.ndarray = np.zeros(len(df))
+
+    for i, column in enumerate(df.columns[::-1]):
+        ax.bar(names, df[column], bottom=bottom, label=label_box[-(i+1)], 
+               color=plot_colors[-(i+1)], edgecolor='white', width=0.5)
+        bottom += df[column]
+
+    ax.set_xlabel(xlabel, fontweight='bold')
+    ax.set_ylabel(ylabel, fontweight='bold')
+    ax.set_title(title, fontweight='bold')
+    ax.set_xticklabels(names, rotation=0, ha='center')
+    ax.legend(loc="upper left", bbox_to_anchor=(1, 1), ncol=1)
+
+    # Rotate x-axis labels
+    ax.set_xticklabels(names, rotation=90, ha='center', va='top')
+
+    plt.tight_layout()
+    save_plot(save_name)
+
+def save_plot(save_name: str) -> None:
+    """
+    Save the current plot as both PDF and PNG files.
+
+    Args:
+        save_name (str): Base name to use when saving the plot.
+
+    Returns:
+        None
+    """
+    plt.savefig(f"{save_name}.pdf", dpi=300)
+    plt.savefig(f"{save_name}.png", dpi=300)
     plt.show()
-    plt.clf()
+    plt.close()
 
-def find_y_label(file_type):
-    dict_ylabels = {
+def get_y_label(data_file_type: str) -> str:
+    """
+    Get the appropriate y-axis label based on the data file type.
+
+    Args:
+        data_file_type (str): Type of data file being analyzed.
+
+    Returns:
+        str: Appropriate y-axis label.
+    """
+    y_labels: Dict[str, str] = {
         "mq_proteins": "# protein groups",
         'mq_peptides': "# peptides",
         'alphadia_proteins': "# protein groups",
@@ -870,418 +952,685 @@ def find_y_label(file_type):
         'spectronaut_proteins': "# protein groups",
         'spectronaut_precursors': "# precursors",
     }
-    return dict_ylabels[file_type]
+    return y_labels.get(data_file_type, "Count")
 
-def make_bar_bar_plot(
-    df_results_filtered_for_column_indicator,
-    labels,
-    save_output_here,
-    file_type,
-    column_indicator,
-):
+def create_cv_bar_plot(
+    filtered_results_df: pd.DataFrame,
+    labels: List[str],
+    output_directory: str,
+    data_file_type: str,
+    column_identifier: str
+) -> None:
+    """
+    Create a CV bar plot.
 
-    save_name = save_output_here + "/bar_plot_CVs_"+ file_type + "_" + column_indicator
-    ylabel = find_y_label(file_type) # Name of the y axis for the bar plot
-    xlabel = 'Type' # Name or topic of all the columns
-    label_box = ['Total No.', '<= CV 20%', '<= CV 10%', '<= CV 5%']
+    Args:
+        filtered_results_df (pd.DataFrame): DataFrame containing filtered results.
+        labels (List[str]): List of labels for the data.
+        output_directory (str): Directory to save output files.
+        data_file_type (str): Type of data file being analyzed.
+        column_identifier (str): Identifier for the current column.
 
+    Returns:
+        None
+    """
+    save_name: str = f"{output_directory}/bar_plot_CVs_{data_file_type}_{column_identifier}"
+    ylabel: str = get_y_label(data_file_type)
+    xlabel: str = 'Type'
+    title: str = column_identifier
+    label_box: List[str] = ['Total No.', '<= CV 20%', '<= CV 10%', '<= CV 5%']
+    
+    required_columns: List[str] = ['totalIDs', 'CV20Percent', 'CV10Percent', 'CV5Percent']
+    if not all(col in filtered_results_df.columns for col in required_columns):
+        print(f"Error: Missing required columns. Available columns: {filtered_results_df.columns}")
+        return
 
-    bar_plot(
-        df_results_filtered_for_column_indicator[['totalIDs', 'CV20Percent', 'CV10Percent', 'CV5Percent']],
-        labels,
-        save_name,
-        ylabel,
-        xlabel,
-        column_indicator,
-        label_box
+    print(filtered_results_df[required_columns])
+    plot_data: pd.DataFrame = pd.DataFrame({
+        'Total No.': filtered_results_df['totalIDs'] - filtered_results_df['CV20Percent'],
+        '<= CV 20%': filtered_results_df['CV20Percent'] - filtered_results_df['CV10Percent'],
+        '<= CV 10%': filtered_results_df['CV10Percent'] - filtered_results_df['CV5Percent'],
+        '<= CV 5%': filtered_results_df['CV5Percent']
+    })
+
+    create_stacked_bar_plot(
+        df=plot_data,
+        names=labels,
+        save_name=save_name,
+        ylabel=ylabel,
+        xlabel=xlabel,
+        title=title,
+        label_box=label_box
     )
 
-def plot_IDs_per_run(
-    df_results_filtered_for_column_indicator,
-    labels,
-    save_output_here,
-    file_type,
-    column_indicator,
-    dotsize = 15,
-    capsize = 25
-):
+def plot_identifications_per_run(
+    filtered_results_df: pd.DataFrame,
+    labels: List[str],
+    output_directory: str,
+    data_file_type: str,
+    column_identifier: str,
+    dot_size: int = 15,
+    cap_size: int = 25
+) -> None:
+    """
+    Plot identifications per run.
 
-    mean_list_pep = list()
-    error_pep = list()
-    list_dfs = list()
-    x_pos_pep = range(len(labels))
+    Args:
+        filtered_results_df (pd.DataFrame): DataFrame containing filtered results.
+        labels (List[str]): List of labels for the data.
+        output_directory (str): Directory to save output files.
+        data_file_type (str): Type of data file being analyzed.
+        column_identifier (str): Identifier for the current column.
+        dot_size (int, optional): Size of dots in the swarm plot. Defaults to 15.
+        cap_size (int, optional): Size of error bar caps. Defaults to 25.
 
-    for x in x_pos_pep:
-        # calculate mean and std for each sample
-        pep_temp = df_results_filtered_for_column_indicator["IDs_per_run"].iloc[x]
-        mean_list_pep.append(np.mean(pep_temp))
+    Returns:
+        None
+    """
+    mean_list: List[float] = []
+    error_list: List[float] = []
+    jitter_data: List[Tuple[float, str]] = []
 
-        error_pep.append(np.std(pep_temp))
+    for i, label in enumerate(labels):
+        if 'IDs_per_run' in filtered_results_df.columns:
+            ids_per_run = filtered_results_df['IDs_per_run'].iloc[i]
+            if isinstance(ids_per_run, list):
+                mean_list.append(np.mean(ids_per_run))
+                error_list.append(np.std(ids_per_run))
+                jitter_data.extend([(id_value, label) for id_value in ids_per_run])
+            else:
+                print(f"Warning: IDs_per_run for {label} is not a list. Skipping this entry.")
+        else:
+            print(f"Warning: 'IDs_per_run' column not found in DataFrame. Available columns: {filtered_results_df.columns}")
+            return
 
-        #create joined data frame
-        jitter = pd.DataFrame(pep_temp)
-        jitter["Type"] = labels[x]
-        list_dfs.append(jitter)
-    print(mean_list_pep)
-    jitter = pd.concat(list_dfs)
-    jitter.columns =['value', 'Type']
+    jitter_df: pd.DataFrame = pd.DataFrame(jitter_data, columns=['value', 'Type'])
 
-    # Build the plot
-    fig, ax = plt.subplots()
-    ax.bar(x_pos_pep, mean_list_pep, yerr=error_pep, align='center', ecolor='black', capsize=capsize, color = '#3777ac', label="average")
-    ax = sns.swarmplot(x='Type', y='value', data=jitter, color = "grey", alpha = 0.8, size = dotsize)
-    ax.set_ylabel(find_y_label(file_type))
-    ax.set_xticks(x_pos_pep)
-    ax.set_xticklabels(labels)
-    plt.title(column_indicator)
+    print("Mean IDs:", mean_list)
+
+    fig, ax = plt.subplots(figsize=(12, 6))
+    ax.bar(labels, mean_list, yerr=error_list, align='center', ecolor='black', capsize=cap_size, color='#3777ac', label="average")
+    sns.swarmplot(x='Type', y='value', data=jitter_df, color="grey", alpha=0.8, size=dot_size, ax=ax)
+
+    ax.set_ylabel(get_y_label(data_file_type))
+    ax.set_title(column_identifier)
     plt.legend(loc="lower right", bbox_to_anchor=(1.4, 0.85), ncol=1)
+    plt.xticks(rotation=90, ha='right')
 
-    # Save the figure and show
-    plt.savefig(save_output_here + "/bar_plot_IDs_per_run_"+ file_type + "_" + column_indicator + ".png", bbox_inches='tight', pad_inches=0,dpi=300)
-    plt.savefig(save_output_here + "/bar_plot_IDs_per_run_"+ file_type + "_" + column_indicator + ".pdf", bbox_inches='tight', pad_inches=0,dpi=300)
-
-    plt.show()
+    plt.tight_layout()
+    save_name = f"{output_directory}/bar_plot_IDs_per_run_{data_file_type}_{column_identifier}"
+    save_plot(save_name)
 
 def generate_violin_plots(
-    df_results_filtered_for_column_indicator,
-    labels,
-    save_output_here,
-    file_type,
-    column_indicator
-):
+    filtered_results_df: pd.DataFrame,
+    labels: List[str],
+    output_directory: str,
+    data_file_type: str,
+    column_identifier: str
+) -> None:
+    """
+    Generate violin plots for CV values.
 
-    list_dfs = list()
-    x_pos_pep = range(len(labels))
+    Args:
+        filtered_results_df (pd.DataFrame): DataFrame containing filtered results.
+        labels (List[str]): List of labels for the data.
+        output_directory (str): Directory to save output files.
+        data_file_type (str): Type of data file being analyzed.
+        column_identifier (str): Identifier for the current column.
 
-    for x in x_pos_pep:
-        #create joined data frame
-        df_temp = pd.DataFrame(df_results_filtered_for_column_indicator["CV"].iloc[x])
-        df_temp["Type"] = labels[x]
-        list_dfs.append(df_temp)
+    Returns:
+        None
+    """
+    cv_data: List[Tuple[float, str]] = []
 
-    df = pd.concat(list_dfs)
-    df.columns =['value', 'Type']
+    if 'CV' not in filtered_results_df.columns:
+        print(f"Warning: 'CV' column not found in DataFrame. Available columns: {filtered_results_df.columns}")
+        return
 
-    # Build the plot
-    fig, ax = plt.subplots()
-    sns.violinplot(data=df.drop_duplicates(), x='Type', y='value',palette="Blues")
-    ax.set_ylabel("CV (" + find_y_label(file_type)[2:] + ")")
-    plt.title(column_indicator)
+    for i, label in enumerate(labels):
+        cv_values = filtered_results_df['CV'].iloc[i]
+        if isinstance(cv_values, list):
+            cv_data.extend([(cv, label) for cv in cv_values])
+        else:
+            print(f"Warning: CV values for {label} is not a list. Skipping this entry.")
 
-    # Save the figure and show
-    plt.savefig(save_output_here + "/violin_plot_IDs_per_run_"+ file_type + "_" + column_indicator+".pdf", bbox_inches='tight', pad_inches=0,dpi=300)
-    plt.savefig(save_output_here + "/violin_plot_IDs_per_run_"+ file_type + "_" + column_indicator+".png", bbox_inches='tight', pad_inches=0,dpi=300)
+    if not cv_data:
+        print("No valid CV data found. Unable to generate violin plot.")
+        return
 
-    plt.show()
+    cv_df: pd.DataFrame = pd.DataFrame(cv_data, columns=['CV', 'Type'])
 
+    fig, ax = plt.subplots(figsize=(12, 6))
+    sns.violinplot(data=cv_df, x='Type', y='CV', palette="Blues", ax=ax)
 
-def bar_missing_value(
-    df_results_filtered_for_column_indicator,
-    labels,
-    save_output_here,
-    file_type,
-    column_indicator
-):
-    list_dfs_temp = list()
-    x_pos_pep = range(len(labels))
+    ax.set_ylabel(f"CV ({get_y_label(data_file_type)[2:]})")
+    ax.set_title(column_identifier)
+    plt.xticks(rotation=90, ha='right')
 
-    # print(df_results_filtered_for_column_indicator)
-    for x in x_pos_pep:
-        #create joined data frame
-        list_filtered = df_results_filtered_for_column_indicator["DataCompleteness"].iloc[x]
-        df_temp = pd.DataFrame(np.array([list_filtered[1]]),
-                               columns=list_filtered[0])
-        df_temp["Type"] = labels[x]
-        list_dfs_temp.append(df_temp)
+    plt.tight_layout()
+    save_name = f"{output_directory}/violin_plot_CVs_{data_file_type}_{column_identifier}"
+    save_plot(save_name)
 
-    df = pd.concat(list_dfs_temp).reset_index(drop=True).fillna(0)
-    print(df)
-    columns_selected = sorted([column for column in df.columns if type(column) != str])
+def is_consistent_pattern(levels: List[Tuple[float, ...]]) -> bool:
+    """
+    Check if the data completeness levels follow a consistent pattern.
+    
+    Args:
+        levels (List[Tuple[float, ...]]): List of data completeness level tuples.
+    
+    Returns:
+        bool: True if the pattern is consistent, False otherwise.
+    """
+    # Check if all sequences end with 1.0
+    if not all(seq[-1] == 1.0 for seq in levels):
+        return False
+    
+    # Check if all sequences have a consistent step size
+    step_sizes = set()
+    for seq in levels:
+        if len(seq) > 1:
+            step = round(seq[1] - seq[0], 4)  # Round to 4 decimal places to avoid floating point issues
+            step_sizes.add(step)
+            if not all(round(seq[i+1] - seq[i], 4) == step for i in range(len(seq)-1)):
+                return False
+    
+    # Check if all sequences use the same step size
+    return len(step_sizes) == 1
 
-    save_name = save_output_here + "/bar_plot_DataCompleteness_"+ file_type + "_" + column_indicator
-    ylabel = find_y_label(file_type) # Name of the y axis for the bar plot
-    xlabel = 'Type' # Name or topic of all the columns
-    label_box = columns_selected*len(df_results_filtered_for_column_indicator["IDs_per_run"].iloc[0])
+def plot_missing_value_bars(
+    filtered_results_df: pd.DataFrame,
+    labels: List[str],
+    output_directory: str,
+    data_file_type: str,
+    column_identifier: str
+) -> None:
+    """
+    Plot stacked bar chart for missing value ratios if all datasets have an equal number of entries.
 
-    bar_plot(
-        df[columns_selected],
-        labels,
-        save_name,
-        ylabel,
-        xlabel,
-        column_indicator,
-        label_box
+    Args:
+        filtered_results_df (pd.DataFrame): DataFrame containing filtered results.
+        labels (List[str]): List of labels for each dataset.
+        output_directory (str): Directory to save output files.
+        data_file_type (str): Type of data file being analyzed.
+        column_identifier (str): Identifier for the current column.
+
+    Returns:
+        None
+    """
+    print("Checking data completeness levels...")
+    
+    # Extract data completeness levels
+    data_completeness_levels = [tuple(data_completeness[0]) for data_completeness in filtered_results_df["DataCompleteness"]]
+    print("Data completeness levels:", data_completeness_levels)
+    
+    # Check if the pattern is consistent
+    consistent = is_consistent_pattern(data_completeness_levels)
+    
+    if not consistent:
+        print("Error: Inconsistent data completeness levels across datasets.")
+        for label, levels in zip(labels, data_completeness_levels):
+            print(f"{label}: {levels}")
+        print("Skipping the missing value bar plot.")
+        return
+
+    print("Creating stacked bar plot for missing values")
+    save_name: str = f"{output_directory}/bar_plot_DataCompleteness_{data_file_type}_{column_identifier}"
+    ylabel: str = get_y_label(data_file_type)
+    xlabel: str = 'Type'
+    title: str = f'Data Completeness - {column_identifier}'
+    label_box: List[str] = ['Total No.', '<= CV 20%', '<= CV 10%', '<= CV 5%']
+
+    temp_data_frames: List[pd.DataFrame] = []
+
+    for label, data_completeness in zip(labels, filtered_results_df["DataCompleteness"]):
+        df_temp = pd.DataFrame({
+            "DataCompleteness": data_completeness[0],
+            "Count": data_completeness[1],
+            "Type": label
+        })
+        temp_data_frames.append(df_temp)
+
+    df = pd.concat(temp_data_frames).reset_index(drop=True)
+    
+    # Pivot the dataframe to get it in the right format for stacking
+    df_pivot = df.pivot(index='Type', columns='DataCompleteness', values='Count')
+    print(df_pivot)
+    
+    # Sort columns in descending order (1.0 to 0.25)
+    df_pivot = df_pivot.sort_index(axis=1, ascending=False)
+    
+    # Calculate the differences for stacking
+    df_stacked = df_pivot.copy()
+    for col in df_pivot.columns[1:]:
+        df_stacked[col] = df_pivot[col] - df_pivot[df_pivot.columns[df_pivot.columns.get_loc(col) - 1]]
+
+    create_stacked_bar_plot(
+        df=df_stacked.sort_index(axis=1, ascending=True),
+        names=labels,
+        save_name=save_name,
+        ylabel=ylabel,
+        xlabel=xlabel,
+        title=title,
+        label_box=df_stacked.columns
     )
 
-def rank_plot(
-    list_dfs,
-    labels,
-    column_indicator,
-    save_output_here,
-    file_type,
-    x_value="index",
-    y_value= "log10_median",
-):
-    colors = sample_colorscale('blues', len(labels)+1)
-    fig1 = px.scatter()
-    num = 0
-    for dfs_intensity in list_dfs:
-        if True in dfs_intensity.columns.str.contains(column_indicator+"_"):
-            label = labels[num]
-            selected_columns = [col for col in dfs_intensity.columns if column_indicator in col]
-            dfs_intensity['median'] = dfs_intensity[selected_columns].median(axis=1)
-            dfs_intensity["log10_median"] = np.log10(dfs_intensity["median"])
-            dfs_intensity_sorted = dfs_intensity.sort_values(by="log10_median", ascending=False)
-            dfs_intensity_index = dfs_intensity_sorted.reset_index()
-            dfs_intensity_index["index"] = dfs_intensity_index.index
+def create_interactive_rank_plot(
+    all_data_frames: List[pd.DataFrame],
+    labels: List[str],
+    column_identifier: str,
+    output_directory: str,
+    data_file_type: str,
+    x_value: str = "index",
+    y_value: str = "log10_median"
+) -> px.scatter:
+    """
+    Create an interactive rank plot.
 
-            fig1.add_scatter(x=dfs_intensity_index[x_value], y=dfs_intensity_index[y_value], mode="markers", marker=dict(color=colors[num+1]), name=label)
+    Args:
+        all_data_frames (List[pd.DataFrame]): List of all DataFrames.
+        labels (List[str]): List of labels for the data.
+        column_identifier (str): Identifier for the current column.
+        output_directory (str): Directory to save output files.
+        data_file_type (str): Type of data file being analyzed.
+        x_value (str, optional): Column name for x-axis values. Defaults to "index".
+        y_value (str, optional): Column name for y-axis values. Defaults to "log10_median".
 
-            dict_labels = {
-                "index": "Rank", "log10_median": "Median Intensities (log10)",
-                "CV_"+column_indicator: "CV", "data_completeness_"+column_indicator: "missing value ratio"
-            }
-            x_axis_label = dict_labels[x_value]
-            y_axis_label = dict_labels[y_value]
-            fig1.update_layout(
-                title=dict(
-                    text=x_axis_label+" versus "+y_axis_label,
-                    font=dict(
-                        size=16,
-                    ),
-                    x=0.5,
-                    xanchor='center',
-                    yanchor='top',
-                    y=0.92
-                ),
-                xaxis=dict(
-                    title=x_axis_label,
-                    titlefont_size=14,
-                    #tickmode='auto',
-                    tickfont_size=14,
-                    #autorange=False,
-                ),
-                yaxis=dict(
-                    title=y_axis_label,
-                    # type="log"
-                ),
-                legend_title_text='Legend:',
-                #hovermode="x",
-                template='plotly_white',
-                # width=1000,
-                height=450
-            )
+    Returns:
+        px.scatter: The created interactive scatter plot.
+    """
+    plot_colors: List[str] = px.colors.sample_colorscale('blues', len(labels) + 1)
+    fig: px.scatter = px.scatter()
 
-            if (x_value=="index") & (y_value== "log10_median"):
-                # caclulate the position of the quartiles
-                print(label+":", "quartile, position on the y-axis:")
-                df_quartile = dfs_intensity["log10_median"].quantile([0.25,0.5,0.75])
-                for quartile in [0.25, 0.5, 0.75]:
-                    print(quartile, df_quartile[quartile])
-        #             fig1.add_hline(y=df_quartile[quartile], line_color=colors[num+1], annotation_text=str(quartile), annotation_position="bottom right",annotation_font_color=colors[num+1], opacity=0.25, legend='legend2')
+    for num, (intensity_df, label) in enumerate(zip(all_data_frames, labels)):
+        if column_identifier + "_" in intensity_df.columns.str.cat():
+            processed_df: pd.DataFrame = prepare_dataframe_for_plotting(intensity_df, column_identifier, x_value, y_value)
+            fig.add_scatter(x=processed_df[x_value], y=processed_df[y_value], 
+                            mode="markers", marker=dict(color=plot_colors[num+1]), name=label)
 
+            if x_value == "index" and y_value == "log10_median":
+                print_quartile_info(processed_df, label)
+                print_dynamic_range_info(processed_df)
 
-                # calculate the number of precursors per 25% of the dynamic range
-                diff_max_min = (dfs_intensity["log10_median"].max() - dfs_intensity["log10_median"].min()) / 4
-                percentile_ranges = [[dfs_intensity["log10_median"].min(), dfs_intensity["log10_median"].min()+diff_max_min],
-                [dfs_intensity["log10_median"].min()+diff_max_min, dfs_intensity["log10_median"].min()+diff_max_min*2],
-                [dfs_intensity["log10_median"].min()+diff_max_min*2, dfs_intensity["log10_median"].min()+diff_max_min*3],
-                [dfs_intensity["log10_median"].min()+diff_max_min*3, dfs_intensity["log10_median"].max()]]
+    update_layout(fig, x_value, y_value, column_identifier)
+    fig.show()
+    fig.write_image(f"{output_directory}/plot_{get_axis_label(x_value, column_identifier)}_{get_axis_label(y_value, column_identifier)}_{data_file_type}_{column_identifier}.pdf")
+    return fig
 
-                print("number of precursors per 25% of the dynamic range")
-                num2 = 0
-                for percentile in percentile_ranges:
-                    precursors_within_range = len(dfs_intensity[(dfs_intensity["log10_median"]>=percentile[0]) & (dfs_intensity["log10_median"]<percentile[1])])
-                    if num != len(percentile_ranges)-1:
-                        print(str(percentile) + "(25%):")
-                        print("count:", precursors_within_range, ", ratio from total IDs:", round(precursors_within_range/len(dfs_intensity["log10_median"]),2))
-                    else:
-                        print(str(percentile) + "(25%):")
-                        print("count:", precursors_within_range, ", ratio from total IDs:", round(precursors_within_range/len(dfs_intensity["log10_median"]),2))
-                    num2+=1
-            num += 1
-        else:
-            next
-    fig1.show()
-    fig1.write_image(save_output_here + "/plot_"+x_axis_label+"_versus_"+y_axis_label+ "_" + file_type + "_" + column_indicator + ".pdf")
-    return fig1
+def print_quartile_info(df: pd.DataFrame, label: str) -> None:
+    """
+    Print quartile information for the given DataFrame.
 
+    Args:
+        df (pd.DataFrame): DataFrame containing the data.
+        label (str): Label for the current dataset.
 
-def rank_plot_static(
-    list_dfs,
-    labels,
-    column_indicator,
-    save_output_here,
-    file_type,
-    x_value="index",
-    y_value= "log10_median",
-):
-    colors = plt.cm.viridis(np.linspace(0,1,len(labels)+1))
-    # colors = ["#E48E25", "#4E3468", "#E48E25",]
-    num = 0
-    list_scatter_plot = list()
-    # fig, ax = plt.subplots()
-    for dfs_intensity in list_dfs:
-        if True in dfs_intensity.columns.str.contains(column_indicator+"_"):
-            label = labels[num]
-            selected_columns = [col for col in dfs_intensity.columns if column_indicator in col]
-            dfs_intensity['median'] = dfs_intensity[selected_columns].median(axis=1)
-            dfs_intensity["log10_median"] = np.log10(dfs_intensity["median"])
-            dfs_intensity_sorted = dfs_intensity.sort_values(by="log10_median", ascending=False)
-            dfs_intensity_index = dfs_intensity_sorted.reset_index()
-            dfs_intensity_index["index"] = dfs_intensity_index.index
+    Returns:
+        None
+    """
+    print(f"{label}:", "quartile, position on the y-axis:")
+    df_quartile: pd.Series = df["log10_median"].quantile([0.25, 0.5, 0.75])
+    for quartile in [0.25, 0.5, 0.75]:
+        print(quartile, df_quartile[quartile])
 
+def print_dynamic_range_info(df: pd.DataFrame) -> None:
+    """
+    Print dynamic range information for the given DataFrame.
+
+    Args:
+        df (pd.DataFrame): DataFrame containing the data.
+
+    Returns:
+        None
+    """
+    diff_max_min: float = (df["log10_median"].max() - df["log10_median"].min()) / 4
+    percentile_ranges: List[List[float]] = [
+        [df["log10_median"].min() + i * diff_max_min, df["log10_median"].min() + (i + 1) * diff_max_min]
+        for i in range(4)
+    ]
+
+    print("number of precursors per 25% of the dynamic range")
+    for percentile in percentile_ranges:
+        precursors_within_range: int = len(df[(df["log10_median"] >= percentile[0]) & (df["log10_median"] < percentile[1])])
+        print(f"{percentile} (25%):")
+        print(f"count: {precursors_within_range}, ratio from total IDs: {precursors_within_range / len(df['log10_median']):.2f}")
+
+def update_layout(fig: px.scatter, x_value: str, y_value: str, column_identifier: str) -> None:
+    """
+    Update the layout of the given scatter plot.
+
+    Args:
+        fig (px.scatter): The scatter plot to update.
+        x_value (str): Column name for x-axis values.
+        y_value (str): Column name for y-axis values.
+        column_identifier (str): Identifier for the current column.
+
+    Returns:
+        None
+    """
+    x_axis_label: str = get_axis_label(x_value, column_identifier)
+    y_axis_label: str = get_axis_label(y_value, column_identifier)
+    fig.update_layout(
+        title=dict(text=f"{x_axis_label} versus {y_axis_label}", font=dict(size=16), x=0.5, xanchor='center', yanchor='top', y=0.92),
+        xaxis=dict(title=x_axis_label, titlefont_size=14, tickfont_size=14),
+        yaxis=dict(title=y_axis_label),
+        legend_title_text='Legend:',
+        template='plotly_white',
+        height=450
+    )
+
+def create_static_rank_plot(
+    all_data_frames: List[pd.DataFrame],
+    labels: List[str],
+    column_identifier: str,
+    output_directory: str,
+    data_file_type: str,
+    x_value: str = "index",
+    y_value: str = "log10_median"
+) -> Optional[List[pd.DataFrame]]:
+    """
+    Create a static rank plot.
+
+    Args:
+        all_data_frames (List[pd.DataFrame]): List of all DataFrames.
+        labels (List[str]): List of labels for the data.
+        column_identifier (str): Identifier for the current column.
+        output_directory (str): Directory to save output files.
+        data_file_type (str): Type of data file being analyzed.
+        x_value (str, optional): Column name for x-axis values. Defaults to "index".
+        y_value (str, optional): Column name for y-axis values. Defaults to "log10_median".
+
+    Returns:
+        Optional[List[pd.DataFrame]]: List of DataFrames for scatter plots if y_value is not "log10", otherwise None.
+    """
+    plot_colors: np.ndarray = plt.cm.viridis(np.linspace(0, 1, len(labels) + 1))
+    scatter_plot_data: List[pd.DataFrame] = []
+
+    for num, (intensity_df, label) in enumerate(zip(all_data_frames, labels)):
+        if column_identifier + "_" in intensity_df.columns.str.cat():
+            processed_df: pd.DataFrame = prepare_dataframe_for_plotting(intensity_df, column_identifier, x_value, y_value)
+            
             if "log10" in y_value:
-                plt.plot(x_value, y_value, data = dfs_intensity_index, color = colors[num+1], linewidth = 2, label = label) #marker=".",linewidth = 0, label = label)
+                plt.plot(processed_df[x_value], processed_df[y_value], color=plot_colors[num + 1], linewidth=2, label=label)
             else:
-                dfs_intensity["log2_median"] = np.log2(dfs_intensity["median"])
-                dfs_intensity_sorted = dfs_intensity.sort_values(by="log2_median", ascending=False)
-                dfs_intensity_index = dfs_intensity_sorted.reset_index()
-                dfs_intensity_index["index"] = dfs_intensity_index.index
-                df_temp = pd.DataFrame()
-                df_temp[x_value] = dfs_intensity_index[x_value]
-                df_temp[y_value] = dfs_intensity_index[y_value]
-                df_temp["Type: "] = label
-                list_scatter_plot.append(df_temp)
+                temp_df: pd.DataFrame = pd.DataFrame({
+                    x_value: processed_df[x_value],
+                    y_value: processed_df[y_value],
+                    "Type: ": label
+                })
+                scatter_plot_data.append(temp_df)
 
-            num += 1
-        else:
-            next
-    dict_labels = {
-        "index": "Rank", "log10_median": "Median Intensities (log10)", "log2_median": "Median Intensities (log2)",
-        "CV_"+column_indicator: "CV", "data_completeness_"+column_indicator: "missing value ratio"
-    }
-    x_axis_label = dict_labels[x_value]
-    y_axis_label = dict_labels[y_value]
+    x_axis_label: str = get_axis_label(x_value, column_identifier)
+    y_axis_label: str = get_axis_label(y_value, column_identifier)
 
     if "log10" in y_value:
         plt.xlabel(x_axis_label)
         plt.ylabel(y_axis_label)
-        plt.title(x_axis_label+" versus "+y_axis_label)
+        plt.title(f"{x_axis_label} versus {y_axis_label}")
         plt.legend()
-        plt.savefig(save_output_here + "/plot_"+x_axis_label+"_versus_"+y_axis_label+ "_" + file_type + "_" + column_indicator + ".pdf",bbox_inches='tight', pad_inches=0, dpi=300)
-        plt.savefig(save_output_here + "/plot_"+x_axis_label+"_versus_"+y_axis_label+ "_" + file_type + "_" + column_indicator + ".png",bbox_inches='tight', pad_inches=0, dpi=300)
-        plt.show()
+        save_name = f"{output_directory}/plot_{x_axis_label}_versus_{y_axis_label}_{data_file_type}_{column_identifier}"
+        save_plot(save_name)
         plt.clf()
+        return None
     else:
-        return list_scatter_plot
+        return scatter_plot_data
 
-def scatter_density_plot(
-    list_scatter_plot,
-    labels,
-    column_indicator,
-    save_output_here,
-    file_type,
-    x_value="index",
-    y_value= "log10_median",
-    kde=False,
-):
-    dict_labels = {
-        "index": "Rank", "log10_median": "Median Intensities (log10)", "log2_median": "Median Intensities (log2)",
-        "CV_"+column_indicator: "CV", "data_completeness_"+column_indicator: "missing value ratio"
-    }
-    x_axis_label = dict_labels[x_value]
-    y_axis_label = dict_labels[y_value]
+def prepare_dataframe_for_plotting(df: pd.DataFrame, column_identifier: str, x_value: str, y_value: str) -> pd.DataFrame:
+    """
+    Prepare a DataFrame for plotting by calculating various metrics.
 
-    df_scatter_plot = pd.concat(list_scatter_plot).reset_index(drop=True)
-    # Generate a scatter plot comparing sample A and B
+    Args:
+        df (pd.DataFrame): Input DataFrame.
+        column_identifier (str): Identifier for the current column.
+        x_value (str): Column name for x-axis values.
+        y_value (str): Column name for y-axis values.
+
+    Returns:
+        pd.DataFrame: Processed DataFrame ready for plotting.
+    """
+    selected_columns: List[str] = [col for col in df.columns if column_identifier in col]
+    df['median'] = df[selected_columns].median(axis=1)
+    df["log10_median"] = np.log10(df["median"])
+    df["log2_median"] = np.log2(df["median"])
+    df["CV"] = df[f"CV_{column_identifier}"]
+    df["missing_value_ratio"] = df[f"data_completeness_{column_identifier}"]
+    sorted_df: pd.DataFrame = df.sort_values(by="log10_median", ascending=False).reset_index(drop=True)
+    sorted_df["index"] = sorted_df.index
+    return sorted_df
+
+def create_scatter_density_plot(
+    all_data_frames: List[pd.DataFrame],
+    labels: List[str],
+    column_identifier: str,
+    output_directory: str,
+    data_file_type: str,
+    x_value: str = "index",
+    y_value: str = "log10_median",
+    use_kernel_density_estimation: bool = False
+) -> None:
+    """
+    Create a scatter density plot.
+
+    Args:
+        all_data_frames (List[pd.DataFrame]): List of all DataFrames.
+        labels (List[str]): List of labels for the data.
+        column_identifier (str): Identifier for the current column.
+        output_directory (str): Directory to save output files.
+        data_file_type (str): Type of data file being analyzed.
+        x_value (str, optional): Column name for x-axis values. Defaults to "index".
+        y_value (str, optional): Column name for y-axis values. Defaults to "log10_median".
+        use_kernel_density_estimation (bool, optional): Whether to use kernel density estimation. Defaults to False.
+
+    Returns:
+        None
+    """
+    x_axis_label: str = get_axis_label(x_value, column_identifier)
+    y_axis_label: str = get_axis_label(y_value, column_identifier)
+
+    scatter_plot_data: List[pd.DataFrame] = []
+    for df, label in zip(all_data_frames, labels):
+        if column_identifier + "_" in df.columns.str.cat():
+            processed_df: pd.DataFrame = prepare_dataframe_for_plotting(df, column_identifier, x_value, y_value)
+            temp_df: pd.DataFrame = pd.DataFrame({
+                x_value: processed_df[x_value],
+                y_value: processed_df[y_value],
+                "Type": label
+            })
+            scatter_plot_data.append(temp_df)
+
+    combined_scatter_data: pd.DataFrame = pd.concat(scatter_plot_data).reset_index(drop=True)
+    
     print("Please wait - it may take several minutes")
-    # delete kind="kde" if you don't want to wait
-    colors = sns.color_palette('viridis', len(labels)+1)
-    fig = sns.jointplot(data=df_scatter_plot, x=x_value, y=y_value, hue="Type: ", palette="viridis", s=5, ec="face")#, kind="kde")
+    
+    joint_plot: sns.JointGrid = create_joint_plot(combined_scatter_data, x_value, y_value, use_kernel_density_estimation)
+    
     plt.xlabel(x_axis_label)
     plt.ylabel(y_axis_label)
-    fig.savefig(save_output_here + "/plot_"+x_axis_label+"_versus_"+y_axis_label+ "_" + file_type + "_" + column_indicator + "_wo_kde.pdf",bbox_inches='tight', pad_inches=0, dpi=300)
+    save_name = f"{output_directory}/plot_{x_axis_label}_versus_{y_axis_label}_{data_file_type}_{column_identifier}_{'w' if use_kernel_density_estimation else 'wo'}_kde"
+    joint_plot.savefig(f"{save_name}.pdf", bbox_inches='tight', pad_inches=0, dpi=300)
     plt.show()
-    if kde==True:
-        fig = sns.jointplot(data=df_scatter_plot, x=x_value, y=y_value, hue="Type: ", palette="viridis", kind="kde")
-        plt.xlabel(x_axis_label)
-        plt.ylabel(y_axis_label)
-        fig.savefig(save_output_here + "/plot_"+x_axis_label+"_versus_"+y_axis_label+ "_" + file_type + "_" + column_indicator + "_w_kde.pdf",bbox_inches='tight', pad_inches=0, dpi=300)
-        plt.show()
 
+def create_joint_plot(df: pd.DataFrame, x_value: str, y_value: str, use_kernel_density_estimation: bool) -> sns.JointGrid:
+    """
+    Create a joint plot using seaborn.
 
-def make_venn_or_upset_plot(list_dfs_only_with_intensity_columns, column_indicator, save_output_here):
+    Args:
+        df (pd.DataFrame): DataFrame containing the data to plot.
+        x_value (str): Column name for x-axis values.
+        y_value (str): Column name for y-axis values.
+        use_kernel_density_estimation (bool): Whether to use kernel density estimation.
 
-    set_all = set()
-    dict_set = dict()
-
-    for df_temp in list_dfs_only_with_intensity_columns:
-        if True in df_temp.columns.str.contains(column_indicator):
-            label = df_temp.columns[0].split(column_indicator)[0]
-            set_temp = set(df_temp["unique_id"])
-            set_all = set_all.union(set_temp)
-            dict_set[label] = set_temp
-        else:
-            next
-
-    if len(dict_set) == 2:
-        print("Make Venn diagram")
-
-        make_venn2_diagram(dict_set, save_output_here, column_indicator)
-
-    elif len(dict_set) == 3:
-        print("Make Venn diagram")
-
-        make_venn3_diagram(dict_set, save_output_here, column_indicator)
-
+    Returns:
+        sns.JointGrid: The created joint plot.
+    """
+    if use_kernel_density_estimation:
+        return sns.jointplot(data=df, x=x_value, y=y_value, hue="Type", kind="kde")
     else:
-        print ("More than three files: Make upset plot")
+        return sns.jointplot(data=df, x=x_value, y=y_value, hue="Type", s=5, edgecolor="face")
 
-        make_upset_plot(dict_set, set_all, save_output_here, column_indicator)
+def get_axis_label(value: str, column_identifier: str) -> str:
+    """
+    Get the appropriate axis label based on the value and column identifier.
 
-def make_venn3_diagram(
-    dict_set,
-    save_output_here,
-    column_indicator
-):
-    viridis = cm.get_cmap('viridis', 3)
-    colors = viridis.colors
+    Args:
+        value (str): The value to get the label for.
+        column_identifier (str): Identifier for the current column.
 
-    venn3(
-        [value for key, value in dict_set.items()],
-        set_labels = [key for key, value in dict_set.items()],
-        set_colors=colors, alpha = 0.7
-    )
-    plt.title(column_indicator)
-    # Save the figure and show
-    plt.savefig(save_output_here + "/venn_diagram_"+ column_indicator + ".png", bbox_inches='tight', pad_inches=0,dpi=300)
-    plt.savefig(save_output_here + "/venn_diagram_"+ column_indicator + ".pdf", bbox_inches='tight', pad_inches=0,dpi=300)
-    plt.show()
+    Returns:
+        str: The appropriate axis label.
+    """
+    axis_labels: Dict[str, str] = {
+        "index": "Rank", 
+        "log10_median": "Median Intensities (log10)", 
+        "log2_median": "Median Intensities (log2)",
+        f"CV_{column_identifier}": "CV", 
+        f"data_completeness_{column_identifier}": "Missing Value Ratio"
+    }
+    return axis_labels.get(value, value)
 
-def make_venn2_diagram(
-    dict_set,
-    save_output_here,
-    column_indicator
-):
-    viridis = cm.get_cmap('viridis', 2)
-    colors = viridis.colors
+def create_venn_or_upset_plot(
+    intensity_data_frames: List[pd.DataFrame],
+    column_identifier: str,
+    output_directory: str
+) -> None:
+    """
+    Create either a Venn diagram or an UpSet plot based on the number of datasets.
+
+    Args:
+        intensity_data_frames (List[pd.DataFrame]): List of DataFrames with intensity data.
+        column_identifier (str): Identifier for the current column.
+        output_directory (str): Directory to save output files.
+
+    Returns:
+        None
+    """
+    all_identifications: Set[str]
+    set_dictionary: Dict[str, Set[str]]
+    all_identifications, set_dictionary = process_dataframes_for_set_analysis(intensity_data_frames, column_identifier)
+
+    if len(set_dictionary) == 2:
+        print("Creating Venn diagram")
+        create_venn2_diagram(set_dictionary, output_directory, column_identifier)
+    elif len(set_dictionary) == 3:
+        print("Creating Venn diagram")
+        create_venn3_diagram(set_dictionary, output_directory, column_identifier)
+    else:
+        print("More than three files: Creating UpSet plot")
+        create_upset_plot(set_dictionary, all_identifications, output_directory, column_identifier)
+
+def process_dataframes_for_set_analysis(
+    data_frames: List[pd.DataFrame],
+    column_identifier: str
+) -> Tuple[Set[str], Dict[str, Set[str]]]:
+    """
+    Process DataFrames to create sets of unique IDs for set analysis.
+
+    Args:
+        data_frames (List[pd.DataFrame]): List of DataFrames to process.
+        column_identifier (str): Identifier for the current column.
+
+    Returns:
+        Tuple[Set[str], Dict[str, Set[str]]]: A tuple containing a set of all unique IDs and a dictionary mapping labels to sets of unique IDs.
+    """
+    all_identifications: Set[str] = set()
+    set_dictionary: Dict[str, Set[str]] = {}
+
+    for df in data_frames:
+        if column_identifier in df.columns.str.cat():
+            label: str = df.columns[0].split(column_identifier)[0]
+            identifications: Set[str] = set(df["unique_id"])
+            all_identifications = all_identifications.union(identifications)
+            set_dictionary[label] = identifications
+
+    return all_identifications, set_dictionary
+
+def create_venn2_diagram(
+    set_dictionary: Dict[str, Set[str]],
+    output_directory: str,
+    column_identifier: str
+) -> None:
+    """
+    Create a 2-set Venn diagram.
+
+    Args:
+        set_dictionary (Dict[str, Set[str]]): Dictionary mapping labels to sets of unique IDs.
+        output_directory (str): Directory to save output files.
+        column_identifier (str): Identifier for the current column.
+
+    Returns:
+        None
+    """
+    plot_colors: np.ndarray = cm.get_cmap('viridis', 2).colors
 
     venn2(
-        [value for key, value in dict_set.items()],
-        set_labels = [key for key, value in dict_set.items()],
-        set_colors=colors, alpha = 0.7
+        [value for value in set_dictionary.values()],
+        set_labels = list(set_dictionary.keys()),
+        set_colors=plot_colors, alpha=0.7
     )
-    plt.title(column_indicator)
-    # Save the figure and show
-    plt.savefig(save_output_here + "/venn_diagram_"+ column_indicator + ".png", bbox_inches='tight', pad_inches=0,dpi=300)
-    plt.savefig(save_output_here + "/venn_diagram_"+ column_indicator + ".pdf", bbox_inches='tight', pad_inches=0,dpi=300)
-    plt.show()
+    plt.title(column_identifier)
+    save_venn_diagram(output_directory, column_identifier)
 
-def make_upset_plot(dict_set, set_all, save_output_here, column_indicator):
-    dict_df = dict()
-    for key, value in dict_set.items():
-        list_temp = [True if e in value else False for e in set_all]
-        dict_df[key] = list_temp
+def create_venn3_diagram(
+    set_dictionary: Dict[str, Set[str]],
+    output_directory: str,
+    column_identifier: str
+) -> None:
+    """
+    Create a 3-set Venn diagram.
 
-    df = pd.DataFrame(dict_df)
-    df_up = df.groupby(list(dict_set.keys())).size()
-    upset_plot(df_up, orientation='horizontal')
-    plt.suptitle(column_indicator)
-    # Save the figure and show
-    plt.savefig(save_output_here + "/upset_plot_"+ column_indicator + ".png", bbox_inches='tight', pad_inches=0,dpi=300)
-    plt.savefig(save_output_here + "/upset_plot_"+ column_indicator + ".pdf", bbox_inches='tight', pad_inches=0,dpi=300)
-    plt.show()
+    Args:
+        set_dictionary (Dict[str, Set[str]]): Dictionary mapping labels to sets of unique IDs.
+        output_directory (str): Directory to save output files.
+        column_identifier (str): Identifier for the current column.
 
+    Returns:
+        None
+    """
+    plot_colors: np.ndarray = cm.get_cmap('viridis', 3).colors
 
+    venn3(
+        [value for value in set_dictionary.values()],
+        set_labels = list(set_dictionary.keys()),
+        set_colors=plot_colors, alpha=0.7
+    )
+    plt.title(column_identifier)
+    save_venn_diagram(output_directory, column_identifier)
 
+def save_venn_diagram(output_directory: str, column_identifier: str) -> None:
+    """
+    Save the Venn diagram to a file.
+
+    Args:
+        output_directory (str): Directory to save output files.
+        column_identifier (str): Identifier for the current column.
+
+    Returns:
+        None
+    """
+    save_name = f"{output_directory}/venn_diagram_{column_identifier}"
+    save_plot(save_name)
+
+def create_upset_plot(
+    set_dictionary: Dict[str, Set[str]],
+    all_identifications: Set[str],
+    output_directory: str,
+    column_identifier: str
+) -> None:
+    """
+    Create an UpSet plot.
+
+    Args:
+        set_dictionary (Dict[str, Set[str]]): Dictionary mapping labels to sets of unique IDs.
+        all_identifications (Set[str]): Set of all unique IDs.
+        output_directory (str): Directory to save output files.
+        column_identifier (str): Identifier for the current column.
+
+    Returns:
+        None
+    """
+    df: pd.DataFrame = pd.DataFrame({key: [e in value for e in all_identifications] for key, value in set_dictionary.items()})
+    upset_data: pd.Series = df.groupby(list(set_dictionary.keys())).size()
+    
+    upset_plot(upset_data, orientation='horizontal')
+    plt.suptitle(column_identifier)
+    save_name = f"{output_directory}/upset_plot_{column_identifier}"
+    save_plot(save_name)
