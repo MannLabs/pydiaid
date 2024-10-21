@@ -788,10 +788,11 @@ class GenerateMethodCard(BaseWidget):
             margin=(0, 0, 0, 0)
         )
         self.method_error = pn.pane.Alert(
-            "This method is not supported by timsControl 5.0",
+            "This method is not supported by timsControl <= 6.0",
             alert_type="danger",
             sizing_mode='stretch_width',
-            margin=(30, 0, 5, 15),
+            align='center',
+            margin=(10, 0, 0, 0)
         )
         self.path_method = pn.widgets.TextInput(
             name='Specify the path to the method file:',
@@ -836,6 +837,9 @@ class GenerateMethodCard(BaseWidget):
             css_classes=['background']
         )
 
+        self.results_placeholder = pn.Row()
+        self.error_placeholder = pn.Row()
+
         self.layout = pn.Card(
             self.generate_method_descr,
             pn.Row(
@@ -852,6 +856,7 @@ class GenerateMethodCard(BaseWidget):
                     pn.Spacer(),
                     self.generate_method_button,
                     self.method_creation_progress,
+                    self.error_placeholder,
                     pn.Spacer(),
                     width=400,
                     align='center',
@@ -859,9 +864,8 @@ class GenerateMethodCard(BaseWidget):
                 sizing_mode='stretch_width',
             ),
             pn.layout.Divider(),
-            pn.Row(
-                None
-            ),
+            self.results_placeholder, 
+
             title='Generate Synchro-PASEF Method',
             collapsed=False,
             collapsible=True,
@@ -920,12 +924,11 @@ class GenerateMethodCard(BaseWidget):
 
     def run_generation(self, *args):
         self.method_creation_progress.active = True
-        self.layout[3] = pn.Row("")
-        
+        self.results_placeholder.clear()
+        self.error_placeholder.clear()
+
         if (self.window_type.value != "equidistant") or (self.scan_mode.value != "classical_synchro-PASEF"):
-            self.layout[1][1][2]= self.method_error
-        else:
-            self.layout[1][1][2]= None
+            self.error_placeholder.append(self.method_error)
 
         self.scan_ratio.value, self.scans.value = method_creator.create_method(
             self.data.path_save_folder.value + '/final_method',
@@ -954,11 +957,13 @@ class GenerateMethodCard(BaseWidget):
         )
         self.path_method.value = final_method_path
 
-        self.layout[3] = pn.Column(
-            pn.pane.Markdown('### Method Generated', align='center'),
-            pn.widgets.TextInput(value=final_method_path, disabled=True),
-            sizing_mode='stretch_width',
-            align='center',
+        self.results_placeholder.append(
+            pn.Column(
+                pn.pane.Markdown('### Method Generated', align='center'),
+                pn.widgets.TextInput(value=final_method_path, disabled=True),
+                sizing_mode='stretch_width',
+                align='center',
+            )
         )
 
         self.trigger_dependancy()
