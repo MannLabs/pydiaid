@@ -11,7 +11,7 @@ import holoviews as hv
 
 
 #local
-import pydiaid.synchropasef as pydiaid
+# import pydiaid.synchropasef as pydiaid
 from pydiaid.synchropasef.gui_synchropasef import SynchroCardWidget
 from pydiaid.diapasef.gui_diapasef import DiaCardWidget
 # from pydiaid.quadrupolecalibration.gui_quad import QuadCardWidget
@@ -480,7 +480,8 @@ class pydiaidGui(GUI):
             name="py_diAID",
             github_url='https://github.com/MannLabs/pydiaid',
         )
-        self.project_description = """#### py_diAID is a Python tool that optimally places dia-PASEF and synchro-PASEF window schemes into the m/z and ion mobility space to cover the precursor cloud efficiently. It is based on pre-acquired precursor information. diAID: Data-Independent Acquisition + Automated Isolation Design. Please cite: \n Skowronek, … , Mann, MCP, 2022 for dia-PASEF and Skowronek, … , Willems, Raether, Mann, MCP, 2023 for synchro-PASEF."""
+        self.project_description = """#### py_diAID is a Python tool that optimally places dia-PASEF and synchro-PASEF window schemes into the m/z and ion mobility space to cover the precursor cloud efficiently. It is based on pre-acquired precursor information. diAID: Data-Independent Acquisition + Automated Isolation Design. \n <i style="font-size: 0.8em; display: block">  Please cite: Skowronek, … , Mann, MCP, 2022 for dia-PASEF and \n Skowronek, … , Willems, Raether, Mann, MCP, 2023 for synchro-PASEF.</i>"""
+        
         self.manual_path = os.path.join(
             DOCS_PATH,
             "manual.pdf"
@@ -490,16 +491,22 @@ class pydiaidGui(GUI):
             self.manual_path
         )
         self.tabs = TabsWidget()
-        self.layout += [
+
+        self.header = HeaderWidget(
+            "py_diAID",
+            IMG_PATH,
+            'https://github.com/MannLabs/pydiaid'
+        )
+
+        self.layout = pn.Column(
+            self.header.create_layout(),
             self.main_widget.create_layout(),
-            self.tabs.create_layout(
-                [
-                    ('Optimal dia-PASEF', pn.panel("Blank")),
-                    ('Synchro-PASEF', pn.panel("Blank")),
-                    # ('Quadrupole Calibration', pn.panel("Blank"))
-                ]
-            ),
-        ]
+            self.tabs.create_layout([
+                ('Optimal dia-PASEF', DiaCardWidget().create_layout()),
+                ('Synchro-PASEF', SynchroCardWidget().create_layout()),
+                # ('Quadrupole Calibration', QuadCardWidget().create_layout())
+            ])
+        )
         if start_server:
             self.start_server()
 
@@ -510,4 +517,10 @@ def run():
     Returns: None. 
     """
     init_panel()
-    pydiaidGui(start_server=True)
+    gui = pydiaidGui(start_server=False)
+    
+    # Run the GUI on the main thread
+    pn.serve(gui.layout, show=True, title="py_diAID")
+
+if __name__ == "__main__":
+    run()

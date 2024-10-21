@@ -115,24 +115,21 @@ class LoadLibraryCard(BaseWidget):
         self.path_library = pn.widgets.TextInput(
             name='Specify the path to the library:',
             placeholder=library_path_placeholder,
-            value = os.path.join(os.path.dirname(__file__), "static/evidence_MaxQuant_270223.txt"),
-            width=900,
+            value=os.path.join(os.path.dirname(__file__), "static","evidence_MaxQuant_270223.txt"),
             sizing_mode='stretch_width',
             margin=(15, 15, 0, 15)
         )
         self.path_save_folder = pn.widgets.TextInput(
             name='Save the output to the following folder:',
-            value=method_conf["input"]["save_at"], # TODO comment out
+            # value=method_conf["input"]["save_at"],
             placeholder=save_folder_placeholder,
-            width=900,
             sizing_mode='stretch_width',
             margin=(15, 15, 0, 15)
         )
         self.ptm = pn.widgets.LiteralInput(
-            name='Specify the PTM: for example, [“STY”]',
-            value=method_conf["input"]["PTM"], # TODO comment out
+            name='Specify the PTM: for example, ["STY"]',
+            # value=method_conf["input"]["PTM"],
             placeholder="['Phospho']",
-            width=680,
             sizing_mode='stretch_width',
             margin=(15, 15, 15, 15)
         )
@@ -140,10 +137,9 @@ class LoadLibraryCard(BaseWidget):
             name='Analysis software',
             value=method_conf["input"]["analysis_software"],
             options=['AlphaPept', 'AlphaDIA', 'MaxQuant', 'FragPipe', 'Spectronaut single-run', 'Spectronaut library', 'DIANN library', 'AlphaPeptDeep library'],
-            width=200,
+            sizing_mode='stretch_width',
             margin=(15, 15, 15, 15)
         )
-        # PLOTS
         self.plot_mz = pn.widgets.EditableRangeSlider(
             name='m/z-range [Da]',
             start=100,
@@ -151,7 +147,7 @@ class LoadLibraryCard(BaseWidget):
             value=tuple(method_conf['graphs']['plot_mz']),
             step=50,
             margin=(15, 15, 0, 15),
-            width=430,
+            sizing_mode='stretch_width',
         )
         self.plot_im = pn.widgets.EditableRangeSlider(
             name='Ion mobility range [1/K0]',
@@ -160,7 +156,7 @@ class LoadLibraryCard(BaseWidget):
             value=tuple(method_conf['graphs']['plot_IM']),
             step=0.1,
             margin=(15, 15, 0, 15),
-            width=430,
+            sizing_mode='stretch_width',
         )
         self.numbins = pn.widgets.IntInput(
             name='Number of bins',
@@ -169,14 +165,13 @@ class LoadLibraryCard(BaseWidget):
             value=method_conf['graphs']['numbins'],
             step=1,
             margin=(15, 15, 0, 15),
-            width=430,
+            sizing_mode='stretch_width',
         )
         self.load_library_descr = pn.pane.Markdown(
             description,
-            margin=(2, 0, 2, 0),
-            align='center',
+            margin=(5, 0, 2, 15),
+            align='start',
         )
-        # UPLOAD DATA
         self.upload_button = pn.widgets.Button(
             name='Upload library',
             button_type='primary',
@@ -200,41 +195,41 @@ class LoadLibraryCard(BaseWidget):
         )
 
     def create_layout(self):
+        plot_widgets = pn.Column(
+            pn.Row(
+                pn.Column(self.plot_mz), 
+                pn.Column(self.plot_im)),
+            pn.Row(self.numbins, sizing_mode='stretch_width'),
+            pn.Spacer(height=20), 
+            sizing_mode='stretch_width',
+        )
+
         self.layout = pn.Card(
             self.load_library_descr,
             pn.Row(
-                pn.WidgetBox(
-                    pn.Column(
-                        self.path_library,
-                        self.path_save_folder,
-                        pn.Row(
-                            self.analysis_software,
-                            self.ptm,
-                        ),
-                        pn.Row(
-                            self.numbins,
-                            None,
-                            sizing_mode='stretch_width'
-                        ),
-                        pn.Row(
-                            self.plot_mz,
-                            self.plot_im,
-                            sizing_mode='stretch_width',
-                     ),
-                    ),
-                    margin=(20, 30, 30, 10),
-                    sizing_mode='fixed',
-                ),
-                pn.Spacer(sizing_mode='stretch_width'),
                 pn.Column(
+                    self.path_library,
+                    self.path_save_folder,
+                    pn.Row(self.analysis_software, self.ptm),
+                    pn.WidgetBox(
+                        plot_widgets,
+                        sizing_mode='stretch_width',
+                        margin=(20, 10, 50, 10),
+                    ),
+                    margin=(10, 30, 10, 10),
+                    sizing_mode='stretch_width',
+                ),
+                pn.Column(
+                    pn.Spacer(),
                     self.upload_button,
                     self.upload_progress,
+                    pn.Spacer(),
+                    width=400,
                     align='center',
-                    margin=(0, 40, 0, 0),
                 ),
+                sizing_mode='stretch_width',
             ),
-            pn.layout.Divider(
-            ),
+            pn.layout.Divider(),
             pn.Row(
                 None, None, None
             ),
@@ -242,7 +237,7 @@ class LoadLibraryCard(BaseWidget):
             collapsed=False,
             collapsible=True,
             header_background='#eaeaea',
-            background ='white',
+            background='white',
             header_color='#333',
             align='center',
             sizing_mode='stretch_width',
@@ -259,7 +254,6 @@ class LoadLibraryCard(BaseWidget):
             self.plot_im: [self.update_parameters_plotting, 'value'],
             self.numbins: [self.update_parameters_plotting, 'value'],
             self.upload_button: [self.upload_data, 'clicks'],
-
         }
         for k in dependances.keys():
             k.param.watch(
@@ -298,18 +292,9 @@ class LoadLibraryCard(BaseWidget):
         )
         folder_paths = [
             self.path_save_folder.value,
-            os.path.join(
-                self.path_save_folder.value,
-                'input_library'
-            ),
-            os.path.join(
-                self.path_save_folder.value,
-                'final_method'
-            ),
-            os.path.join(
-                self.path_save_folder.value,
-                'gif'
-            ),
+            os.path.join(self.path_save_folder.value, 'input_library'),
+            os.path.join(self.path_save_folder.value, 'final_method'),
+            os.path.join(self.path_save_folder.value, 'gif'),
         ]
         method_creator.create_folder(folder_paths)
         self.xi, self.yi, self.zi = plots.kernel_density_calculation(
@@ -440,10 +425,8 @@ class DefineScanAreaCard(BaseWidget):
         self.layout = None
         self.scan_area_descr = pn.pane.Markdown(
             description,
-            margin=(2, 0, 2, 0),
-            # css_classes=['main-part'],
-            align='center',
-            # width=460
+            margin=(5, 0, 2, 15),
+            align='start',
         )
         self.scan_area_width = pn.widgets.IntInput(
             name='Scan area width (horizontal) [m/z]',
@@ -452,7 +435,7 @@ class DefineScanAreaCard(BaseWidget):
             value=method_conf["scan_area"]["scan_area_width"],
             step=1,
             margin=(15, 15, 0, 15),
-            width=430,
+            sizing_mode='stretch_width',
         )
         self.charge_state = pn.widgets.EditableRangeSlider(
             name='Charge state',
@@ -461,9 +444,8 @@ class DefineScanAreaCard(BaseWidget):
             value=tuple(method_conf["scan_area"]["charge_state"]),
             step=1,
             margin=(15, 15, 0, 15),
-            width=430,
+            sizing_mode='stretch_width',
         )
-        # UPLOAD DATA
         self.calculate_scan_area_button = pn.widgets.Button(
             name='Calculate Scan Area',
             button_type='primary',
@@ -477,7 +459,7 @@ class DefineScanAreaCard(BaseWidget):
             value=method_conf["scan_area"]["scan_area"],
             type=list,
             margin=(15, 15, 0, 15),
-            width=900
+            sizing_mode='stretch_width',
         )
         self.evaluate_scan_area_button = pn.widgets.Button(
             name='Plot and Evaluate Scan Area',
@@ -492,55 +474,66 @@ class DefineScanAreaCard(BaseWidget):
             bgcolor='light',
             color='secondary',
             align='center',
-            margin=(0, 40, 0, 10),
+            # margin=(0, 40, 0, 10),
             width=35,
             height=35
         )
 
     def create_layout(self):
+        scan_area_widgets = pn.Column(
+            pn.Row(self.scan_area_width, self.charge_state, sizing_mode='stretch_width'),
+            pn.Spacer(height=20), 
+            sizing_mode='stretch_width',
+        )
+
+        scan_area_def_widgets = pn.Column(
+            pn.Row(self.scan_area_definition, sizing_mode='stretch_width'),
+            pn.Spacer(height=20), 
+            sizing_mode='stretch_width',
+        )
+
         self.layout = pn.Card(
             self.scan_area_descr,
             pn.Row(
-                pn.WidgetBox(
-                    pn.Row(
-                        self.scan_area_width,
-                        self.charge_state,
-                        margin=(10, 30, 10, 10),
-                    ),
-                    sizing_mode='fixed',
-                    margin=(20, 10, 30, 10),   
-                ),
-                pn.Spacer(sizing_mode='stretch_width'),
                 pn.Column(
-                    pn.Row(
-                        self.calculate_scan_area_button,
-                        self.scan_area_spinner,
+                    pn.WidgetBox(
+                        scan_area_widgets,
+                        sizing_mode='stretch_width',
+                        margin=(20, 10, 50, 10),
                     ),
+                    margin=(10, 30, 10, 10),
+                    sizing_mode='stretch_width',
+                ),
+                pn.Column(
+                    pn.Spacer(),
+                    self.calculate_scan_area_button,
+                    self.scan_area_spinner,
+                    pn.Spacer(),
+                    width=400,
                     align='center',
-                    margin=(0, 40, 0, 0),
-                )
-            ),
-            pn.layout.Divider(
-            ),
-            pn.Row(
-                None, None, None
-            ),
-            pn.Row(
-                pn.WidgetBox(
-                    pn.Column(
-                        self.scan_area_definition,
-                        margin=(10, 30, 10, 10),
-                    ),
-                    sizing_mode='fixed',
-                    margin=(20, 10, 30, 10),
-                    height=90
                 ),
-                pn.Spacer(sizing_mode='stretch_width'),
+                sizing_mode='stretch_width',
+            ),
+            pn.layout.Divider(),
+            pn.Row(None, None, None),
+            pn.Row(
                 pn.Column(
+                    pn.WidgetBox(
+                        scan_area_def_widgets,
+                        sizing_mode='stretch_width',
+                        margin=(20, 10, 50, 10),
+                    ),
+                    margin=(10, 30, 10, 10),
+                    sizing_mode='stretch_width',
+                ),
+                pn.Column(
+                    pn.Spacer(),
                     self.evaluate_scan_area_button,
+                    pn.Spacer(),
+                    width=400,
                     align='center',
-                    margin=(0, 40, 0, 0),
-                )
+                ),
+                sizing_mode='stretch_width',
             ),
             pn.layout.Divider(
             ),
@@ -551,7 +544,7 @@ class DefineScanAreaCard(BaseWidget):
             collapsed=False,
             collapsible=True,
             header_background='#eaeaea',
-            background ='white',
+            background='white',
             header_color='#333',
             align='center',
             sizing_mode='stretch_width',
@@ -593,13 +586,12 @@ class DefineScanAreaCard(BaseWidget):
         )
         self.scan_area_spinner.value = False
 
-    def run_evaluations(self, *args):
+    def run_evaluations(self, *args):        
         self.layout[6][0] = pn.Column(
             pn.pane.Markdown(
                 '### Scan area of method',
                  align='center'
             ),
-            pn.pane.Matplotlib(
             plots.density_plot_plus_scan_area(
                 self.data.xi,
                 self.data.yi,
@@ -613,10 +605,9 @@ class DefineScanAreaCard(BaseWidget):
                 self.scan_area_definition.value,
                 gui=True
             ),
-            # tight=True,
             margin=(20, 0, 20, 0),
         )
-        )
+
         plots.density_plot_plus_scan_area(
             self.data.xi,
             self.data.yi,
@@ -628,7 +619,7 @@ class DefineScanAreaCard(BaseWidget):
                 'Scan_Area.pdf'
             ),
             self.scan_area_definition.value
-        ),
+        )
 
         coverage_center = method_evaluator.coverage_calculated_at_center(self.data.library, self.scan_area_definition.value)
         covered_precursor_info = pd.DataFrame(
@@ -647,7 +638,7 @@ class DefineScanAreaCard(BaseWidget):
             layout='fit_data_table', 
             width=400
             ),
-            margin=(0, 50),
+            margin=(20, 50),
         )
         self.trigger_dependancy()
         covered_precursor_info.to_csv(
@@ -702,15 +693,12 @@ class GenerateMethodCard(BaseWidget):
     """
     def __init__(self, data, scan_area, description):
         super().__init__(name="GenerateMethod")
-        self.layout = None
         self.data = data
         self.scan_area = scan_area
         self.generate_method_descr = pn.pane.Markdown(
             description,
-            margin=(2, 0, 2, 0),
-            # css_classes=['main-part'],
-            align='center',
-            # width=460
+            margin=(5, 0, 2, 15),
+            align='start',
         )
         self.scans = pn.widgets.IntInput(
             name='Scans',
@@ -719,52 +707,44 @@ class GenerateMethodCard(BaseWidget):
             value=method_conf["method_parameters"]["scans"],
             step=1,
             margin=(15, 15, 0, 15),
-            width=430,
+            sizing_mode='stretch_width',
         )
         self.window_type = pn.widgets.Select(
             name='Window Type',
             value=method_conf["method_parameters"]["window_type"],
-            options=[
-                "equidistant",
-                "variable",
-                "pre-definied"
-            ],
+            options=["equidistant", "variable", "pre-definied"],
             margin=(15, 15, 0, 15),
-            width=430,
+            sizing_mode='stretch_width',
         )
         self.scan_ratio = pn.widgets.LiteralInput(
             name='Scan ratio * must have as many items as number of scans',
             value=method_conf["method_parameters"]["scan_ratio"],
             type=list,
             margin=(15, 15, 0, 15),
-            width=430
+            sizing_mode='stretch_width',
         )
         self.scan_mode = pn.widgets.Select(
             name='Acquisition scheme',
             value=method_conf["method_parameters"]["scan_mode"],
-            options=[
-                "classical_synchro-PASEF",
-                "highly_accurate_synchro-PASEF",
-                "individual_synchro-PASEF"
-            ],
+            options=["classical_synchro-PASEF", "highly_accurate_synchro-PASEF", "individual_synchro-PASEF"],
             margin=(15, 15, 0, 15),
-            width=430,
+            sizing_mode='stretch_width',
         )
         self.window_modification = pn.widgets.Select(
             name='Window modification',
             value=method_conf["method_parameters"]["window_modification"],
             options=['None', 'overlap', 'staggered'],
             margin=(15, 15, 0, 15),
-            width=430,
+            sizing_mode='stretch_width',
         )
         self.window_overlap = pn.widgets.FloatInput(
-            name='Window overlap *0.2 means 20% of smalles window',
+            name='Window overlap *0.2 means 20% of smallest window',
             start=0,
             end=10,
             value=method_conf["method_parameters"]["window_overlap"],
             step=0.1,
             margin=(15, 15, 0, 15),
-            width=430,
+            sizing_mode='stretch_width',
         )
         self.no_of_combined_scans = pn.widgets.IntInput(
             name='No of combined scans *required for staggered + classical synchro-PASEF',
@@ -773,33 +753,31 @@ class GenerateMethodCard(BaseWidget):
             value=method_conf["method_parameters"]["no_of_combined_scans"],
             step=1,
             margin=(15, 15, 0, 15),
-            width=430,
+            sizing_mode='stretch_width',
         )
         self.window_pattern = pn.widgets.LiteralInput(
             name='Window pattern *required for individual_synchro-PASEF',
             value=method_conf["method_parameters"]["window_pattern"],
             type=list,
             margin=(15, 15, 0, 15),
-            width=430
+            sizing_mode='stretch_width',
         )
         self.MS1_positions = pn.widgets.LiteralInput(
             name='MS1 positions',
             value=method_conf["method_parameters_general"]["MS1_positions"],
             type=list,
             margin=(15, 15, 0, 15),
-            width=430
+            sizing_mode='stretch_width',
         )
         self.im_limits = pn.widgets.EditableRangeSlider(
             name='IM limits for the method',
             start=0.5,
             end=1.7,
-            value=tuple(
-                [method_conf["method_parameters_general"]["dict_im_limits"]['low_limit_IM'],
-                method_conf["method_parameters_general"]["dict_im_limits"]['up_limit_IM']]
-            ),
+            value=tuple([method_conf["method_parameters_general"]["dict_im_limits"]['low_limit_IM'],
+                         method_conf["method_parameters_general"]["dict_im_limits"]['up_limit_IM']]),
             step=0.001,
             margin=(15, 15, 0, 15),
-            width=430,
+            sizing_mode='stretch_width',
         )
         self.generate_method_button = pn.widgets.Button(
             name='Generate synchro-PASEF method',
@@ -809,19 +787,16 @@ class GenerateMethodCard(BaseWidget):
             align='center',
             margin=(0, 0, 0, 0)
         )
-        
         self.method_error = pn.pane.Alert(
             "This method is not supported by timsControl 5.0",
             alert_type="danger",
             sizing_mode='stretch_width',
             margin=(30, 0, 5, 15),
         )
-
         self.path_method = pn.widgets.TextInput(
             name='Specify the path to the method file:',
             placeholder=method_path_placeholder,
             value=method_conf['input']['method_only_used_for_evaluate'],
-            width=900,
             sizing_mode='stretch_width',
             margin=(15, 15, 0, 15)
         )
@@ -834,76 +809,70 @@ class GenerateMethodCard(BaseWidget):
         )
 
     def create_layout(self):
+        general_settings = pn.Column(
+            pn.Row(self.im_limits, self.MS1_positions, sizing_mode='stretch_width'),
+            pn.Row(self.scans, self.window_type, sizing_mode='stretch_width'),
+            pn.Row(self.window_modification, self.window_overlap, sizing_mode='stretch_width'),
+            pn.Spacer(height=20),
+            sizing_mode='stretch_width',
+        )
+
+        additional_settings = pn.Card(
+            pn.Column(
+                pn.Row(self.scan_ratio, self.no_of_combined_scans, sizing_mode='stretch_width'),
+                pn.Row(self.scan_mode, self.window_pattern, sizing_mode='stretch_width'),
+                pn.Spacer(height=20),
+                sizing_mode='stretch_width',
+            ),
+            title='Additional Method Settings',
+            collapsed=True,
+            collapsible=True,
+            header_background='#eaeaea',
+            background='white',
+            header_color='#333',
+            align='center',
+            sizing_mode='stretch_width',
+            margin=(5, 8, 10, 8),
+            css_classes=['background']
+        )
+
         self.layout = pn.Card(
             self.generate_method_descr,
             pn.Row(
                 pn.Column(
                     pn.WidgetBox(
-                        pn.Row(
-                            self.im_limits,
-                            self.MS1_positions,
-                            margin=(10, 30, 10, 10),
-                        ),
-                        pn.Row(
-                            self.scans,
-                            self.window_type,
-                            margin=(10, 30, 10, 10),
-                        ),
-                        pn.Row(
-                            self.window_modification,
-                            self.window_overlap,
-                            margin=(10, 30, 10, 10),
-                        ),
+                        general_settings,
                         sizing_mode='stretch_width',
-                        margin=(20, 10, 30, 10), 
+                        margin=(20, 10, 50, 10),
                     ),
-                    pn.Card(
-                        pn.Row(
-                            self.scan_ratio,
-                            self.no_of_combined_scans,
-                            margin=(10, 30, 10, 10),
-                        ),
-                        pn.Row(
-                            self.scan_mode,
-                            self.window_pattern,
-                            margin=(10, 30, 10, 10),
-                        ),
-                        title='Additional Method Settings',
-                        collapsed=True,
-                        collapsible=True,
-                        header_background='#eaeaea',
-                        background ='white',
-                        header_color='#333',
-                        align='center',
-                        sizing_mode='stretch_width',
-                        margin=(5, 8, 10, 8),
-                        css_classes=['background']
-                    ),
+                    additional_settings,
+                    sizing_mode='stretch_width',
                 ),
-                pn.Spacer(sizing_mode='stretch_width'),
                 pn.Column(
+                    pn.Spacer(),
                     self.generate_method_button,
                     self.method_creation_progress,
-                    None,
+                    pn.Spacer(),
+                    width=400,
                     align='center',
-                    margin=(0, 40, 0, 0),
-                )
+                ),
+                sizing_mode='stretch_width',
             ),
-            pn.layout.Divider(
-            ),
+            pn.layout.Divider(),
             pn.Row(
-                None, None, None
+                None
             ),
             title='Generate Synchro-PASEF Method',
             collapsed=False,
             collapsible=True,
             header_background='#eaeaea',
-            background ='white',
+            background='white',
             header_color='#333',
             align='center',
             sizing_mode='stretch_width',
             margin=(5, 8, 10, 8),
-            css_classes=['background'])
+            css_classes=['background']
+        )
 
         dependances = {
             self.scans: [self.update_parameters, 'value'],
@@ -952,38 +921,46 @@ class GenerateMethodCard(BaseWidget):
     def run_generation(self, *args):
         self.method_creation_progress.active = True
         self.layout[3] = pn.Row("")
-        if (self.window_type.value!="equidistant") or (self.scan_mode.value !="classical_synchro-PASEF"):
-            self.layout[1][2][2]= self.method_error
+        
+        if (self.window_type.value != "equidistant") or (self.scan_mode.value != "classical_synchro-PASEF"):
+            self.layout[1][1][2]= self.method_error
         else:
-            self.layout[1][2][2] = None
+            self.layout[1][1][2]= None
 
         self.scan_ratio.value, self.scans.value = method_creator.create_method(
-            self.data.path_save_folder.value+'/final_method',
+            self.data.path_save_folder.value + '/final_method',
             self.scan_area.scan_area_definition.value,
             {
-            "scans": self.scans.value,
-            "window_type": self.window_type.value,
-            "scan_ratio": self.scan_ratio.value,
-            "scan_mode": self.scan_mode.value,
-            "window_modification": self.window_modification.value,
-            "window_overlap": self.window_overlap.value,
-            "no_of_combined_scans": self.no_of_combined_scans.value,
-            "window_pattern": self.window_pattern.value,
+                "scans": self.scans.value,
+                "window_type": self.window_type.value,
+                "scan_ratio": self.scan_ratio.value,
+                "scan_mode": self.scan_mode.value,
+                "window_modification": self.window_modification.value,
+                "window_overlap": self.window_overlap.value,
+                "no_of_combined_scans": self.no_of_combined_scans.value,
+                "window_pattern": self.window_pattern.value,
             },
             {
-            "MS1_positions": self.MS1_positions.value,
-            "dict_im_limits": {'low_limit_IM': self.im_limits.value[0],'up_limit_IM': self.im_limits.value[1]},
+                "MS1_positions": self.MS1_positions.value,
+                "dict_im_limits": {'low_limit_IM': self.im_limits.value[0], 'up_limit_IM': self.im_limits.value[1]},
             },
             self.data.library
         )
 
-        self.layout[3] = pn.Row("Method generated")
         final_method_path = os.path.join(
             self.data.path_save_folder.value,
             'final_method',
             'synchroPasef.txt'
         )
         self.path_method.value = final_method_path
+
+        self.layout[3] = pn.Column(
+            pn.pane.Markdown('### Method Generated', align='center'),
+            pn.widgets.TextInput(value=final_method_path, disabled=True),
+            sizing_mode='stretch_width',
+            align='center',
+        )
+
         self.trigger_dependancy()
         self.method_creation_progress.active = False
 
@@ -1014,11 +991,10 @@ class LoadMethodCard(BaseWidget):
         super().__init__(name="Load Method")
         self.data = data
         self.method_creation = method_creation
-        self.layout = None
         self.load_method_descr = pn.pane.Markdown(
             description,
-            margin=(2, 0, 2, 0),
-            align='center',
+            margin=(5, 0, 2, 15),
+            align='start',
         )
         self.load_button = pn.widgets.Button(
             name='Load synchro-PASEF method',
@@ -1030,37 +1006,44 @@ class LoadMethodCard(BaseWidget):
         )
 
     def create_layout(self):
+        load_method_widgets = pn.Column(
+            self.method_creation.path_method,
+            pn.Spacer(height=20),
+            sizing_mode='stretch_width',
+        )
+
         self.layout = pn.Card(
             self.load_method_descr,
             pn.Row(
-                pn.WidgetBox(
-                    pn.Column(
-                        pn.Row(
-                            self.method_creation.path_method,
-                            margin=(10, 70, 10, 10),
-                        ),
-                    ),
-                    sizing_mode='stretch_width',
-                    height=110,
-                    margin=(20, 10, 30, 10), 
-                ),
-                pn.Spacer(sizing_mode='stretch_width'),
                 pn.Column(
-                        self.load_button,
-                        align='center',
-                        margin=(0, 40, 0, 0),
+                    pn.WidgetBox(
+                        load_method_widgets,
+                        sizing_mode='stretch_width',
+                        margin=(20, 10, 50, 10),
+                    ),
+                    margin=(10, 30, 10, 10),
+                    sizing_mode='stretch_width',
                 ),
+                pn.Column(
+                    pn.Spacer(),
+                    self.load_button,
+                    pn.Spacer(),
+                    width=400,
+                    align='center',
+                ),
+                sizing_mode='stretch_width',
             ),
-            pn.layout.Divider(
-            ),
-            pn.Row(
-                None
+            pn.layout.Divider(),
+            pn.Column(
+                None,
+                align='center',
+                sizing_mode='stretch_width',
             ),
             title='Load synchro-PASEF Method',
             collapsed=False,
             collapsible=True,
             header_background='#eaeaea',
-            background ='white',
+            background='white',
             header_color='#333',
             align='center',
             sizing_mode='stretch_width',
@@ -1088,7 +1071,6 @@ class LoadMethodCard(BaseWidget):
         }
         method_conf["input"][convertion_dict[event.obj.name]] = event.new
 
-
     def run_load(self, *args):
 
         df_parameters_final = loader_MS_parameter_file.load_MS_method_from_txt_file(
@@ -1096,11 +1078,16 @@ class LoadMethodCard(BaseWidget):
         )
         self.df_method = df_parameters_final
 
-        self.layout[3] = pn.widgets.Tabulator(
-            df_parameters_final,
-            margin=(20, 50),
-            layout='fit_data_table', 
-            width = 1200,
+        self.layout[3] = pn.Column(
+            pn.pane.Markdown('### Loaded synchro-PASEF Method', align='center'),
+            pn.widgets.Tabulator(
+                df_parameters_final,
+                margin=(20, 50),
+                layout='fit_data_table', 
+                sizing_mode='stretch_width',
+            ),
+            sizing_mode='stretch_width',
+            align='center',
         )
 
 
@@ -1140,8 +1127,8 @@ class EvaluateMethodCard(BaseWidget):
         self.layout = None
         self.evaluate_method_descr = pn.pane.Markdown(
             description,
-            margin=(2, 0, 2, 0),
-            align='center',
+            margin=(5, 0, 2, 15),
+            align='start',
         )
         self.im = self.generate_method.im_limits
         self.library = self.data.library
@@ -1152,7 +1139,7 @@ class EvaluateMethodCard(BaseWidget):
             value=method_conf["graphs"]["ramp_steps"],
             step=1,
             margin=(15, 15, 0, 15),
-            width=430,
+            sizing_mode='stretch_width',
         )
         self.evaluate_button = pn.widgets.Button(
             name='Evaluate synchro-PASEF method',
@@ -1162,7 +1149,7 @@ class EvaluateMethodCard(BaseWidget):
             align='center',
             margin=(0, 0, 0, 0),
         )
-        self.upload_progress = pn.indicators.Progress(
+        self.evaluate_progress = pn.indicators.Progress(
             active=False,
             bar_color='light',
             width=250,
@@ -1171,25 +1158,31 @@ class EvaluateMethodCard(BaseWidget):
         )
 
     def create_layout(self):
+        evaluate_method_widgets = pn.Column(
+            pn.Row(self.im, self.ramp_steps, sizing_mode='stretch_width'),
+            pn.Spacer(height=20),
+            sizing_mode='stretch_width',
+        )
+
         self.layout = pn.Card(
             self.evaluate_method_descr,
             pn.Row(
                 pn.Column(
-                    pn.Row(
-                        None,
-                        margin=(10, 70, 10, 10),
-                    ),
+                    None,
+                    margin=(10, 30, 10, 10),
+                    sizing_mode='stretch_width',
                 ),
-                pn.Spacer(sizing_mode='stretch_width'),
                 pn.Column(
-                        self.evaluate_button,
-                        self.upload_progress,
-                        align='center',
-                        margin=(0, 40, 0, 0),
+                    pn.Spacer(),
+                    self.evaluate_button,
+                    self.evaluate_progress,
+                    pn.Spacer(),
+                    width=400,
+                    align='center',
                 ),
+                sizing_mode='stretch_width',
             ),
-            pn.layout.Divider(
-            ),
+            pn.layout.Divider(),
             pn.Row(
                 None, None, None
             ),
@@ -1200,7 +1193,7 @@ class EvaluateMethodCard(BaseWidget):
             collapsed=False,
             collapsible=True,
             header_background='#eaeaea',
-            background ='white',
+            background='white',
             header_color='#333',
             align='center',
             sizing_mode='stretch_width',
@@ -1223,7 +1216,6 @@ class EvaluateMethodCard(BaseWidget):
 
         return self.layout
 
-
     def update_acquisition_parameters(self, event):
         global method_conf
         convertion_dict = {
@@ -1232,16 +1224,14 @@ class EvaluateMethodCard(BaseWidget):
         }
         method_conf["graphs"][convertion_dict[event.obj.name]] = event.new
 
-    
     def update_layout_according_to_library(self, *args):
         if 'IMlength' in self.data.library.columns:
-            self.layout[1][0][0] = pn.Row(self.im, self.ramp_steps)
+            self.layout[1][0][0] = pn.Row(self.im, self.ramp_steps, sizing_mode='stretch_width')
         else:
             self.layout[1][0][0] = None
 
-    
     def run_evaluation(self, *args):
-        self.upload_progress.active = True
+        self.evaluate_progress.active = True
 
         self.layout[3][0] = pn.Column(
             pn.pane.Markdown(
@@ -1260,14 +1250,6 @@ class EvaluateMethodCard(BaseWidget):
             ),
             tight=True
         )
-        )
-        plots.plot_acquisition_scheme(
-            self.load_method.df_method,
-            os.path.join(
-                self.data.path_save_folder.value,
-                'final_method',
-                "acquisition_scheme.pdf"
-            ),
         )
 
         self.layout[3][1] = pn.Column(
@@ -1292,6 +1274,16 @@ class EvaluateMethodCard(BaseWidget):
             tight=True
         )
         )
+
+        plots.plot_acquisition_scheme(
+            self.load_method.df_method,
+            os.path.join(
+                self.data.path_save_folder.value,
+                'final_method',
+                "acquisition_scheme.pdf"
+            ),
+        )
+
         plots.plot_method_and_precursors(
             self.data.xi,
             self.data.yi,
@@ -1305,7 +1297,7 @@ class EvaluateMethodCard(BaseWidget):
             ),
         )
 
-        if ('IMlength' in self.data.library.columns) & (self.ramp_steps.value!=0):
+        if ('IMlength' in self.data.library.columns) & (self.ramp_steps.value != 0):
             self.layout[3][2] = pn.Column(
             pn.pane.Markdown(
                 '### Histogram showing ion mobility length of precursors and slicing cutoff per scan',
@@ -1362,7 +1354,7 @@ class EvaluateMethodCard(BaseWidget):
             )
         )
 
-        self.upload_progress.active = False
+        self.evaluate_progress.active = False
 
 
 class MakeGifCard(object):
@@ -1389,26 +1381,23 @@ class MakeGifCard(object):
         interface.
     """
     def __init__(self, data, load_method, description):
-        #super().__init__(name="Data")
-        self.layout = None
+        # super().__init__(name="Make GIF")
         self.data = data
         self.load_method = load_method
         self.make_gif_descr = pn.pane.Markdown(
             description,
-            margin=(2, 0, 2, 0),
-            # css_classes=['main-part'],
-            align='center',
-            # width=460
+            margin=(5, 0, 2, 15),
+            align='start',
         )
         self.gif_button = pn.widgets.Button(
-            name='Synchro-PASEF method as GIF',
+            name='Create Synchro-PASEF method GIF',
             button_type='primary',
             height=31,
             width=250,
             align='center',
             margin=(0, 0, 0, 0)
         )
-        self.upload_progress = pn.indicators.Progress(
+        self.gif_progress = pn.indicators.Progress(
             active=False,
             bar_color='light',
             width=250,
@@ -1422,7 +1411,7 @@ class MakeGifCard(object):
             value=0.002,
             step=0.001,
             margin=(15, 15, 0, 15),
-            width=430,
+            sizing_mode='stretch_width',
         )
         self.im_steps = pn.widgets.IntInput(
             name='Ion mobility steps',
@@ -1431,7 +1420,7 @@ class MakeGifCard(object):
             value=50,
             step=1,
             margin=(15, 15, 0, 15),
-            width=430,
+            sizing_mode='stretch_width',
         )
         self.scans_plotted_at_once = pn.widgets.IntInput(
             name='TOF triggers highlighted at once',
@@ -1440,48 +1429,56 @@ class MakeGifCard(object):
             value=1,
             step=1,
             margin=(15, 15, 0, 15),
-            width=430,
+            sizing_mode='stretch_width',
         )
 
     def create_layout(self):
+        gif_settings = pn.Column(
+            pn.Row(self.gif_duration, self.scans_plotted_at_once, sizing_mode='stretch_width'),
+            pn.Row(self.im_steps, sizing_mode='stretch_width'),
+            pn.Spacer(height=20),
+            sizing_mode='stretch_width',
+        )
+
         self.layout = pn.Card(
             self.make_gif_descr,
             pn.Row(
-                pn.WidgetBox(
-                    pn.Row(
-                        self.gif_duration,
-                        self.scans_plotted_at_once
-                    ),
-                    pn.Row(
-                        self.im_steps
-                    ),
-                    sizing_mode='fixed',
-                    margin=(20, 10, 30, 10),
-                    height=150
-                ),
-                pn.Spacer(sizing_mode='stretch_width'),
                 pn.Column(
-                    self.gif_button,
-                    self.upload_progress,
-                    align='center',
-                    margin=(0, 40, 0, 0),
+                    pn.WidgetBox(
+                        gif_settings,
+                        sizing_mode='stretch_width',
+                        margin=(20, 10, 50, 10),
+                    ),
+                    margin=(10, 30, 10, 10),
+                    sizing_mode='stretch_width',
                 ),
+                pn.Column(
+                    pn.Spacer(),
+                    self.gif_button,
+                    self.gif_progress,
+                    pn.Spacer(),
+                    width=400,
+                    align='center',
+                ),
+                sizing_mode='stretch_width',
             ),
-            pn.layout.Divider(
-            ),
-            pn.Row(
-                None, None, None
+            pn.layout.Divider(),
+            pn.Column(
+                None,
+                align='center',
+                sizing_mode='stretch_width',
             ),
             title='Make a GIF of a Synchro-PASEF Method',
             collapsed=True,
             collapsible=True,
             header_background='#eaeaea',
-            background ='white',
+            background='white',
             header_color='#333',
             align='center',
             sizing_mode='stretch_width',
             margin=(5, 8, 10, 8),
-            css_classes=['background'])
+            css_classes=['background']
+        )
 
         dependances = {
             self.gif_button: [self.run_gif, 'clicks'],
@@ -1496,16 +1493,17 @@ class MakeGifCard(object):
         return self.layout
 
     def run_gif(self, *args):
-        self.upload_progress.active = True
+        self.gif_progress.active = True
 
         save_at = os.path.join(
             self.data.path_save_folder.value,
             'gif',
         )
 
-        files = glob.glob(save_at+"/*")
+        files = glob.glob(save_at + "/*")
         for f in files:
             os.remove(f)
+
         boxes, df_temp_reset_index = plots.generate_boxes(self.load_method.df_method, self.im_steps.value)
         plots.generate_gif_single_windows(
             self.data.xi,
@@ -1514,25 +1512,31 @@ class MakeGifCard(object):
             method_conf["graphs"],
             boxes,
             range(1, len(df_temp_reset_index)+1),
-            save_at+"/",
+            save_at + "/",
             facecolor="#FF0098",
-            window_color = "white_grey",
+            window_color="white_grey",
             scans_plotted_at_once=self.scans_plotted_at_once.value,
         )
 
         images = []
         for file_name in sorted(os.listdir(save_at)):
             if file_name.endswith('.png'):
-                file_path = os.path.join(save_at+"/", file_name)
+                file_path = os.path.join(save_at, file_name)
                 images.append(iio.imread(file_path))
-        iio.imwrite(save_at + '/SynchroPasef_single_windows.gif', images, duration = self.gif_duration.value, loop = 0)
+        iio.imwrite(os.path.join(save_at, "SynchroPasef_single_windows.gif"), images, duration=self.gif_duration.value, loop=0)
 
-        self.layout[3][1] = pn.pane.GIF(
-            save_at+"/" + 'SynchroPasef_single_windows.gif',
-            alt_text="Sorry, please try using a different browser",
-            width=640, height=360
+        self.layout[3] = pn.Column(
+            pn.pane.Markdown('### Synchro-PASEF Method GIF', align='center'),
+            pn.pane.GIF(
+                os.path.join(save_at, "SynchroPasef_single_windows.gif"),
+                alt_text="Sorry, please try using a different browser",
+                width=640, height=360
+            ),
+            sizing_mode='stretch_width',
+            align='center',
         )
-        self.upload_progress.active = False
+
+        self.gif_progress.active = False
 
 
 class SynchroCardWidget(object):

@@ -1,3 +1,5 @@
+from bokeh.io import curdoc
+
 #!python
 import os
 import json
@@ -110,16 +112,16 @@ class LoadLibraryCard(BaseWidget):
         self.path_library = pn.widgets.TextInput(
             name='Specify the path to the library:',
             placeholder=library_path_placeholder,
-            value=os.path.join(os.path.dirname(__file__), "static\AlphaPept_results.csv"),
-            width=900,
+            value=os.path.join(os.path.dirname(__file__), "static", "AlphaPept_results.csv"),
+            # width=900,
             sizing_mode='stretch_width',
             margin=(15, 15, 0, 15)
         )
         self.path_save_folder = pn.widgets.TextInput(
             name='Save the output to the following folder:',
-            value=method_conf["input"]["save_at"],
+            # value=method_conf["input"]["save_at"],
             placeholder=save_folder_placeholder,
-            width=900,
+            # width=900,
             sizing_mode='stretch_width',
             margin=(15, 15, 0, 15)
         )
@@ -127,7 +129,7 @@ class LoadLibraryCard(BaseWidget):
             name='Specify the PTM: for example, [“STY”]',
             value=method_conf["input"]["PTM"],
             placeholder="['Phospho']",
-            width=680,
+            # width=680,
             sizing_mode='stretch_width',
             margin=(15, 15, 15, 15)
         )
@@ -135,7 +137,7 @@ class LoadLibraryCard(BaseWidget):
             name='Analysis software',
             value=method_conf["input"]["analysis_software"],
             options=['AlphaPept', 'MaxQuant', 'FragPipe', 'Spectronaut single-run', 'Spectronaut library', "DIANN library", 'AlphaPeptDeep library'],
-            width=200,
+            min_width=200,
             margin=(15, 15, 15, 15)
         )
         # PLOTS
@@ -146,7 +148,6 @@ class LoadLibraryCard(BaseWidget):
             value=tuple(method_conf['graphs']['plot_mz']),
             step=50,
             margin=(15, 15, 0, 15),
-            width=430,
         )
         self.plot_im = pn.widgets.EditableRangeSlider(
             name='Plot ion mobility range [1/K0]',
@@ -155,7 +156,6 @@ class LoadLibraryCard(BaseWidget):
             value=tuple(method_conf['graphs']['plot_IM']),
             step=0.1,
             margin=(15, 15, 0, 15),
-            width=430,
         )
         self.numbins = pn.widgets.IntInput(
             name='Number of bins',
@@ -164,7 +164,6 @@ class LoadLibraryCard(BaseWidget):
             value=method_conf['graphs']['numbins'],
             step=1,
             margin=(15, 15, 0, 15),
-            width=430,
         )
         self.window_transparency = pn.widgets.FloatInput(
             name='Transparency',
@@ -173,28 +172,24 @@ class LoadLibraryCard(BaseWidget):
             value=method_conf['graphs']['window_transparency'],
             step=0.1,
             margin=(15, 15, 0, 15),
-            width=430,
         )
         self.window_frame_color = pn.widgets.Select(
             name='Frame color',
             value=method_conf['graphs']['window_frame_color'],
             options=['black', 'grey'],
             margin=(15, 15, 0, 15),
-            width=430,
         )
         self.window_color = pn.widgets.Select(
             name='Color',
             value=method_conf['graphs']['window_color'],
             options=['yellow', 'green', 'black', 'grey', 'white'],
             margin=(15, 15, 0, 15),
-            width=430,
         )
         self.load_library_descr = pn.pane.Markdown(
             description,
-            margin=(2, 0, 2, 0),
+            margin=(5, 0, 2, 15),
             # css_classes=['main-part'],
-            align='center',
-            # width=460
+            align='start',
         )
         # UPLOAD DATA
         self.upload_button = pn.widgets.Button(
@@ -214,59 +209,46 @@ class LoadLibraryCard(BaseWidget):
         )
         self.import_error = pn.pane.Alert(
             alert_type="danger",
-            sizing_mode='stretch_width',
+            # sizing_mode='stretch_width',
             # object='test warning message',
             margin=(30, 15, 5, 15),
         )
 
     def create_layout(self):
+        plot_widgets = pn.Column(
+            pn.Row(
+                pn.Column(self.plot_mz), 
+                pn.Column(self.plot_im)),
+            pn.Row(self.numbins, self.window_transparency, sizing_mode='stretch_width'),
+            pn.Row(self.window_frame_color, self.window_color, sizing_mode='stretch_width'),
+            pn.Spacer(height=20), 
+            sizing_mode='stretch_width',
+        )
+
         self.layout = pn.Card(
             self.load_library_descr,
             pn.Row(
                 pn.Column(
                     self.path_library,
                     self.path_save_folder,
-                    pn.Row(
-                        self.analysis_software,
-                        self.ptm,
+                    pn.Row(self.analysis_software, self.ptm),
+                    pn.WidgetBox(
+                        plot_widgets,
+                        sizing_mode='stretch_width',
+                        margin=(20, 10, 50, 10),
                     ),
                     margin=(10, 30, 10, 10),
+                    sizing_mode='stretch_width',
                 ),
-                pn.Spacer(sizing_mode='stretch_width'),
                 pn.Column(
+                    pn.Spacer(),  
                     self.upload_button,
                     self.upload_progress,
-                    # self.import_error,
+                    pn.Spacer(),  
+                    width=400,
                     align='center',
-                    margin=(0, 40, 0, 0),
-                )
-            ),
-            pn.Row(
-                pn.Column(
-                    pn.WidgetBox(
-                        pn.Row(
-                            self.plot_mz,
-                            self.plot_im,
-                            sizing_mode='stretch_width',
-                    ),
-                        pn.Row(
-                            self.numbins,
-                            self.window_transparency,
-                            sizing_mode='stretch_width'
-                        ),
-                        pn.Row(
-                            self.window_frame_color,
-                            self.window_color,
-                            sizing_mode='stretch_width'
-                        ),
-                        sizing_mode='fixed',
-                        height=220,
-                        margin=(20, 10, 30, 10),
-                    ),
-                    margin=(10, 0, 10, 10),
                 ),
-                None,
-                None
+                sizing_mode='stretch_width',
             ),
             pn.layout.Divider(
                 # sizing_mode='stretch_width',
@@ -356,7 +338,7 @@ class LoadLibraryCard(BaseWidget):
             self.library,
             method_conf["graphs"]["numbins"]
         )
-        self.layout[4][0] = pn.Column(
+        self.layout[3][0] = pn.Column(
             pn.pane.Markdown(
                 '### Histogram: Precursor distribution in m/z',
                  align='center'
@@ -376,7 +358,7 @@ class LoadLibraryCard(BaseWidget):
             # tight=True
         )
         )
-        self.layout[4][1] = pn.Column(
+        self.layout[3][1] = pn.Column(
             pn.pane.Markdown(
                 '### Precursor cloud plotted across m/z and ion mobility',
                  align='center'
@@ -414,7 +396,7 @@ class LoadLibraryCard(BaseWidget):
             ),
             index=False
         )
-        self.layout[4][2] = pn.Column(
+        self.layout[3][2] = pn.Column(
             pn.pane.Markdown(
                 '### Percentage of multiple charged precursors',
                  align='center'
@@ -470,7 +452,7 @@ class SpecifyParametersCard(BaseWidget):
             value=tuple(method_conf['method_parameters']['mz']),
             step=50,
             margin=(15, 15, 0, 15),
-            width=430,
+            sizing_mode='stretch_width',
         )
         self.ion_mobility = pn.widgets.EditableRangeSlider(
             name='Ion mobility range [1/K0]',
@@ -479,7 +461,7 @@ class SpecifyParametersCard(BaseWidget):
             value=tuple(method_conf['method_parameters']['ion_mobility']),
             step=0.05,
             margin=(15, 15, 0, 15),
-            width=430,
+            sizing_mode='stretch_width',
         )
         self.num_dia_pasef_scans = pn.widgets.IntInput(
             name='Number of dia-PASEF scans',
@@ -488,7 +470,7 @@ class SpecifyParametersCard(BaseWidget):
             value=method_conf['method_parameters']['num_dia_pasef_scans'],
             step=1,
             margin=(15, 15, 0, 15),
-            width=430,
+            sizing_mode='stretch_width',
         )
         self.im_steps = pn.widgets.IntInput(
             name='Number of ion mobility windows / dia-PASEF scan',
@@ -497,7 +479,7 @@ class SpecifyParametersCard(BaseWidget):
             value=method_conf['method_parameters']['im_steps'],
             step=1,
             margin=(15, 15, 0, 15),
-            width=430,
+            sizing_mode='stretch_width',
         )
         self.overlap = pn.widgets.IntInput(
             name='Isolation window overlap [Da]',
@@ -506,7 +488,7 @@ class SpecifyParametersCard(BaseWidget):
             value=method_conf['method_parameters']['overlap'],
             step=1,
             margin=(15, 15, 0, 15),
-            width=430,
+            sizing_mode='stretch_width',
         )
         self.shift_of_final_method = pn.widgets.FloatInput(
             name='Shift of the final acquisition scheme (in IM dimension) [1/K0]',
@@ -515,20 +497,17 @@ class SpecifyParametersCard(BaseWidget):
             value=method_conf['method_parameters']['shift_of_final_method'],
             step=0.01,
             margin=(15, 15, 0, 15),
-            width=430,
+            sizing_mode='stretch_width',
         )
         self.spec_param_table = pn.widgets.DataFrame(
             autosize_mode='fit_viewport',
-            # margin=(0, 0, 0, 100),
             align='center',
             auto_edit=False,
         )
         self.specify_parameter_descr = pn.pane.Markdown(
             description,
-            margin=(2, 0, 2, 0),
-            # css_classes=['main-part'],
-            align='center',
-            # width=460
+            margin=(5, 0, 2, 15),
+            align='start',
         )
         self.calculate_button = pn.widgets.Button(
             name='Calculate',
@@ -540,43 +519,36 @@ class SpecifyParametersCard(BaseWidget):
         )
 
     def create_layout(self):
+        parameter_widgets = pn.Column(
+            pn.Row(pn.Column(self.mz), pn.Column(self.ion_mobility)),
+            pn.Row(self.num_dia_pasef_scans, self.im_steps, sizing_mode='stretch_width'),
+            pn.Row(self.overlap, self.shift_of_final_method, sizing_mode='stretch_width'),
+            pn.Spacer(height=20),
+            sizing_mode='stretch_width',
+        )
+
         self.layout = pn.Card(
             self.specify_parameter_descr,
             pn.Row(
                 pn.Column(
                     pn.WidgetBox(
-                        pn.Row(
-                            self.mz,
-                            self.ion_mobility,
-                            # sizing_mode='stretch_width',
-                        ),
-                        pn.Row(
-                            self.num_dia_pasef_scans,
-                            self.im_steps,
-                            # sizing_mode='stretch_width'
-                        ),
-                        pn.Row(
-                            self.overlap,
-                            self.shift_of_final_method,
-                            # sizing_mode='stretch_width'
-                        ),
-                        sizing_mode='fixed',
-                        margin=(20, 10, 30, 10),
-                        height=220
+                        parameter_widgets,
+                        sizing_mode='stretch_width',
+                        margin=(20, 10, 50, 10),
                     ),
                     margin=(10, 30, 10, 10),
+                    sizing_mode='stretch_width',
                 ),
-                pn.Spacer(sizing_mode='stretch_width'),
                 pn.Column(
+                    pn.Spacer(),
                     self.calculate_button,
+                    pn.Spacer(),
+                    width=400,
                     align='center',
-                    margin=(0, 40, 0, 0),
-                )
+                ),
+                sizing_mode='stretch_width',
             ),
-            pn.layout.Divider(
-                # sizing_mode='stretch_width',
-                # margin=(0, 0, 20, 10),
-            ),
+            pn.layout.Divider(),
             pn.Row(
                 None,
             ),
@@ -584,14 +556,14 @@ class SpecifyParametersCard(BaseWidget):
             collapsed=True,
             collapsible=True,
             header_background='#eaeaea',
-            background ='white',
+            background='white',
             header_color='#333',
             align='center',
             sizing_mode='stretch_width',
-            # height=470,
             margin=(5, 8, 10, 8),
             css_classes=['background']
         )
+
         dependances = {
             self.mz: [self.update_parameters, 'value'],
             self.ion_mobility: [self.update_parameters, 'value'],
@@ -633,7 +605,7 @@ class SpecifyParametersCard(BaseWidget):
 
         df_precursors_within_scan_area = pd.DataFrame(
             {
-            "precursors within the scan area [%]": list(dict_precursors_within_scan_area.values())
+                "precursors within the scan area [%]": list(dict_precursors_within_scan_area.values())
             }
         )
 
@@ -647,6 +619,10 @@ class SpecifyParametersCard(BaseWidget):
         )
         
         self.layout[3][0] = pn.Column(
+            pn.pane.Markdown(
+                '### Precursors within scan area',
+                align='center'
+            ),
             pn.widgets.Tabulator(
                 df_precursors_within_scan_area,
                 layout='fit_data_table', 
@@ -654,10 +630,8 @@ class SpecifyParametersCard(BaseWidget):
             ),
             margin=(20, 50),
             sizing_mode='stretch_width',
-            # align='center',
         )
 
-        # self.trigger_dependancy()
 
 
 class OptimizationCard(BaseWidget):
@@ -700,7 +674,7 @@ class OptimizationCard(BaseWidget):
             value=method_conf['optimizer']['n_calls'],
             step=1,
             margin=(15, 15, 0, 15),
-            width=430,
+            sizing_mode='stretch_width',
         )
         self.initial_points = pn.widgets.IntInput(
             name='Number of starting points',
@@ -709,7 +683,7 @@ class OptimizationCard(BaseWidget):
             value=method_conf['optimizer']['initial_points'],
             step=1,
             margin=(15, 15, 0, 15),
-            width=430,
+            sizing_mode='stretch_width',
         )
         self.YA1 = pn.widgets.EditableRangeSlider(
             name='A1 range',
@@ -718,7 +692,7 @@ class OptimizationCard(BaseWidget):
             value=tuple(method_conf['optimizer']['YA1']),
             step=0.1,
             margin=(15, 15, 0, 15),
-            width=430,
+            sizing_mode='stretch_width',
         )
         self.YA2 = pn.widgets.EditableRangeSlider(
             name='A2 range',
@@ -727,7 +701,7 @@ class OptimizationCard(BaseWidget):
             value=tuple(method_conf['optimizer']['YA2']),
             step=0.05,
             margin=(15, 15, 0, 15),
-            width=430,
+            sizing_mode='stretch_width',
         )
         self.YB1 = pn.widgets.EditableRangeSlider(
             name='B1 range',
@@ -736,7 +710,7 @@ class OptimizationCard(BaseWidget):
             value=tuple(method_conf['optimizer']['YB1']),
             step=0.1,
             margin=(15, 15, 0, 15),
-            width=430,
+            sizing_mode='stretch_width',
         )
         self.YB2 = pn.widgets.EditableRangeSlider(
             name='B2 range',
@@ -745,7 +719,7 @@ class OptimizationCard(BaseWidget):
             value=tuple(method_conf['optimizer']['YB2']),
             step=0.05,
             margin=(15, 15, 0, 15),
-            width=430,
+            sizing_mode='stretch_width',
         )
         self.evaluation_parameter = pn.widgets.Select(
             name='Evaluation parameter',
@@ -757,8 +731,8 @@ class OptimizationCard(BaseWidget):
                 "No. of covered, triply charged precursors",
                 "No. of covered, quadruply charged precursors"
             ],
-            width=430,
-            margin=(15, 15, 0, 15)
+            margin=(15, 15, 0, 15),
+            sizing_mode='stretch_width',
         )
         self.optimize_button = pn.widgets.Button(
             name='Optimize',
@@ -777,64 +751,50 @@ class OptimizationCard(BaseWidget):
         )
         self.scan_area_A1_A2_B1_B2_only_used_for_specific_diaPASEF = pn.widgets.LiteralInput(
             name='Scan area A1/A2/B1/B2',
-            # value=method_conf['method_parameters']['scan_area_A1_A2_B1_B2_only_used_for_specific_diaPASEF'],
             value=[0,0,0,0],
             type=list,
             margin=(15, 15, 0, 15),
-            width=900
+            sizing_mode='stretch_width',
         )
         self.optimization_descr = pn.pane.Markdown(
             description,
-            margin=(2, 0, 2, 0),
-            # css_classes=['main-part'],
-            align='center',
-            # width=460
+            margin=(5, 0, 2, 15),
+            align='start',
         )
 
     def create_layout(self):
+        optimization_widgets = pn.Column(
+            pn.Row(self.n_calls, self.initial_points, sizing_mode='stretch_width'),
+            pn.Row(self.evaluation_parameter, sizing_mode='stretch_width'),
+            pn.Row(self.YA1, self.YA2, sizing_mode='stretch_width'),
+            pn.Row(self.YB1, self.YB2, sizing_mode='stretch_width'),
+            pn.Spacer(height=20),
+            sizing_mode='stretch_width',
+        )
+
         self.layout = pn.Card(
             self.optimization_descr,
             pn.Row(
                 pn.Column(
                     pn.WidgetBox(
-                        pn.Row(
-                            self.n_calls,
-                            #self.n_start,
-                            self.initial_points,
-                            sizing_mode='stretch_width',
-                        ),
-                        pn.Row(
-                            #self.initial_points,
-                            self.evaluation_parameter,
-                            sizing_mode='stretch_width'
-                        ),
-                        pn.Row(
-                            self.YA1,
-                            self.YA2,
-                            sizing_mode='stretch_width'
-                        ),
-                        pn.Row(
-                            self.YB1,
-                            self.YB2,
-                            sizing_mode='stretch_width'
-                        ),
-                        margin=(20, 30, 30, 10),
-                        sizing_mode='fixed',
-                        height=270
+                        optimization_widgets,
+                        sizing_mode='stretch_width',
+                        margin=(20, 10, 50, 10),
                     ),
+                    margin=(10, 30, 10, 10),
+                    sizing_mode='stretch_width',
                 ),
-                pn.Spacer(sizing_mode='stretch_width'),
                 pn.Column(
+                    pn.Spacer(),
                     self.optimize_button,
                     self.optimize_progress,
+                    pn.Spacer(),
+                    width=400,
                     align='center',
-                    margin=(0, 40, 0, 0),
                 ),
+                sizing_mode='stretch_width',
             ),
-            pn.layout.Divider(
-                # sizing_mode='stretch_width',
-                # margin=(-20, 10, -20, 10),
-            ),
+            pn.layout.Divider(),
             pn.Column(
                 None,
                 pn.Row(
@@ -847,18 +807,16 @@ class OptimizationCard(BaseWidget):
             collapsed=True,
             collapsible=True,
             header_background='#eaeaea',
-            background ='white',
+            background='white',
             header_color='#333',
             align='center',
             sizing_mode='stretch_width',
-            # height=470,
             margin=(5, 8, 10, 8),
             css_classes=['background']
         )
 
         dependances = {
             self.n_calls: [self.update_parameters, 'value'],
-            #self.n_start: [self.update_parameters, 'value'],
             self.initial_points: [self.update_parameters, 'value'],
             self.evaluation_parameter: [self.update_parameters, 'value'],
             self.YA1: [self.update_parameters, 'value'],
@@ -879,8 +837,7 @@ class OptimizationCard(BaseWidget):
         global method_conf
         convertion_dict = {
             self.n_calls.name: "n_calls",
-            #self.n_start.name: "n_start",
-            self.initial_points: "initial_points",
+            self.initial_points.name: "initial_points",
             self.evaluation_parameter.name: "evaluation_parameter",
             self.YA1.name: "YA1",
             self.YA2.name: "YA2",
@@ -915,7 +872,7 @@ class OptimizationCard(BaseWidget):
 
         self.scan_area_A1_A2_B1_B2_only_used_for_specific_diaPASEF.value = self.opt_result
 
-        self.filenames_plots =  loader.get_file_names_from_directory(
+        self.filenames_plots = loader.get_file_names_from_directory(
             self.folder_path[0],
             'png'
         )
@@ -944,15 +901,19 @@ class OptimizationCard(BaseWidget):
         )
         self.kde_plot_table = pn.widgets.Tabulator(
             opt_plot_df,
-            # autosize_mode='fit_viewport',
             margin=(0, 0, 20, 100),
             layout='fit_data_table', 
             width=350,
-            # align='center',
-            # auto_edit=False
         )
 
-        self.layout[3][0] = self.player
+        self.layout[3][0] = pn.Column(
+            pn.pane.Markdown(
+                '### Optimization Results',
+                align='center'
+            ),
+            self.player,
+            sizing_mode='stretch_width',
+        )
         self.layout[3][1][0] = self.kde_plot
         self.layout[3][1][1] = self.kde_plot_table
 
@@ -1011,60 +972,61 @@ class CreateMethodCard(BaseWidget):
         self.path_method = pn.widgets.TextInput(
             name='Specify the path to the method file:',
             placeholder=method_path_placeholder,
-            # value=method_conf['input']['diaPASEF_method_only_used_for_method_evaluation'],
-            width=900,
             sizing_mode='stretch_width',
             margin=(15, 15, 0, 15)
         )
         self.create_method_descr = pn.pane.Markdown(
             description,
-            margin=(2, 0, 2, 0),
-            # css_classes=['main-part'],
-            align='center',
-            # width=460
+            margin=(5, 0, 2, 15),
+            align='start',
         )
 
     def create_layout(self):
+        create_method_widgets = pn.Column(
+            pn.Row(
+                self.opt_widget.scan_area_A1_A2_B1_B2_only_used_for_specific_diaPASEF,
+            ),
+            pn.Row(
+                self.path_method,
+            ),
+            pn.Spacer(height=20),
+        )
+
         self.layout = pn.Card(
             self.create_method_descr,
             pn.Row(
                 pn.Column(
                     pn.WidgetBox(
-                        pn.Row(
-                            self.opt_widget.scan_area_A1_A2_B1_B2_only_used_for_specific_diaPASEF,
-                            sizing_mode='stretch_width'
-                        ),
+                        create_method_widgets,
                         sizing_mode='stretch_width',
-                        margin=(20, 10, 30, 10),
-                        height=90
+                        margin=(20, 10, 50, 10),
                     ),
                     margin=(10, 30, 10, 10),
+                    sizing_mode='stretch_width',
                 ),
-                pn.Spacer(sizing_mode='stretch_width'),
-                pn.Row(
+                pn.Column(
+                    pn.Spacer(),
                     self.create_button,
+                    pn.Spacer(),
+                    width=400,
                     align='center',
-                    margin=(0, 40, 0, 0),
-                )
+                ),
+                sizing_mode='stretch_width',
             ),
-            pn.layout.Divider(
-                # sizing_mode='stretch_width',
-                # margin=(-20, 10, -20, 10),
-            ),
-            pn.Row(
+            pn.layout.Divider(),
+            pn.Column(
                 None,
-                None,
-                align='center'
+                align='center',
+                sizing_mode='stretch_width',
             ),
             title='Create Method',
             collapsed=True,
             collapsible=True,
             header_background='#eaeaea',
-            background ='white',
+            background='white',
             header_color='#333',
             align='center',
             sizing_mode='stretch_width',
-            # height=470,
             margin=(5, 8, 10, 8),
             css_classes=['background']
         )
@@ -1114,13 +1076,19 @@ class CreateMethodCard(BaseWidget):
             skiprows=3,
             names=["MS Type", "Cycle Id", "Start IM", "End IM", "Start Mass", "End Mass", "CE"]
         )
-        self.layout[3][0] = pn.widgets.Tabulator(
-            df_method,
-            # autosize_mode='fit_viewport',
-            margin=(20, 0, 20, 100),
-            # align='center',
-            # auto_edit=False,
-            width=700,
+        self.layout[3] = pn.Column(
+            pn.pane.Markdown(
+                '### Created Method Parameters',
+                align='center'
+            ),
+            pn.widgets.Tabulator(
+                df_method,
+                margin=(20, 0, 20, 100),
+                width=700,
+                sizing_mode='stretch_width',
+            ),
+            sizing_mode='stretch_width',
+            align='center',
         )
         self.trigger_dependancy()
 
@@ -1164,47 +1132,55 @@ class EvaluateMethodCard(object):
         )
         self.evaluate_method_descr = pn.pane.Markdown(
             description,
-            margin=(2, 0, 2, 0),
-            # css_classes=['main-part'],
-            align='center',
-            # width=460
+            margin=(5, 0, 2, 15),
+            align='start',
         )
 
     def create_layout(self):
+        evaluate_method_widgets = pn.Column(
+            pn.Row(
+                self.method_creation.path_method,
+                sizing_mode='stretch_width'
+            ),
+            pn.Spacer(height=20),
+            sizing_mode='stretch_width',
+        )
+
         self.layout = pn.Card(
             self.evaluate_method_descr,
             pn.Row(
                 pn.Column(
-                    self.method_creation.path_method,
+                    pn.WidgetBox(
+                        evaluate_method_widgets,
+                        sizing_mode='stretch_width',
+                        margin=(20, 10, 50, 10),
+                    ),
+                    margin=(10, 30, 10, 10),
                     sizing_mode='stretch_width',
-                    margin=(20, 10, 30, 10),
                 ),
-                pn.Spacer(sizing_mode='stretch_width'),
-                pn.Row(
+                pn.Column(
+                    pn.Spacer(),
                     self.evaluate_button,
+                    pn.Spacer(),
+                    width=400,
                     align='center',
-                    margin=(0, 40, 0, 0),
-                )
+                ),
+                sizing_mode='stretch_width',
             ),
-            pn.layout.Divider(
-                # sizing_mode='stretch_width',
-                # margin=(-20, 10, -20, 10),
-            ),
-            pn.Row(
+            pn.layout.Divider(),
+            pn.Column(
                 None,
-                None,
-                None,
-                align='center'
+                align='center',
+                sizing_mode='stretch_width',
             ),
             title='Evaluate Method',
             collapsed=True,
             collapsible=True,
             header_background='#eaeaea',
-            background ='white',
+            background='white',
             header_color='#333',
             align='center',
             sizing_mode='stretch_width',
-            # height=470,
             margin=(5, 8, 10, 8),
             css_classes=['background']
         )
@@ -1229,12 +1205,6 @@ class EvaluateMethodCard(object):
         method_conf['input'][convertion_dict[event.obj.name]] = event.new
 
     def evaluate_method(self, event):
-        method_eval_table = pn.widgets.DataFrame(
-            autosize_mode='fit_viewport',
-            # margin=(0, 0, 0, 100),
-            # align='center',
-            auto_edit=False,
-        )
 
         method_eval_dir = os.path.dirname(self.method_creation.path_method.value)
 
@@ -1256,7 +1226,6 @@ class EvaluateMethodCard(object):
             method_conf["method_parameters"]["scan_area_A1_A2_B1_B2_only_used_for_create"]
         )
 
-        # save parameters for method evaluation as .csv
         dict_precursors_within_mz = method_evaluation.calculate_precursor_within_scan_area(
             self.data.library,
             method_conf["method_parameters"]["mz"],
@@ -1272,7 +1241,7 @@ class EvaluateMethodCard(object):
         }
 
         if method_conf["method_parameters"]["scan_area_A1_A2_B1_B2_only_used_for_create"][0] != int:
-            next
+            pass
         else:
             dict_evaluation_of_final_method["final A1, A2, B1, B2 values"] = str([
                 method_conf["method_parameters"]["scan_area_A1_A2_B1_B2_only_used_for_create"][0] + method_conf['method_parameters']["shift_of_final_method"],
@@ -1292,36 +1261,43 @@ class EvaluateMethodCard(object):
             ),
             index=False
         )
-        # method_eval_table.value = final_df
 
-        print(os.path.join(
-            method_conf["input"]["save_at"],
-            'final_method',
-            'Kernel_density_distribution_and_final_method.png'
-        ))
-        self.layout[3][0] = pn.Column(
-            pn.pane.Markdown(
-                '### Final method plotted on top of precursor cloud',
-                 align='center'
-            ),pn.pane.PNG(
-            object=os.path.join(
-                method_conf["input"]["save_at"],
-                'final_method',
-                'Kernel_density_distribution_and_final_method.png'
+        self.layout[3] = pn.Column(
+            pn.Row(
+                pn.Column(
+                    pn.pane.Markdown(
+                        '### Final method plotted on top of precursor cloud',
+                        align='center'
+                    ),
+                    pn.pane.PNG(
+                        object=os.path.join(
+                            method_conf["input"]["save_at"],
+                            'final_method',
+                            'Kernel_density_distribution_and_final_method.png'
+                        ),
+                        height=345,
+                        width=460,
+                        align='center',
+                        margin=(50, 0, 0, 0)
+                    ),
+                    sizing_mode='stretch_width',
+                ),
+                pn.Column(
+                    pn.pane.Markdown(
+                        '### Evaluation Results',
+                        align='center'
+                    ),
+                    pn.widgets.Tabulator(
+                        final_df,
+                        margin=(20, 0, 20, 100),
+                        sizing_mode='stretch_width',
+                    ),
+                    sizing_mode='stretch_width',
+                ),
+                sizing_mode='stretch_width',
             ),
-            height=345,
-            width=460,
+            sizing_mode='stretch_width',
             align='center',
-            margin=(50, 0, 0, 0)
-        )
-        )
-        self.layout[3][1] = pn.widgets.Tabulator(
-            final_df,
-            # autosize_mode='fit_viewport',
-            margin=(20, 0, 20, 100),
-            # align='center',
-            # auto_edit=False,
-            width=450,
         )
 
 
