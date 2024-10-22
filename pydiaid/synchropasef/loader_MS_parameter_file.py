@@ -1,8 +1,6 @@
 # for data manipulation:
 import pandas as pd
 
-
-
 def load_MS_method_from_txt_file(
     open_name,
 ):

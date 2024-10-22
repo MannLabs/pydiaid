@@ -5,7 +5,7 @@ import click
 
 # local
 import pydiaid.diapasef as pydiaid
-from pydiaid.diapasef  import loader
+from pydiaid  import loader
 from pydiaid.diapasef  import main
 from pydiaid.diapasef  import method_optimizer
 

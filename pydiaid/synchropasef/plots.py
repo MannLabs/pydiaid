@@ -102,9 +102,9 @@ def density_plot(
     ax.set_ylim(plot_parameters["plot_IM"][0], plot_parameters["plot_IM"][1])
     ax.set_facecolor(color_scheme[color_scheme_name][1])
     plt.xlabel('m/z')
-    plt.ylabel('1/K0 [Vs*cm-2]')
-    plt.colorbar().set_label('Density', labelpad=-28, y=1.14, rotation=0)
-    plt.savefig(file_name, bbox_inches='tight', pad_inches=0, dpi=300)
+    plt.ylabel('$\mathregular{1/K_0}$ [Vs $\mathregular{cm^{-2}}$]')
+    plt.colorbar().set_label('Density', labelpad=15, rotation=270)
+    plt.savefig(file_name, bbox_inches='tight', pad_inches=0.1, dpi=300)
     if gui:
         return fig
     else:
@@ -234,9 +234,9 @@ def density_plot_plus_scan_area(
     ax.set_ylim(plot_parameters["plot_IM"][0], plot_parameters["plot_IM"][1])
     ax.set_facecolor(color_scheme[color_scheme_name][1])
     plt.xlabel('m/z')
-    plt.ylabel('1/K_0 [Vs*cm-2]')
-    plt.colorbar().set_label('Density', labelpad=-28, y=1.14, rotation=0)
-    plt.savefig(file_name, bbox_inches='tight', pad_inches=0, dpi=300)
+    plt.ylabel('$\mathregular{1/K_0}$ [Vs $\mathregular{cm^{-2}}$]')
+    plt.colorbar().set_label('Density', labelpad=15, rotation=270)
+    plt.savefig(file_name, bbox_inches='tight', pad_inches=0.1, dpi=300)
     if gui:
         return fig
     else:
@@ -394,8 +394,8 @@ def plot_method_and_precursors(
     ax.set_ylim(plot_parameters["plot_IM"][0], plot_parameters["plot_IM"][1])
     ax.set_facecolor(color_scheme[color_scheme_name][1])
     plt.xlabel('m/z')
-    plt.ylabel('1/K0 [Vs cm-2]')
-    plt.colorbar().set_label('Density', labelpad=-28, y=1.14, rotation=0)
+    plt.ylabel('$\mathregular{1/K_0}$ [Vs $\mathregular{cm^{-2}}$]')
+    plt.colorbar().set_label('Density', labelpad=15, rotation=270)
 
     pc = PatchCollection(polygon_coordinates, edgecolor = window_color, facecolor = "None")
     ax.add_collection(pc)
@@ -403,7 +403,7 @@ def plot_method_and_precursors(
 
     ax.add_collection(pc)
 
-    ax.figure.savefig(path, bbox_inches='tight', pad_inches=0, dpi=500)
+    ax.figure.savefig(path, bbox_inches='tight', pad_inches=0.1, dpi=500)
     if gui:
         return ax.figure # return fig, ax
     else:
@@ -604,7 +604,7 @@ def generate_gif_single_windows(
                 ax.set_facecolor('#440256')
                 plt.xlabel('$\mathregular{\it{m/z}}$')
                 plt.ylabel('$\mathregular{1/K_0}$ [Vs $\mathregular{cm^{-2}}$]')
-                plt.colorbar().set_label('Density', labelpad=-28, y=1.14, rotation=0)
+                plt.colorbar().set_label('Density', labelpad=15, rotation=270)
 
                 num = 0
                 for item in scans:
@@ -633,7 +633,7 @@ def generate_gif_single_windows(
 
                 pc = PatchCollection(box_temp, facecolor=facecolor)
                 ax.add_collection(pc)
-                ax.figure.savefig(save_at+'{0:0>5}'.format(cnt)+".png", bbox_inches='tight', pad_inches=0, dpi=100)
+                ax.figure.savefig(save_at+'{0:0>5}'.format(cnt)+".png", bbox_inches='tight', pad_inches=0.1, dpi=100)
                 plt.clf()
                 cnt += 1
 

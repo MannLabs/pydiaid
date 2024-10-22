@@ -13,7 +13,7 @@ from matplotlib.collections import PatchCollection
 # for suppressing warnings
 import warnings
 
-from pydiaid.diapasef .method_evaluation import boxes
+from pydiaid.diapasef.method_evaluation import boxes
 
 # importing components for visualization
 mpl.rcParams['font.family'] = 'Arial'
@@ -70,6 +70,7 @@ def plot_density(
     gui (bool): whether to use in the GUI or not. Defaults is False.
     """
     fig, ax = plt.subplots()
+
     plt.pcolormesh(
         xi, yi, zi.reshape(xi.shape),
         vmax=0.02,
@@ -80,8 +81,8 @@ def plot_density(
     ax.set_facecolor('#440256')
     plt.xlabel('$\mathregular{\it{m/z}}$')
     plt.ylabel('$\mathregular{1/K_0}$ [Vs $\mathregular{cm^{-2}}$]')
-    plt.colorbar().set_label('Density', labelpad=-28, y=1.14, rotation=0)
-    plt.savefig(file_name, bbox_inches='tight', pad_inches=0, dpi=300)
+    plt.colorbar().set_label('Density', labelpad=15, rotation=270)
+    plt.savefig(file_name, bbox_inches='tight', pad_inches=0.1, dpi=300)
     if gui:
         return fig
     else:
@@ -183,8 +184,8 @@ def plot_density_and_method(
     ax.set_facecolor('#440256')
     plt.xlabel('$\mathregular{\it{m/z}}$')
     plt.ylabel('$\mathregular{1/K_0}$ [Vs $\mathregular{cm^{-2}}$]')
-    plt.colorbar().set_label('Density', labelpad=-28, y=1.14, rotation=0)
-    plt.savefig(file_name, bbox_inches='tight', pad_inches=0, dpi=300)
+    plt.colorbar().set_label('Density', labelpad=15, rotation=270)
+    plt.savefig(file_name, bbox_inches='tight', pad_inches=0.1, dpi=300)
     plt.clf()
 
 
