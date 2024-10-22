@@ -15,7 +15,7 @@ import glob
 #local
 import pydiaid.synchropasef as pydiaid
 import pydiaid.synchropasef.loader_MS_parameter_file as loader_MS_parameter_file
-import pydiaid.synchropasef.loader_proteomics_library as loader_proteomics_library
+import pydiaid.loader as loader
 import pydiaid.synchropasef.method_creator as method_creator
 import pydiaid.synchropasef.method_evaluator as method_evaluator
 import pydiaid.synchropasef.plots as plots
@@ -285,7 +285,7 @@ class LoadLibraryCard(BaseWidget):
 
     def upload_data(self, *args):
         self.upload_progress.active = True
-        self.library = loader_proteomics_library.load_library(
+        self.library = loader.load_library(
             self.path_library.value,
             method_conf["input"]["analysis_software"],
             method_conf["input"]["PTM"]
@@ -317,7 +317,7 @@ class LoadLibraryCard(BaseWidget):
                 ),
                 gui=True
             ),
-            # tight=True
+            tight=True
         )
         )
         plots.plot_precursor_distribution_as_histogram(
@@ -347,7 +347,7 @@ class LoadLibraryCard(BaseWidget):
                 ),
                 gui=True
             ),
-            # tight=True
+            tight=True
         )
         )
         plots.density_plot(
@@ -592,6 +592,7 @@ class DefineScanAreaCard(BaseWidget):
                 '### Scan area of method',
                  align='center'
             ),
+            pn.pane.Matplotlib(
             plots.density_plot_plus_scan_area(
                 self.data.xi,
                 self.data.yi,
@@ -604,6 +605,8 @@ class DefineScanAreaCard(BaseWidget):
                 ),
                 self.scan_area_definition.value,
                 gui=True
+            ),
+            tight=True
             ),
             margin=(20, 0, 20, 0),
         )

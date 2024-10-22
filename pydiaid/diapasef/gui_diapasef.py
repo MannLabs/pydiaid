@@ -1,19 +1,19 @@
-from bokeh.io import curdoc
+# from bokeh.io import curdoc
 
 #!python
 import os
 import json
-import logging
+# import logging
 import platform
 import pandas as pd
 
 # visualization
 import panel as pn
-import bokeh.server.views.ws
+# import bokeh.server.views.ws
 
 # modules
 import pydiaid.diapasef as pydiaid
-import pydiaid.diapasef.loader as  loader
+import pydiaid.loader as  loader
 import pydiaid.diapasef.main as main
 import pydiaid.diapasef.graphs as graphs
 import pydiaid.diapasef.method_optimizer as method_optimizer
@@ -355,7 +355,7 @@ class LoadLibraryCard(BaseWidget):
                 gui=True
             ),
             # margin=(20, 0),
-            # tight=True
+            tight=True
         )
         )
         self.layout[3][1] = pn.Column(
@@ -376,7 +376,7 @@ class LoadLibraryCard(BaseWidget):
                 ),
                 gui=True
             ),
-            # tight=True,
+            tight=True,
             # margin=(20, 0),
             # sizing_mode='scale_both'
         )
@@ -895,8 +895,8 @@ class OptimizationCard(BaseWidget):
                 self.folder_path[0],
                 self.filenames_plots[self.player.value]
             ),
-            height=345,
-            width=460,
+            # height=345,
+            # width=460,
             align='center',
         )
         self.kde_plot_table = pn.widgets.Tabulator(
@@ -1084,7 +1084,7 @@ class CreateMethodCard(BaseWidget):
             pn.widgets.Tabulator(
                 df_method,
                 margin=(20, 0, 20, 100),
-                width=700,
+                layout='fit_data_table', 
                 sizing_mode='stretch_width',
             ),
             sizing_mode='stretch_width',
@@ -1275,8 +1275,8 @@ class EvaluateMethodCard(object):
                             'final_method',
                             'Kernel_density_distribution_and_final_method.png'
                         ),
-                        height=345,
-                        width=460,
+                        # height=345,
+                        # width=460,
                         align='center',
                         margin=(50, 0, 0, 0)
                     ),
