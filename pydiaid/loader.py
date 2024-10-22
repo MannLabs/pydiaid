@@ -11,6 +11,7 @@ def load_library(
     library_name: str,
     analysis_software: str,
     ptm_list: list,
+    require_im: bool = True
 ) -> pd.DataFrame:
     """Loads an output file of a proteomics analysis software as a data frame,
         which should represent the diversity of possible peptides.
@@ -22,30 +23,35 @@ def load_library(
         depending on this identifier.
     ptm_list (list): a list with identifiers used for filtering a specific data frame column
         for the strings within the list.
+    require_im (bool): if True, requires ion mobility data; if False, makes ion mobility optional.
 
     Returns:
-    pd.DataFrame: returns a pre-filtered data frame with unified column names
-        independent of the input data frame analyzed with individual analysis
-        software.
+    pd.DataFrame: returns a pre-filtered data frame with unified column names.
     """
-
     try:
+        # Special case for DIANN single-run which needs the file path directly
+        if analysis_software == 'DIANN single-run':
+            return __parse_diann_single_run(library_name, ptm_list, require_im)
+        
+        # For all other software, load the dataframe first
         dataframe = __load_dataframe_from_file(library_name)
-        if analysis_software == 'AlphaPept':
-            return __parse_alpha_pept(dataframe, ptm_list)
-        if analysis_software == 'MaxQuant':
-            return __parse_max_quant(dataframe, ptm_list)
-        if analysis_software == 'FragPipe':
-            return __parse_ms_fragger(dataframe, ptm_list)
-        if analysis_software == 'Spectronaut single-run':
-            return __parse_spectronaut_single_shot(dataframe, ptm_list)
-        if analysis_software == 'Spectronaut library':
-            return __parse_spectronaut_library(dataframe, ptm_list)
-        if analysis_software == 'DIANN library':
-            return __parse_diann_lib(dataframe, ptm_list)
-        if analysis_software == 'AlphaPeptDeep library':
-            return __parse_alphadeep_lib(dataframe, ptm_list)
-        raise Exception('Analysis software not supported.')
+        parsers = {
+            'AlphaPept': __parse_alpha_pept,
+            'MaxQuant': __parse_max_quant,
+            'MSFragger': __parse_ms_fragger,
+            'Spectronaut single-run': __parse_spectronaut_single_shot,
+            'Spectronaut library': __parse_spectronaut_library,
+            'DIANN library': __parse_diann_lib,
+            'AlphaPeptDeep library': __parse_alphadeep_lib,
+            'OpenSWATH': __parse_openswath,
+            'AlphaDIA': __parse_alphadia
+        }
+        
+        if analysis_software not in parsers:
+            raise Exception('Analysis software not supported.')
+            
+        return parsers[analysis_software](dataframe, ptm_list, require_im)
+        
     except Exception as e:
         print(e)
         raise Exception("error while processing: Did you choose the correct analysis_software and is the modification present in the dataset?")
@@ -71,9 +77,352 @@ def __load_dataframe_from_file(
         return pd.read_csv(library_name, sep='\t')  # .xls, .tsv, .txt
 
 
+def __parse_alpha_pept(
+    dataframe: pd.DataFrame,
+    ptm_list: list,
+    require_im: bool = True
+) -> pd.DataFrame:
+    """Filters a data frame depending on the software specific requirements to
+        only include valid precursors. Additionally, it parses the data frame
+        to library_loader to filter for specific modified peptides and to unify
+        the column names of the required columns.
+
+    Parameters:
+    dataframe (pd.DataFrame): imported output file from the analysis software
+        "AlphaPept". File format: .csv, required columns: "q_value", "decoy",
+        'mz', 'mobility', 'charge', 'protein', 'precursor'.
+    ptm_list (list): a list with identifiers used for filtering a specific dataframe column.
+    require_im (bool): if True, requires ion mobility data; if False, makes ion mobility optional.
+
+    Returns:
+    pd.DataFrame: returns a pre-filtered data frame with unified column names.
+    """
+
+    filtered_dataframe = dataframe[
+        (dataframe["q_value"] <= 0.01) &
+        (dataframe["decoy"] == False)
+    ]
+    
+    # Check if mobility column exists
+    im_col = 'mobility' if 'mobility' in dataframe.columns else None
+    
+    if require_im and im_col is None:
+        raise Exception("Ion mobility data required but not found in AlphaPept output")
+    
+    return library_loader(
+        filtered_dataframe,
+        ptm_list,
+        mz='mz',
+        im=im_col,
+        charge='charge',
+        protein='protein',
+        modified_peptide='precursor'
+    )
+
+
+def __parse_max_quant(
+    dataframe: pd.DataFrame,
+    ptm_list: list,
+    require_im: bool = True
+) -> pd.DataFrame:
+    """Filters a data frame depending on the software specific requirements to
+        only include valid precursors. Additionally, it parses the data frame
+        to library_loader to filter for specific modified peptides and to unify
+        the column names of the required columns.
+
+    Parameters:
+    dataframe (pd.DataFrame): imported output file from the analysis software
+        "MaxQuant".
+    File format: evidence.txt, required columns: "Reverse",  'm/z', '1/K0', 'Charge', 
+        'Proteins', 'Modified sequence', 1/K0 length'.
+    ptm_list (list): a list with identifiers used for filtering a specific dataframe column.
+    require_im (bool): if True, requires ion mobility data; if False, makes ion mobility optional.
+
+    Returns:
+    pd.DataFrame: returns a pre-filtered data frame with unified column names.
+    """
+
+    filtered_dataframe = dataframe[
+        dataframe["Reverse"] != "+"
+    ]
+    
+    # Check if IM columns exist
+    im_col = '1/K0' if '1/K0' in dataframe.columns else None
+    im_length_col = '1/K0 length' if '1/K0 length' in dataframe.columns else None
+    
+    if require_im and im_col is None:
+        raise Exception("Ion mobility data required but not found in MaxQuant output")
+    
+    return library_loader(
+        filtered_dataframe,
+        ptm_list,
+        mz='m/z',
+        im=im_col,
+        charge='Charge',
+        protein='Proteins',
+        modified_peptide='Modified sequence',
+        im_length=im_length_col
+    )
+
+
+def __parse_ms_fragger(
+    dataframe: pd.DataFrame,
+    ptm_list: list,
+    require_im: bool = True
+) -> pd.DataFrame:
+    """It parses the data frame to library_loader to filter for specific
+        modified peptides and to unify the column names of the required
+        columns.
+
+    Parameters:
+    dataframe (pd.DataFrame): imported output file from the analysis software
+        "MSFragger".
+    File format: .tsv, required columns: 'PrecursorMz', 'PrecursorIonMobility',
+        'PrecursorCharge', 'ProteinId', 'ModifiedPeptideSequence'.
+    ptm_list (list): a list with identifiers used for filtering a specific dataframe column.
+    require_im (bool): if True, requires ion mobility data; if False, makes ion mobility optional.
+
+    Returns:
+    pd.DataFrame: returns a pre-filtered data frame with unified column names.
+    """
+
+    im_col = 'PrecursorIonMobility' if 'PrecursorIonMobility' in dataframe.columns else None
+    
+    if require_im and im_col is None:
+        raise Exception("Ion mobility data required but not found in MSFragger output")
+    
+    return library_loader(
+        dataframe,
+        ptm_list,
+        mz='PrecursorMz',
+        im=im_col,
+        charge='PrecursorCharge',
+        protein='ProteinId',
+        modified_peptide='ModifiedPeptideSequence'
+    )
+
+
+def __parse_spectronaut_single_shot(
+    dataframe: pd.DataFrame,
+    ptm_list: list,
+    require_im: bool = True
+) -> pd.DataFrame:
+    """Filters a data frame depending on the software specific requirements to
+        only include valid precursors. Additionally, it parses the data frame
+        to library_loader to filter for specific modified peptides and to unify
+        the column names of the required columns.
+
+    Parameters:
+    dataframe (pd.DataFrame): imported output file from the analysis software
+        "Spectronaut - DIA analysis".
+    File format: .xls, pre-filtered for FDR, required columns: 'PG.ProteinGroups', 'EG.PrecursorId',
+        'FG.PrecMzCalibrated', 'FG.ApexIonMobility', 'FG.Charge', 'FG.IonMobilityPeakWidth'.
+    ptm_list (list): a list with identifiers used for filtering a specific dataframe column.
+    require_im (bool): if True, requires ion mobility data; if False, makes ion mobility optional.
+
+    Returns:
+    pd.DataFrame: returns a pre-filtered data frame with unified column names.
+    """
+
+    # Basic filtering for valid precursor m/z
+    filter_selection = (dataframe['FG.PrecMzCalibrated'].isnull() == False)
+    
+    # Check if IM columns exist
+    im_col = 'FG.ApexIonMobility' if 'FG.ApexIonMobility' in dataframe.columns else None
+    im_length_col = 'FG.IonMobilityPeakWidth' if 'FG.IonMobilityPeakWidth' in dataframe.columns else None
+    
+    # Only apply IM filter if column exists and IM is required
+    if im_col is not None:
+        filter_selection &= (dataframe[im_col].isnull() == False)
+    elif require_im:
+        raise Exception("Ion mobility data required but not found in Spectronaut output")
+    
+    filtered_library = dataframe[filter_selection]
+    
+    return library_loader(
+        filtered_library,
+        ptm_list,
+        mz='FG.PrecMzCalibrated',
+        im=im_col,
+        charge='FG.Charge',
+        protein='PG.ProteinGroups',
+        modified_peptide='EG.PrecursorId',
+        im_length=im_length_col
+    )
+
+
+def __parse_spectronaut_library(
+    dataframe: pd.DataFrame,
+    ptm_list: list,
+    require_im: bool = True
+) -> pd.DataFrame:
+    """Filters a data frame depending on the software specific requirements to
+        only include valid precursors. Additionally, it parses the data frame
+        to library_loader to filter for specific modified peptides and to unify
+        the column names of the required columns.
+
+    Parameters:
+    dataframe (pd.DataFrame): imported output file from the analysis software
+        "Spectronaut - library generation from Pulsar".
+    File format: .xls, required columns: 'PrecursorMz', 'IonMobility',
+        'PrecursorCharge', 'UniProtIds', 'ModifiedPeptide'.
+    ptm_list (list): a list with identifiers used for filtering a specific dataframe column.
+    require_im (bool): if True, requires ion mobility data; if False, makes ion mobility optional.
+
+    Returns:
+    pd.DataFrame: returns a pre-filtered data frame with unified column names.
+    """
+    filtered_dataframe = dataframe[
+        dataframe["ExcludeFromAssay"] != True
+    ]
+    # Basic filtering for valid precursor m/z
+    filter_selection = (filtered_dataframe['PrecursorMz'].isnull() == False)
+    
+    # Check if IM column exists and add to filter if present
+    if 'IonMobility' in filtered_dataframe.columns:
+        if require_im:
+            filter_selection &= (filtered_dataframe['IonMobility'].isnull() == False)
+        im_col = 'IonMobility'
+    else:
+        if require_im:
+            raise Exception("Ion mobility data required but not found in Spectronaut library")
+        im_col = None
+    
+    filtered_library = filtered_dataframe[filter_selection]
+    
+    return library_loader(
+        filtered_library,
+        ptm_list,
+        mz='PrecursorMz',
+        im=im_col,
+        charge='PrecursorCharge',
+        protein='UniProtIds',
+        modified_peptide='ModifiedPeptide'
+    )
+
+
+def __parse_diann_lib(
+    dataframe: pd.DataFrame,
+    ptm_list: list,
+    require_im: bool = True
+) -> pd.DataFrame:
+    """Filters a data frame depending on the software specific requirements to
+    only include valid precursors. Additionally, it parses the data frame
+    to library_loader to filter for specific modified peptides and to unify
+    the column names of the required columns.
+
+    Parameters:
+    dataframe (pd.DataFrame): imported library file from the analysis software
+        "DIANN". File format: .csv, required columns:
+        'PrecursorMz',
+        'IonMobility',
+        'PrecursorCharge',
+        'ProteinName',
+        'ModifiedPeptide',
+        'decoy',
+        'QValue'.
+    ptm_list (list): a list with identifiers used for filtering a specific dataframe column.
+    require_im (bool): if True, requires ion mobility data; if False, makes ion mobility optional.
+
+    Returns:
+    pd.DataFrame: returns a pre-filtered data frame with unified column names.
+    """
+    # Filter out decoys and apply Q-value thresholdt
+    filtered_dataframe = dataframe[
+        (dataframe['decoy'] == 0) &  # Remove decoy entries
+        (dataframe['QValue'] <= 0.01)  # Filter for 1% FDR
+    ]
+
+    # Check if IM column exists
+    im_col = 'IonMobility' if 'IonMobility' in dataframe.columns else None
+    
+    if require_im and im_col is None:
+        raise Exception("Ion mobility data required but not found in DIANN library")
+
+    return library_loader(
+        filtered_dataframe,
+        ptm_list,
+        mz='PrecursorMz',
+        im=im_col,
+        charge='PrecursorCharge',
+        protein='ProteinName',
+        modified_peptide='ModifiedPeptide'
+    )
+
+
+from alphabase.psm_reader import psm_reader_provider
+
+def __parse_diann_single_run(
+    tsv_file: str,
+    ptm_list: list,
+    require_im: bool = True
+) -> pd.DataFrame:
+    """Filters a DIA-NN single-run output file and parses it to unify
+    the column names of the required columns.
+
+    Parameters:
+    tsv_file (str): path to the DIA-NN single-run output file.
+        File format: tsv, the file should contain the following columns:
+        'precursor_mz': precursor mass-to-charge ratio, calculated by alphabase
+        'sequence': peptide sequence, Stripped.Sequence
+        'charge': precursor charge state, Precursor.Charge
+        'proteins': protein identifiers, Protein.Group
+        'fdr': false discovery rate, Q.Value
+        Optional columns:
+        'mobility': ion mobility, IM
+        'mod_sites': modification sites, Modified.Sequence
+        'mods': modifications, Modified.Sequence
+    ptm_list (list): a list with identifiers used for filtering a specific column
+        for modifications.
+    require_im (bool): if True, requires ion mobility data; if False, makes ion mobility optional.
+
+    Returns:
+    pd.DataFrame: returns a pre-filtered data frame with unified column names.
+        The returned DataFrame contains filtered and processed data with standardized
+        column names for downstream analysis.
+
+    Raises:
+    Exception: If ion mobility data is required but not found in the input file.
+    """
+    # Import the data using psm reader
+    dataframe = psm_reader_provider.get_reader('diann').import_file(tsv_file)
+
+    # Filter for high-quality identifications
+    filtered_dataframe = dataframe[
+        (dataframe["fdr"] <= 0.01)  # Filter for 1% FDR
+    ]
+
+    # Check if IM column exists
+    im_col = 'mobility' if 'mobility' in dataframe.columns else None
+    
+    if require_im and im_col is None:
+        raise Exception("Ion mobility data required but not found in DIA-NN output")
+
+    # Create modified sequence identifier by combining sequence, mods, and mod_sites
+    if 'mods' in dataframe.columns and 'mod_sites' in dataframe.columns:
+        filtered_dataframe['modified_sequence'] = filtered_dataframe.apply(
+            lambda row: f"{row['sequence']}_{row['mods']}_{row['mod_sites']}" 
+            if pd.notna(row['mods']) else row['sequence'], 
+            axis=1
+        )
+    else:
+        filtered_dataframe['modified_sequence'] = filtered_dataframe['sequence']
+
+    return library_loader(
+        library=filtered_dataframe,
+        ptm_list=ptm_list,
+        mz='precursor_mz',
+        charge='charge',
+        protein='proteins',
+        modified_peptide='modified_sequence',
+        im=im_col
+    )
+
+
 def __parse_alphadeep_lib(
     dataframe: pd.DataFrame,
     ptm_list: list,
+    require_im: bool = True
 ) -> pd.DataFrame:
     """Filters a data frame depending on the software specific requirements to
         only include valid precursors. Additionally, it parses the data frame
@@ -89,273 +438,136 @@ def __parse_alphadeep_lib(
         'ProteinID',
         'ModifiedPeptide'.
     ptm_list (list): a list with identifiers used for filtering a specific dataframe column.
-
+    require_im (bool): if True, requires ion mobility data; if False, makes ion mobility optional.
     Returns:
     pd.DataFrame: returns a pre-filtered data frame with unified column names.
     """
-    library_subset = library_loader(
+    im_col = 'IonMobility' if 'IonMobility' in dataframe.columns else None
+    
+    if require_im and im_col is None:
+        raise Exception("Ion mobility data required but not found in AlphaPeptDeep library")
+    
+    return library_loader(
         dataframe,
         ptm_list,
-        'PrecursorMz',
-        'IonMobility',
-        'PrecursorCharge',
-        'ProteinID',
-        'ModifiedPeptide'
+        mz='PrecursorMz',
+        im=im_col,
+        charge='PrecursorCharge',
+        protein='ProteinID',
+        modified_peptide='ModifiedPeptide'
     )
-    return library_subset
 
 
-def __parse_diann_lib(
+def __parse_openswath(
     dataframe: pd.DataFrame,
     ptm_list: list,
+    require_im: bool = True
 ) -> pd.DataFrame:
-    """Filters a data frame depending on the software specific requirements to
-        only include valid precursors. Additionally, it parses the data frame
-        to library_loader to filter for specific modified peptides and to unify
-        the column names of the required columns.
+    """Filters a data frame from OpenSWATH output and parses it to unify
+    the column names of the required columns.
 
     Parameters:
-    dataframe (pd.DataFrame): imported library file from the analysis software
-        "DIANN". File format: .csv, required columns: 
+    dataframe (pd.DataFrame): imported output file from OpenSWATH. 
+        File format: csv/tsv, required columns:
         'PrecursorMz',
-        'IonMobility',
         'PrecursorCharge',
         'ProteinName',
-        'ModifiedPeptide'.
+        'FullUniModPeptideName',
+        Optional columns:
+        'IonMobility'
     ptm_list (list): a list with identifiers used for filtering a specific dataframe column.
+    require_im (bool): if True, requires ion mobility data; if False, makes ion mobility optional.
 
     Returns:
     pd.DataFrame: returns a pre-filtered data frame with unified column names.
     """
-    library_subset = library_loader(
-        dataframe,
-        ptm_list,
-        'PrecursorMz',
-        'IonMobility',
-        'PrecursorCharge',
-        'ProteinName',
-        'ModifiedPeptide'
+    # Check if IM column exists
+    im_col = 'IonMobility' if 'IonMobility' in dataframe.columns else None
+    
+    if require_im and im_col is None:
+        raise Exception("Ion mobility data required but not found in OpenSWATH data")
+    
+    # Drop duplicates to get unique precursors
+    unique_precursors = dataframe.drop_duplicates(
+        ['FullUniModPeptideName', 'PrecursorCharge']
     )
-    return library_subset
-
-
-def __parse_alpha_pept(
-    dataframe: pd.DataFrame,
-    ptm_list: list,
-) -> pd.DataFrame:
-    """Filters a data frame depending on the software specific requirements to
-        only include valid precursors. Additionally, it parses the data frame
-        to library_loader to filter for specific modified peptides and to unify
-        the column names of the required columns.
-
-    Parameters:
-    dataframe (pd.DataFrame): imported output file from the analysis software
-        "AlphaPept". File format: .csv, required columns: "q_value", "decoy",
-        'mz', 'mobility', 'charge', 'protein', 'precursor'.
-    ptm_list (list): a list with identifiers used for filtering a specific dataframe column.
-
-    Returns:
-    pd.DataFrame: returns a pre-filtered data frame with unified column names.
-    """
-
-    filtered_dataframe = dataframe[
-        (dataframe["q_value"] <= 0.01) &
-        (dataframe["decoy"] == False)
-    ]
-    library_subset = library_loader(
-        filtered_dataframe,
-        ptm_list,
-        'mz',
-        'mobility',
-        'charge',
-        'protein',
-        'precursor'
+    
+    return library_loader(
+        library=unique_precursors,
+        ptm_list=ptm_list,
+        mz='PrecursorMz',
+        charge='PrecursorCharge',
+        protein='ProteinName',
+        modified_peptide='FullUniModPeptideName',
+        im=im_col
     )
-    return library_subset
-
-
-def __parse_max_quant(
-    dataframe: pd.DataFrame,
-    ptm_list: list,
-) -> pd.DataFrame:
-    """Filters a data frame depending on the software specific requirements to
-        only include valid precursors. Additionally, it parses the data frame
-        to library_loader to filter for specific modified peptides and to unify
-        the column names of the required columns.
-
-    Parameters:
-    dataframe (pd.DataFrame): imported output file from the analysis software
-        "MaxQuant".
-    File format: evidence.txt, required columns: "Reverse",  'm/z', '1/K0', 'Charge', 
-        'Proteins', 'Modified sequence', 1/K0 length'.
-    ptm_list (list): a list with identifiers used for filtering a specific dataframe column.
-
-    Returns:
-    pd.DataFrame: returns a pre-filtered data frame with unified column names.
-    """
-
-    filtered_dataframe = dataframe[
-        dataframe["Reverse"] != "+"
-    ]
-    library_subset = library_loader(
-        filtered_dataframe,
-        ptm_list,
-        'm/z',
-        '1/K0',
-        'Charge',
-        'Proteins',
-        'Modified sequence',
-        '1/K0 length'
-    )
-    return library_subset
-
-
-def __parse_ms_fragger(
-    dataframe: pd.DataFrame,
-    ptm_list: list,
-) -> pd.DataFrame:
-    """It parses the data frame to library_loader to filter for specific
-        modified peptides and to unify the column names of the required
-        columns.
-
-    Parameters:
-    dataframe (pd.DataFrame): imported output file from the analysis software
-        "MSFragger".
-    File format: .tsv, required columns: 'PrecursorMz', 'PrecursorIonMobility',
-        'PrecursorCharge', 'ProteinId', 'ModifiedPeptideSequence'.
-    ptm_list (list): a list with identifiers used for filtering a specific dataframe column.
-
-    Returns:
-    pd.DataFrame: returns a pre-filtered data frame with unified column names.
-    """
-
-    library_subset = library_loader(
-        dataframe,
-        ptm_list,
-        'PrecursorMz',
-        'PrecursorIonMobility',
-        'PrecursorCharge',
-        'ProteinId',
-        'ModifiedPeptideSequence'
-    )
-    return library_subset
-
-
-def __parse_spectronaut_single_shot(
-    dataframe: pd.DataFrame,
-    ptm_list: list,
-) -> pd.DataFrame:
-    """Filters a data frame depending on the software specific requirements to
-        only include valid precursors. Additionally, it parses the data frame
-        to library_loader to filter for specific modified peptides and to unify
-        the column names of the required columns.
-
-    Parameters:
-    dataframe (pd.DataFrame): imported output file from the analysis software
-        "Spectronaut - DIA analysis".
-    File format: .xls, required columns: 'PG.ProteinGroups', 'EG.PrecursorId',
-        'FG.PrecMzCalibrated', 'FG.ApexIonMobility', 'FG.Charge', 'FG.IonMobilityPeakWidth'.
-    ptm_list (list): a list with identifiers used for filtering a specific dataframe column.
-
-    Returns:
-    pd.DataFrame: returns a pre-filtered data frame with unified column names.
-    """
-
-    filter_selection = (dataframe['FG.PrecMzCalibrated'].isnull() == False)
-    filter_selection &= (dataframe['FG.ApexIonMobility'].isnull() == False)
-    filtered_library = dataframe[filter_selection]
-    library_subset = library_loader(
-        filtered_library,
-        ptm_list,
-        'FG.PrecMzCalibrated',
-        'FG.ApexIonMobility',
-        'FG.Charge',
-        'PG.ProteinGroups',
-        'EG.PrecursorId',
-        'FG.IonMobilityPeakWidth'
-    )
-    return library_subset
-
-
-def __parse_spectronaut_library(
-    dataframe: pd.DataFrame,
-    ptm_list: list,
-) -> pd.DataFrame:
-    """Filters a data frame depending on the software specific requirements to
-        only include valid precursors. Additionally, it parses the data frame
-        to library_loader to filter for specific modified peptides and to unify
-        the column names of the required columns.
-
-    Parameters:
-    dataframe (pd.DataFrame): imported output file from the analysis software
-        "Spectronaut - library generation from Pulsar".
-    File format: .xls, required columns: 'PrecursorMz', 'IonMobility',
-        'PrecursorCharge', 'UniProtIds', 'ModifiedPeptide'.
-    ptm_list (list): a list with identifiers used for filtering a specific dataframe column.
-
-    Returns:
-    pd.DataFrame: returns a pre-filtered data frame with unified column names.
-    """
-    filter_selection = (dataframe['PrecursorMz'].isnull() == False)
-    filter_selection &= (dataframe['IonMobility'].isnull() == False)
-    filtered_library = dataframe[filter_selection]
-
-    library_subset = library_loader(
-        filtered_library,
-        ptm_list,
-        'PrecursorMz',
-        'IonMobility',
-        'PrecursorCharge',
-        'UniProtIds',
-        'ModifiedPeptide'
-    )
-
-    return library_subset
 
 
 def __parse_alphadia(
     dataframe: pd.DataFrame,
-    ptm: str,
+    ptm_list: list,
+    require_im: bool = True
 ) -> pd.DataFrame:
-    """Filters a data frame depending on the software specific requirements to
-        only include valid precursors. Additionally, it parses the data frame
-        to library_loader to filter for specific modified peptides and to unify
-        the column names of the required columns.
+    """Filters a data frame from AlphaDIA output and parses it to unify
+    the column names of the required columns.
 
     Parameters:
-    dataframe (pd.DataFrame): imported output file from the analysis software
-        "AlphaDia".
-    File format: .tsv, required columns: 'mz_calibrated', 'mobility_calibrated',
-        'charge', 'proteins', 'precursor_idx', 'base_width_mobility'.
-    ptm (str): an identifier used for filtering a specific data frame column.
+    dataframe (pd.DataFrame): imported output file from AlphaDIA. 
+        File format: csv/tsv, required columns:
+        'mz_calibrated': calibrated precursor m/z
+        'mobility_calibrated': calibrated ion mobility
+        'charge': precursor charge state
+        'proteins': protein identifiers
+        'precursor_idx': precursor identifier
+        'base_width_mobility': ion mobility peak width
+        'decoy': decoy indicator (0 for targets, 1 for decoys)
+        'qval': q-value for false discovery rate control
+    ptm_list (list): a list with identifiers used for filtering a specific dataframe column.
+    require_im (bool): if True, requires ion mobility data; if False, makes ion mobility optional.
 
     Returns:
     pd.DataFrame: returns a pre-filtered data frame with unified column names.
     """
+    # Check if required columns exist
+    required_cols = ['mz_calibrated', 'charge', 'proteins', 'precursor_idx', 'decoy', 'qval']
+    missing_cols = [col for col in required_cols if col not in dataframe.columns]
+    if missing_cols:
+        raise Exception(f"Required columns missing from AlphaDIA output: {missing_cols}")
+    
+    # Filter for high-quality identifications
+    filtered_dataframe = dataframe[
+        (dataframe['decoy'] == 0) &  # Keep only target hits
+        (dataframe['qval'] <= 0.01)  # Filter at 1% FDR
+    ]
 
-    library_subset = library_loader(
-        dataframe,
-        ptm,
-        'mz_calibrated',
-        'mobility_calibrated',
-        'charge',
-        'proteins',
-        'precursor_idx',
-        'base_width_mobility'
+    # Check if IM columns exist
+    im_col = 'mobility_calibrated' if 'mobility_calibrated' in filtered_dataframe.columns else None
+    im_width_col = 'base_width_mobility' if 'base_width_mobility' in filtered_dataframe.columns else None
+    
+    if require_im and (im_col is None or im_width_col is None):
+        raise Exception("Ion mobility data required but not found in AlphaDIA output")
+
+    return library_loader(
+        library=filtered_dataframe,
+        ptm_list=ptm_list,
+        mz='mz_calibrated',
+        charge='charge',
+        protein='proteins',
+        modified_peptide='precursor_idx',
+        im=im_col,
+        im_length=im_width_col
     )
-
-    return library_subset
 
 
 def library_loader(
     library: pd.DataFrame,
     ptm_list: list,
     mz: str,
-    im: str,
     charge: str,
     protein: str,
     modified_peptide: str,
-    im_length = None
+    im: str = None,
+    im_length: str = None
 ) -> pd.DataFrame:
     """Filters a column of a data frame for a specific identifier (e.g.,
         "Phospho") and unifies the required column names.
@@ -368,22 +580,22 @@ def library_loader(
     ptm_list (list): a list with identifiers used for filtering the data frame 
         column "modified peptide sequence" for a specific modification.
     mz (str): column name of the column containing the precursor m/z value.
-    im (str): column name of the column containing the precursor specific ion
-        mobility.
     charge (str): column name of the column containing the precursor charge
         state information.
     protein (str): column name of the column stating the corresponding proteins
         to a specific precursor.
-    modified_peptide (str):  column name containing the modified peptide
+    modified_peptide (str): column name containing the modified peptide
         sequence for each precursor (can additionally contain charge state
         information).
-    'IMlength' (str): column name containing the ion mobility length information
-        per precursor.
+    im (str, optional): column name of the column containing the precursor specific ion
+        mobility. If None, the IM column will contain NaN values.
+    im_length (str, optional): column name containing the ion mobility length information
+        per precursor. If None, this column will not be included in the output.
 
     Returns:
     pd.DataFrame: returns a pre-filtered data frame with unified column names.
     """
-
+    # Filter for PTMs if specified
     if ptm_list != 'None':
         list_library_prefiltered = list()
         for ptm in ptm_list:
@@ -392,26 +604,32 @@ def library_loader(
             )
             library_prefiltered = library[library[ptm] == True]
             list_library_prefiltered.append(library_prefiltered)
-        library_filtered = pd.concat( list_library_prefiltered, ignore_index=True)
+        library_filtered = pd.concat(list_library_prefiltered, ignore_index=True)
         library_subset = library_filtered.drop_duplicates(
             [modified_peptide, charge]
         )
-    if ptm_list == 'None':
+    else:
         library_subset = library.drop_duplicates(
             [modified_peptide, charge]
         )  # use only unique precursors
 
+    # Create base DataFrame with required columns
     library_small = pd.DataFrame()
     library_small['mz'] = library_subset[mz]
-    library_small['IM'] = library_subset[im]
     library_small['Charge'] = library_subset[charge]
     library_small['Proteins'] = library_subset[protein]
     library_small['Peptide'] = library_subset[modified_peptide]
     
-    if im_length == None:
-        next
+    # Add IM column if specified
+    if im is not None:
+        library_small['IM'] = library_subset[im]
     else:
+        library_small['IM'] = pd.NA
+    
+    # Add IMlength column if specified
+    if im_length is not None:
         library_small['IMlength'] = library_subset[im_length]
+    
     return library_small
 
 

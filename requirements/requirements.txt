@@ -11,3 +11,4 @@ scikit-optimize==0.9.0
 jinja2==3.0.2
 shapely==2.0.2
 matplotlib==3.6.0
+alphabase==1.2.1

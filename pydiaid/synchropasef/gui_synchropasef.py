@@ -136,7 +136,7 @@ class LoadLibraryCard(BaseWidget):
         self.analysis_software = pn.widgets.Select(
             name='Analysis software',
             value=method_conf["input"]["analysis_software"],
-            options=['AlphaPept', 'AlphaDIA', 'MaxQuant', 'FragPipe', 'Spectronaut single-run', 'Spectronaut library', 'DIANN library', 'AlphaPeptDeep library'],
+            options=['AlphaPept', 'MaxQuant', 'MSFragger', 'Spectronaut single-run', 'Spectronaut library', "DIANN single-run", "DIANN library", 'AlphaPeptDeep library', 'AlphaDIA'],
             sizing_mode='stretch_width',
             margin=(15, 15, 15, 15)
         )
