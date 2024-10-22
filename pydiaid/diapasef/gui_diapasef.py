@@ -126,8 +126,8 @@ class LoadLibraryCard(BaseWidget):
             margin=(15, 15, 0, 15)
         )
         self.ptm = pn.widgets.LiteralInput(
-            name='Specify the PTM: for example, [“STY”]',
-            value=method_conf["input"]["PTM"],
+            name='Specify the PTM:',
+            # value=method_conf["input"]["PTM"],
             placeholder="['Phospho']",
             # width=680,
             sizing_mode='stretch_width',
@@ -985,9 +985,6 @@ class CreateMethodCard(BaseWidget):
         create_method_widgets = pn.Column(
             pn.Row(
                 self.opt_widget.scan_area_A1_A2_B1_B2_only_used_for_specific_diaPASEF,
-            ),
-            pn.Row(
-                self.path_method,
             ),
             pn.Spacer(height=20),
         )

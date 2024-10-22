@@ -127,7 +127,7 @@ class LoadLibraryCard(BaseWidget):
             margin=(15, 15, 0, 15)
         )
         self.ptm = pn.widgets.LiteralInput(
-            name='Specify the PTM: for example, ["STY"]',
+            name='Specify the PTM:',
             # value=method_conf["input"]["PTM"],
             placeholder="['Phospho']",
             sizing_mode='stretch_width',
