@@ -14,6 +14,7 @@ import holoviews as hv
 # import pydiaid.synchropasef as pydiaid
 from pydiaid.synchropasef.gui_synchropasef import SynchroCardWidget
 from pydiaid.diapasef.gui_diapasef import DiaCardWidget
+from pydiaid.oadia.gui_orbitrapastraldia import OrbitrapAstralCardWidget
 # from pydiaid.quadrupolecalibration.gui_quad import QuadCardWidget
 
 import warnings
@@ -451,7 +452,7 @@ class TabsWidget(object):
         [
             ('Optimal dia-PASEF', DiaCardWidget().create_layout()),
             ('Synchro-PASEF', SynchroCardWidget().create_layout()),
-            # ('Quadrupole Calibration for Synchro-PASEF', QuadCardWidget().create_layout()),
+            ('Orbitrap Astral DIA', OrbitrapAstralCardWidget().create_layout())
         ]
         )
         return self.layout
@@ -504,7 +505,7 @@ class pydiaidGui(GUI):
             self.tabs.create_layout([
                 ('Optimal dia-PASEF', DiaCardWidget().create_layout()),
                 ('Synchro-PASEF', SynchroCardWidget().create_layout()),
-                # ('Quadrupole Calibration', QuadCardWidget().create_layout())
+                ('Orbitrap Astral DIA', OrbitrapAstralCardWidget().create_layout())
             ])
         )
         if start_server:
