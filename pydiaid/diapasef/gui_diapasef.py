@@ -431,6 +431,7 @@ class SpecifyParametersCard(BaseWidget):
     overlap (IntInput): Selects the isolation window overlap value in Dalton, ranging from 0 to 10.
     shift_of_final_method (FloatInput): Adjusts the shift of the final acquisition scheme (in the
         ion mobility dimension), ranging from -0.5 to 1.0.
+    max_width (IntInput): Sets maximum allowed window width [Da].
     spec_param_table (DataFrame): Specificies the parameters table within the Widget.
     specify_parameter_descr (Markdown): The description for specifying parameters.
     calculate_button (Button): A button widget to initiate calculation of parameters.
@@ -499,6 +500,25 @@ class SpecifyParametersCard(BaseWidget):
             margin=(15, 15, 0, 15),
             sizing_mode='stretch_width',
         )
+        # self.min_width = pn.widgets.FloatInput(
+        #     name='Lower Limit (m/z width)',
+        #     start=0.2,
+        #     end=50,
+        #     value=2,
+        #     step=0.01,
+        #     margin=(15, 15, 0, 15),
+        #     sizing_mode='stretch_width'
+        # )
+
+        self.max_width = pn.widgets.IntInput(
+            name='Upper Limit (m/z width)',
+            start=1,
+            end=300,
+            value=method_conf['method_parameters']['max_width'],
+            step=1,
+            margin=(15, 15, 0, 15),
+            sizing_mode='stretch_width'
+        )
         self.spec_param_table = pn.widgets.DataFrame(
             autosize_mode='fit_viewport',
             align='center',
@@ -523,6 +543,7 @@ class SpecifyParametersCard(BaseWidget):
             pn.Row(pn.Column(self.mz), pn.Column(self.ion_mobility)),
             pn.Row(self.num_dia_pasef_scans, self.im_steps, sizing_mode='stretch_width'),
             pn.Row(self.overlap, self.shift_of_final_method, sizing_mode='stretch_width'),
+            pn.Row(self.max_width, sizing_mode='stretch_width'),
             pn.Spacer(height=20),
             sizing_mode='stretch_width',
         )
@@ -571,6 +592,8 @@ class SpecifyParametersCard(BaseWidget):
             self.im_steps: [self.update_parameters, 'value'],
             self.overlap: [self.update_parameters, 'value'],
             self.shift_of_final_method: [self.update_parameters, 'value'],
+            # self.min_width: [self.update_parameters, 'value'],
+            self.max_width: [self.update_parameters, 'value'],
             self.calculate_button: [self.run_calculation, 'clicks'],
         }
         for k in dependances.keys():
@@ -590,6 +613,8 @@ class SpecifyParametersCard(BaseWidget):
             self.im_steps.name: "im_steps",
             self.overlap.name: "overlap",
             self.shift_of_final_method.name: "shift_of_final_method",
+            # self.min_width.name: "min_width",
+            self.max_width.name: "max_width",
         }
         if isinstance(event.new, tuple):
             method_conf['method_parameters'][convertion_dict[event.obj.name]] = list(event.new)

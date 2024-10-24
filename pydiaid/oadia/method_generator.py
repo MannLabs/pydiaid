@@ -71,7 +71,8 @@ def create_method(
             mz_range,
             num_bins,
             min_width,
-            max_width
+            max_width,
+            merging_for_small_bins=True
         )
     else:  # fixed
         bins = create_fixed_bins(
@@ -237,7 +238,8 @@ def create_variable_bins(
     mz_range: Tuple[float, float],
     num_bins: int,
     min_width: float = 2.0,
-    max_width: float = 50.0
+    max_width: float = 50.0,
+    merging_for_small_bins: bool = False
 ) -> List[List[float]]:
     """Creates variable bins for mass spectrometry data that balance even distribution
     of items with reasonable bin widths.
@@ -248,6 +250,8 @@ def create_variable_bins(
         num_bins (int): Target number of bins
         min_width (float): Minimum allowed bin width in Da
         max_width (float): Maximum allowed bin width in Da
+        merging_for_small_bins (bool): Defines if only max_width contrain or both, 
+            min_width and max_width, is applied
 
     Returns:
         List[List[float]]: List of [start, end] ranges for each bin
@@ -295,9 +299,10 @@ def create_variable_bins(
         # Safety check to prevent infinite loops
         if remaining_range[0] >= remaining_range[1]:
             break
-    
-    # Final step: merge any bins that ended up too small
-    final_bins = merge_small_bins(final_bins, min_width)
+
+    if merging_for_small_bins is True:
+        # Final step: merge any bins that ended up too small
+        final_bins = merge_small_bins(final_bins, min_width)
     return final_bins
 
 

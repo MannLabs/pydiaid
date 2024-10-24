@@ -19,6 +19,8 @@
         "im_steps": 2,
         "overlap": 0,
         "shift_of_final_method": 0.012,
+        "min_width": 2,
+        "max_width": 50,
         "scan_area_A1_A2_B1_B2_only_used_for_create": [
             0.68,
             1.04,
