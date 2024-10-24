@@ -1327,7 +1327,7 @@ class DiaCardWidget(object):
     """
     def __init__(self):
         self.project_description = """#### py_diAID uses an Automated Isolation Design to generate optimal dia-PASEF methods with respect to the precursor density. It designs isolation windows with variable widths, which enable short acquisition cycles, while essentially covering the complete m/z-ion mobility-range."""
-        self.load_library_description = "#### Please load the library for the indicated analysis software’s to check the distribution of the precursors in the m/z-ion mobility plane."
+        self.load_library_description = "#### Load the library for the indicated analysis software to check the distribution of the precursors in the m/z-ion mobility plane."
         self.specify_parameter_description = "####  We found a strong correlation between a high theoretical and empirical precursor coverage. This result suggests using a scan area with a wide m/z-range and a narrow ion mobility range. Specify the number of dia-PASEF scans, which depend on the chromatographic peak width, and the number of ion mobility windows per dia-PASEF scan. We recommend two ion mobility windows per dia-PASEF scan."
         self.optimization_description = "#### py_diAID uses a Bayesian optimization following a Gaussian process to find the optimal scan area. We recommend 100 optimization steps and 20 starting points."
         self.create_method_description = "#### Create a dia-PASEF method with an optimal or an individually specified scan area."

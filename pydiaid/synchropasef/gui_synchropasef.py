@@ -1579,7 +1579,7 @@ class SynchroCardWidget(object):
     """
     def __init__(self):
         self.layout = None
-        self.load_library_description = "#### Please load the library for the indicated analysis software’s to check the distribution of the precursors in the m/z-ion mobility plane."
+        self.load_library_description = "#### Load the library for the indicated analysis software to check the distribution of the precursors in the m/z-ion mobility plane."
         self.scan_area_description = "#### Define the scan area dependent on the precursor density."
         self.generate_method_description = "#### Generated a synchro-PASEF method with individual method design."
         self.load_method_description = "#### Load a synchro-PASEF method from a txt file or directly from the raw file."
