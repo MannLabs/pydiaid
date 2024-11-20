@@ -314,7 +314,7 @@ class SpecifyMethodParametersCard(BaseWidget):
         layout (Card): Panel Card that holds the widgets.
         mz_range (EditableRangeSlider): Controls the m/z range for window generation [Da].
         num_bins (IntInput): Sets number of DIA scans per method.
-        window_type (Select): Selects between fixed or variable window widths.
+        window_type (Select): Selects between fixed or dynamic window widths.
         output_format (Select): Determines output format (all, targeted, center_mass, mz_ranges).
         min_width (FloatInput): Sets minimum allowed window width [Da].
         max_width (IntInput): Sets maximum allowed window width [Da].
@@ -333,7 +333,7 @@ class SpecifyMethodParametersCard(BaseWidget):
 
         # Initialize widgets
         self.mz_range = pn.widgets.EditableRangeSlider(
-            name='m/z Range [Da]',
+            name='m/z range [Da]',
             start=100,
             end=1700,
             value=(380, 980),
@@ -343,9 +343,9 @@ class SpecifyMethodParametersCard(BaseWidget):
         )
 
         self.num_bins = pn.widgets.IntInput(
-            name='Number of Scans',
+            name='Number of scans',
             start=1,
-            end=300,
+            end=3000,
             value=60,
             step=1,
             margin=(15, 15, 0, 15),
@@ -353,15 +353,15 @@ class SpecifyMethodParametersCard(BaseWidget):
         )
 
         self.window_type = pn.widgets.Select(
-            name='Window Type',
-            options=['fixed', 'variable'],
-            value='variable',
+            name='Window type',
+            options=['fixed', 'dynamic'],
+            value='dynamic',
             margin=(15, 15, 0, 15),
             min_width=200
         )
 
         self.output_format = pn.widgets.Select(
-            name='Output Format',
+            name='Output format',
             options=['all', 'targeted', 'center_mass', 'mz_ranges'],
             value='all',
             margin=(15, 15, 0, 15),
@@ -369,7 +369,7 @@ class SpecifyMethodParametersCard(BaseWidget):
         )
 
         self.min_width = pn.widgets.FloatInput(
-            name='Lower Limit (m/z width)',
+            name='Lower limit (m/z width)',
             start=0.2,
             end=50,
             value=2,
@@ -379,13 +379,27 @@ class SpecifyMethodParametersCard(BaseWidget):
         )
 
         self.max_width = pn.widgets.IntInput(
-            name='Upper Limit (m/z width)',
+            name='Upper limit (m/z width)',
             start=1,
             end=300,
-            value=100,
+            value=50,
             step=1,
             margin=(15, 15, 0, 15),
             sizing_mode='stretch_width'
+        )
+
+        self.forbidden_zone = pn.widgets.Checkbox(
+            name='Adjust window boarders to forbidden zones',
+            value=False,  # default value
+            margin=(15, 15, 0, 15),
+            sizing_mode='stretch_width',
+        )
+
+        self.phospho_method = pn.widgets.Checkbox(
+            name='Calculate forbidden zones for phosphopeptides',
+            value=False,  # default value
+            margin=(15, 15, 0, 15),
+            sizing_mode='stretch_width',
         )
 
         self.calculate_button = pn.widgets.Button(
@@ -409,6 +423,7 @@ class SpecifyMethodParametersCard(BaseWidget):
             pn.Row(pn.Column(self.mz_range), pn.Column(self.num_bins)),
             pn.Row(self.window_type, self.output_format, sizing_mode='stretch_width'),
             pn.Row(pn.Column(self.min_width), pn.Column(self.max_width)),
+            pn.Row(pn.Column(self.forbidden_zone), pn.Column(self.phospho_method)),
             pn.Spacer(height=20),
             sizing_mode='stretch_width',
         )
@@ -454,6 +469,8 @@ class SpecifyMethodParametersCard(BaseWidget):
             self.output_format: [self.update_parameters, 'value'],
             self.min_width: [self.update_parameters, 'value'],
             self.max_width: [self.update_parameters, 'value'],
+            self.forbidden_zone: [self.update_parameters, 'value'],
+            self.phospho_method: [self.update_parameters, 'value'],
             self.calculate_button: [self.calculate_method, 'clicks'],
         }
         for k in dependances.keys():
@@ -475,6 +492,8 @@ class SpecifyMethodParametersCard(BaseWidget):
             self.output_format.name: "output_format",
             self.min_width.name: "min_width",
             self.max_width.name: "max_width",
+            self.forbidden_zone.name: "forbidden_zone",
+            self.phospho_method.name: "forbidden_zones_for_phospho",
         }
         method_conf['method_parameters'][convertion_dict[event.obj.name]] = event.new
 
@@ -642,6 +661,8 @@ class CreateMethodCard(BaseWidget):
                 folder_path=final_method_folder,
                 min_width=self.param.min_width.value,
                 max_width=self.param.max_width.value,
+                adjusted_for_forbidden_zones = self.param.forbidden_zone.value,
+                phospho_method = self.param.phospho_method.value
             )
             self.path_method.value = final_method_path
 
@@ -776,15 +797,17 @@ class EvaluateMethodCard(BaseWidget):
                 raise ValueError("Please load a library first")
 
             # Load and evaluate method
-            df_window, bins, df_method = method_evaluator.load_method_file(
+            _, bins, df_method = method_evaluator.load_method_file(
                 method_conf["input"]["dia_method_only_used_for_evaluate"]
             )
 
             # Get statistics
             stats = method_evaluator.analyze_bins(bins, self.data.library["mz"])
+        
+            df_window = method_evaluator.parse_stats_text(stats['tabular_stats'])
 
             # Determine window type
-            window_type = "fixed" if round(stats['min_width'], 2) == round(stats['max_width'], 2) else "variable"
+            window_type = "fixed" if round(stats['min_width'], 2) == round(stats['max_width'], 2) else "dynamic"
 
             # Update layout with results in three columns
             self.layout[3] = pn.Row(
@@ -842,8 +865,6 @@ class EvaluateMethodCard(BaseWidget):
                     ),
                     pn.pane.Matplotlib(
                         method_evaluator.plot_precursors_per_scan(
-                            self.data.library["mz"],
-                            bins,
                             window_type,
                             df_window,
                             os.path.join(
@@ -890,6 +911,15 @@ class EvaluateMethodCard(BaseWidget):
                 ),
                 index=False
             )
+            method_evaluator.plot_precursors_per_scan(
+                window_type,
+                df_window,
+                os.path.join(
+                    self.data.path_save_folder.value,
+                    'final_method',
+                    'precursor_per_scan_evaluation.pdf'
+                ),
+            ),
 
         except Exception as e:
             self.layout[3] = pn.pane.Alert(
@@ -932,7 +962,7 @@ class OrbitrapAstralCardWidget:
         """
         
         self.specify_parameter_descr = """
-        #### Specify DIA window parameters. Recommended m/z-range is 380-980. Choose the number of DIA scans based on chromatographic peak width. Select window type (fixed/variable) and output format.
+        #### Specify DIA window parameters. Recommended m/z-range is 380-980. Choose the number of DIA scans based on the sample concentration and chromatographic peak width. Select window type (fixed/dynamic) and output format.
         """
         
         self.create_method_descr = """
