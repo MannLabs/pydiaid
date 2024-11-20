@@ -128,6 +128,7 @@ def process_proteomics_data(
 
     return column_types, analysis_results, data_source, file_paths, intensity_only_dataframes, full_dataframes
 
+
 def identify_data_source(df: pd.DataFrame) -> str:
     """
     Identify the data source based on the DataFrame columns.
@@ -156,6 +157,7 @@ def identify_data_source(df: pd.DataFrame) -> str:
             return data_source
     
     return ""
+
 
 def analyze_dataframe(
     df: pd.DataFrame,
@@ -207,6 +209,7 @@ def analyze_dataframe(
     
     return column_types, analysis_results, intensity_only_dataframes, full_dataframes
 
+
 def get_data_source_config(data_source: str) -> Dict[str, Union[str, List[str]]]:
     """
     Get configuration for a specific data source.
@@ -231,6 +234,7 @@ def get_data_source_config(data_source: str) -> Dict[str, Union[str, List[str]]]
     }
     return data_source_config[data_source]
 
+
 def preprocess_columns(df: pd.DataFrame, column_type: str, data_source: str, filter_columns: str = None) -> Tuple[pd.DataFrame, List[str]]:
     """
     Preprocess columns based on the data source and column type.
@@ -247,6 +251,7 @@ def preprocess_columns(df: pd.DataFrame, column_type: str, data_source: str, fil
     - List of intensity column names
     """
     return filter_and_rename_columns(df, data_source, column_type, filter_columns)
+
 
 def select_and_rename_columns(df: pd.DataFrame, selection_criteria: Callable[[str], bool], prefix: str = "") -> Tuple[pd.DataFrame, List[str]]:
     """
@@ -269,6 +274,7 @@ def select_and_rename_columns(df: pd.DataFrame, selection_criteria: Callable[[st
     df[new_column_names] = df[new_column_names].replace(0, np.nan)
     print(f"New column names: {new_column_names}")
     return df, new_column_names
+
 
 def filter_and_rename_columns(df: pd.DataFrame, data_source: str, column_type: str, filter_columns: str = None) -> Tuple[pd.DataFrame, List[str]]:
     """
@@ -303,6 +309,7 @@ def filter_and_rename_columns(df: pd.DataFrame, data_source: str, column_type: s
     else:
         raise ValueError(f"Unknown data source: {data_source}")
 
+
 def prepare_intensity_dataframe(df_filtered: pd.DataFrame, intensity_columns: List[str], id_column: str, dataset_label: str) -> pd.DataFrame:
     """
     Prepare intensity DataFrame with unique identifiers.
@@ -319,6 +326,7 @@ def prepare_intensity_dataframe(df_filtered: pd.DataFrame, intensity_columns: Li
     intensity_df: pd.DataFrame = df_filtered[intensity_columns].add_prefix(dataset_label + "_")
     intensity_df["unique_id"] = df_filtered[id_column]
     return intensity_df
+
 
 def analyze_and_filter_data(
     df_filtered: pd.DataFrame,
@@ -377,6 +385,7 @@ def analyze_and_filter_data(
 
     return analysis_results, intensity_only_dataframes, full_dataframes
 
+
 def calculate_statistics(
     df_filtered: pd.DataFrame,
     analysis_results: Dict[str, List[Any]],
@@ -418,6 +427,7 @@ def calculate_statistics(
     
     return analysis_results, df_filtered
 
+
 def update_analysis_results(df_filtered: pd.DataFrame, column_type: str, intensity_columns: List[str], analysis_results: Dict[str, List[Any]]) -> Dict[str, List[Any]]:
     """
     Update analysis results based on the filtered DataFrame.
@@ -446,6 +456,7 @@ def update_analysis_results(df_filtered: pd.DataFrame, column_type: str, intensi
 
     return analysis_results
 
+
 def calculate_cv(x: pd.Series) -> float:
     """
     Calculate the coefficient of variation for a given series.
@@ -460,6 +471,7 @@ def calculate_cv(x: pd.Series) -> float:
     if x_numeric.isna().all():
         return np.nan
     return np.nanstd(x_numeric, ddof=1) / np.nanmean(x_numeric)
+
 
 def generate_correlation_plots(
     df_filtered: pd.DataFrame,
@@ -493,6 +505,7 @@ def generate_correlation_plots(
         font_size=12,
     )
 
+
 def find_common_prefix(column_names: List[str]) -> str:
     """
     Find the common prefix among a list of column names.
@@ -513,6 +526,7 @@ def find_common_prefix(column_names: List[str]) -> str:
         reference_name = reference_name[match.a: match.a + match.size]
     
     return reference_name
+
 
 def create_correlation_plot(df_subset: pd.DataFrame, plot_type: str, correlation_function: Callable, binning: int, font_size: int) -> go.Figure:
     """ 
@@ -538,6 +552,7 @@ def create_correlation_plot(df_subset: pd.DataFrame, plot_type: str, correlation
     fig.update_layout(template="simple_white", coloraxis2=dict(showscale=False, colorscale=["black", "black"]),
                       coloraxis1=dict(showscale=False), font_size=font_size)
     return fig
+
 
 def create_scatter_correlation_plot(df_subset: pd.DataFrame, correlation_function: Callable, binning: int) -> go.Figure:
     """
@@ -576,6 +591,7 @@ def create_scatter_correlation_plot(df_subset: pd.DataFrame, correlation_functio
                 fig.add_annotation(dict(text=str(np.round(np.min(correlation_function(df_subset[[col_i,col_j]].dropna())),4)),
                                         x=binning, y=plot_height, showarrow=False), row=j+1, col=i+1)
     return fig
+
 
 def create_heatmap_correlation_plot(df_subset: pd.DataFrame, correlation_function: Callable) -> go.Figure:
     """
@@ -653,25 +669,6 @@ def plot_sample_correlations(
     return fig
 
 
-
-
-
-# --------------------------------------------------------------------------------------------------------------------------------------------------------------
-# --------------------------------------------------------------------------------------------------------------------------------------------------------------
-# --------------------------------------------------------------------------------------------------------------------------------------------------------------
-# --------------------------------------------------------------------------------------------------------------------------------------------------------------
-# --------------------------------------------------------------------------------------------------------------------------------------------------------------
-# --------------------------------------------------------------------------------------------------------------------------------------------------------------
-# --------------------------------------------------------------------------------------------------------------------------------------------------------------
-# --------------------------------------------------------------------------------------------------------------------------------------------------------------
-# --------------------------------------------------------------------------------------------------------------------------------------------------------------
-# --------------------------------------------------------------------------------------------------------------------------------------------------------------
-# --------------------------------------------------------------------------------------------------------------------------------------------------------------
-# --------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-
-
-
 def generate_all_plots(
     data_column_identifiers: List[str],
     results_dictionary: Dict[str, Any],
@@ -723,6 +720,7 @@ def generate_all_plots(
             intensity_data_frames, all_data_frames
         )
 
+
 def print_median_cv_values(filtered_results_df: pd.DataFrame, labels: List[str]) -> None:
     """
     Print median CV values for each sample in the filtered results DataFrame.
@@ -746,6 +744,7 @@ def print_median_cv_values(filtered_results_df: pd.DataFrame, labels: List[str])
         else:
             print(f"Sample {label}: No CV data available")
     print()  # Add a blank line for better readability
+
 
 def generate_and_save_individual_plots(
     filtered_results_df: pd.DataFrame,
@@ -798,6 +797,7 @@ def generate_and_save_individual_plots(
     create_scatter_density_plot(all_data_frames, labels, column_identifier, output_directory, data_file_type, x_value="log2_median", y_value="CV")
     # create_scatter_density_plot(all_data_frames, labels, column_identifier, output_directory, data_file_type, x_value="log2_median", y_value="missing_value_ratio")
 
+
 def merge_intensity_dataframes(intensity_data_frames: List[pd.DataFrame]) -> pd.DataFrame:
     """
     Merge multiple intensity dataframes based on the 'unique_id' column.
@@ -834,6 +834,7 @@ def merge_intensity_dataframes(intensity_data_frames: List[pd.DataFrame]) -> pd.
 
     return merged_df
 
+
 def _get_filtered_indices(column_identifier_index: int, num_identifiers: int, num_files: int, filter_columns: List[str]) -> List[int]:
     """
     Get filtered indices based on the given parameters.
@@ -855,6 +856,7 @@ def _get_filtered_indices(column_identifier_index: int, num_identifiers: int, nu
                for file_num in range(num_files)]
     return indices
 
+
 def get_viridis_colors(n_colors: int) -> List[Tuple[float, float, float, float]]:
     """
     Get a list of colors from the Viridis colormap.
@@ -867,6 +869,7 @@ def get_viridis_colors(n_colors: int) -> List[Tuple[float, float, float, float]]
     """
     viridis = cm.get_cmap('viridis')
     return [viridis(i / (n_colors - 1)) for i in range(n_colors)]
+
 
 def create_stacked_bar_plot(
     df: pd.DataFrame,
@@ -916,6 +919,7 @@ def create_stacked_bar_plot(
     plt.tight_layout()
     save_plot(save_name)
 
+
 def save_plot(save_name: str) -> None:
     """
     Save the current plot as both PDF and PNG files.
@@ -930,6 +934,7 @@ def save_plot(save_name: str) -> None:
     plt.savefig(f"{save_name}.png", dpi=300)
     plt.show()
     plt.close()
+
 
 def get_y_label(data_file_type: str) -> str:
     """
@@ -953,6 +958,7 @@ def get_y_label(data_file_type: str) -> str:
         'spectronaut_precursors': "# precursors",
     }
     return y_labels.get(data_file_type, "Count")
+
 
 def create_cv_bar_plot(
     filtered_results_df: pd.DataFrame,
@@ -1002,6 +1008,7 @@ def create_cv_bar_plot(
         title=title,
         label_box=label_box
     )
+
 
 def plot_identifications_per_run(
     filtered_results_df: pd.DataFrame,
@@ -1061,6 +1068,7 @@ def plot_identifications_per_run(
     save_name = f"{output_directory}/bar_plot_IDs_per_run_{data_file_type}_{column_identifier}"
     save_plot(save_name)
 
+
 def generate_violin_plots(
     filtered_results_df: pd.DataFrame,
     labels: List[str],
@@ -1111,6 +1119,7 @@ def generate_violin_plots(
     save_name = f"{output_directory}/violin_plot_CVs_{data_file_type}_{column_identifier}"
     save_plot(save_name)
 
+
 def is_consistent_pattern(levels: List[Tuple[float, ...]]) -> bool:
     """
     Check if the data completeness levels follow a consistent pattern.
@@ -1136,6 +1145,7 @@ def is_consistent_pattern(levels: List[Tuple[float, ...]]) -> bool:
     
     # Check if all sequences use the same step size
     return len(step_sizes) == 1
+
 
 def plot_missing_value_bars(
     filtered_results_df: pd.DataFrame,
@@ -1194,15 +1204,16 @@ def plot_missing_value_bars(
     
     # Pivot the dataframe to get it in the right format for stacking
     df_pivot = df.pivot(index='Type', columns='DataCompleteness', values='Count')
-    print(df_pivot)
     
     # Sort columns in descending order (1.0 to 0.25)
     df_pivot = df_pivot.sort_index(axis=1, ascending=False)
+    df_pivot_resorted =    df_pivot.reindex(labels)
+    print(df_pivot_resorted)
     
     # Calculate the differences for stacking
-    df_stacked = df_pivot.copy()
-    for col in df_pivot.columns[1:]:
-        df_stacked[col] = df_pivot[col] - df_pivot[df_pivot.columns[df_pivot.columns.get_loc(col) - 1]]
+    df_stacked = df_pivot_resorted.copy()
+    for col in df_pivot_resorted.columns[1:]:
+        df_stacked[col] = df_pivot_resorted[col] - df_pivot_resorted[df_pivot_resorted.columns[df_pivot_resorted.columns.get_loc(col) - 1]]
 
     create_stacked_bar_plot(
         df=df_stacked.sort_index(axis=1, ascending=True),
@@ -1213,6 +1224,7 @@ def plot_missing_value_bars(
         title=title,
         label_box=df_stacked.columns
     )
+
 
 def create_interactive_rank_plot(
     all_data_frames: List[pd.DataFrame],
@@ -1256,6 +1268,7 @@ def create_interactive_rank_plot(
     fig.write_image(f"{output_directory}/plot_{get_axis_label(x_value, column_identifier)}_{get_axis_label(y_value, column_identifier)}_{data_file_type}_{column_identifier}.pdf")
     return fig
 
+
 def print_quartile_info(df: pd.DataFrame, label: str) -> None:
     """
     Print quartile information for the given DataFrame.
@@ -1271,6 +1284,7 @@ def print_quartile_info(df: pd.DataFrame, label: str) -> None:
     df_quartile: pd.Series = df["log10_median"].quantile([0.25, 0.5, 0.75])
     for quartile in [0.25, 0.5, 0.75]:
         print(quartile, df_quartile[quartile])
+
 
 def print_dynamic_range_info(df: pd.DataFrame) -> None:
     """
@@ -1293,6 +1307,7 @@ def print_dynamic_range_info(df: pd.DataFrame) -> None:
         precursors_within_range: int = len(df[(df["log10_median"] >= percentile[0]) & (df["log10_median"] < percentile[1])])
         print(f"{percentile} (25%):")
         print(f"count: {precursors_within_range}, ratio from total IDs: {precursors_within_range / len(df['log10_median']):.2f}")
+
 
 def update_layout(fig: px.scatter, x_value: str, y_value: str, column_identifier: str) -> None:
     """
@@ -1317,6 +1332,7 @@ def update_layout(fig: px.scatter, x_value: str, y_value: str, column_identifier
         template='plotly_white',
         height=450
     )
+
 
 def create_static_rank_plot(
     all_data_frames: List[pd.DataFrame],
@@ -1374,6 +1390,7 @@ def create_static_rank_plot(
     else:
         return scatter_plot_data
 
+
 def prepare_dataframe_for_plotting(df: pd.DataFrame, column_identifier: str, x_value: str, y_value: str) -> pd.DataFrame:
     """
     Prepare a DataFrame for plotting by calculating various metrics.
@@ -1396,6 +1413,7 @@ def prepare_dataframe_for_plotting(df: pd.DataFrame, column_identifier: str, x_v
     sorted_df: pd.DataFrame = df.sort_values(by="log10_median", ascending=False).reset_index(drop=True)
     sorted_df["index"] = sorted_df.index
     return sorted_df
+
 
 def create_scatter_density_plot(
     all_data_frames: List[pd.DataFrame],
@@ -1449,6 +1467,7 @@ def create_scatter_density_plot(
     joint_plot.savefig(f"{save_name}.pdf", bbox_inches='tight', pad_inches=0, dpi=300)
     plt.show()
 
+
 def create_joint_plot(df: pd.DataFrame, x_value: str, y_value: str, use_kernel_density_estimation: bool) -> sns.JointGrid:
     """
     Create a joint plot using seaborn.
@@ -1466,6 +1485,7 @@ def create_joint_plot(df: pd.DataFrame, x_value: str, y_value: str, use_kernel_d
         return sns.jointplot(data=df, x=x_value, y=y_value, hue="Type", kind="kde")
     else:
         return sns.jointplot(data=df, x=x_value, y=y_value, hue="Type", s=5, edgecolor="face")
+
 
 def get_axis_label(value: str, column_identifier: str) -> str:
     """
@@ -1486,6 +1506,7 @@ def get_axis_label(value: str, column_identifier: str) -> str:
         f"data_completeness_{column_identifier}": "Missing Value Ratio"
     }
     return axis_labels.get(value, value)
+
 
 def create_venn_or_upset_plot(
     intensity_data_frames: List[pd.DataFrame],
@@ -1517,6 +1538,7 @@ def create_venn_or_upset_plot(
         print("More than three files: Creating UpSet plot")
         create_upset_plot(set_dictionary, all_identifications, output_directory, column_identifier)
 
+
 def process_dataframes_for_set_analysis(
     data_frames: List[pd.DataFrame],
     column_identifier: str
@@ -1542,6 +1564,7 @@ def process_dataframes_for_set_analysis(
             set_dictionary[label] = identifications
 
     return all_identifications, set_dictionary
+
 
 def create_venn2_diagram(
     set_dictionary: Dict[str, Set[str]],
@@ -1569,6 +1592,7 @@ def create_venn2_diagram(
     plt.title(column_identifier)
     save_venn_diagram(output_directory, column_identifier)
 
+
 def create_venn3_diagram(
     set_dictionary: Dict[str, Set[str]],
     output_directory: str,
@@ -1595,6 +1619,7 @@ def create_venn3_diagram(
     plt.title(column_identifier)
     save_venn_diagram(output_directory, column_identifier)
 
+
 def save_venn_diagram(output_directory: str, column_identifier: str) -> None:
     """
     Save the Venn diagram to a file.
@@ -1608,6 +1633,7 @@ def save_venn_diagram(output_directory: str, column_identifier: str) -> None:
     """
     save_name = f"{output_directory}/venn_diagram_{column_identifier}"
     save_plot(save_name)
+
 
 def create_upset_plot(
     set_dictionary: Dict[str, Set[str]],
