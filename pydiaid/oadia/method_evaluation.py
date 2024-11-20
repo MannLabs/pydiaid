@@ -105,7 +105,8 @@ def load_method_file(filename: str) -> Tuple[pd.DataFrame, List[List[float]]]:
 def analyze_bins(
     bins: List[List[float]], 
     values: List[float],
-    max_width: float = 50.0
+    max_width: float = 50.0,
+    min_width: float = 2.0,
 ) -> Dict:
     """Analyzes the distribution of items across bins and generates comprehensive
     statistics including a detailed tabular view.
@@ -139,7 +140,7 @@ def analyze_bins(
         start, end = bin_range
         width = end - start
         count = sum(1 for v in values if start <= v <= end)
-        width_ok = "Yes" if width <= max_width else "No"
+        width_ok = width <= max_width and width >= min_width
         
         # Store for summary statistics
         widths.append(width)
@@ -182,60 +183,100 @@ def analyze_bins(
     return stats
 
 
-def plot_precursors_per_scan(
-    lst, 
-    list_mzs, 
-    window_type,
-    df_window, 
-    file_name, 
-    gui=False
-):
+def parse_stats_text(text):
+    """Convert stats table text into a pandas DataFrame"""
+    
+    # Split by newlines and get only data lines
+    lines = text.strip().split('\n')
+    data_lines = [line for line in lines if line and '|' in line and not line.startswith('-')]
+    data_lines = data_lines[1:]  # Skip header
+    
+    # Initialize lists to store data
+    bins = []
+    starts = []
+    ends = []
+    widths = []
+    items_list = []
+    
+    # Parse each line
+    for line in data_lines:
+        # Split by | and clean whitespace
+        parts = [p.strip() for p in line.split('|')]
+        
+        # Parse bin number
+        bins.append(int(parts[0]))
+        
+        # Parse range
+        range_parts = parts[1].strip().split('-')
+        starts.append(float(range_parts[0]))
+        ends.append(float(range_parts[1]))
+        
+        # Parse width and items
+        widths.append(float(parts[2]))
+        items_list.append(int(parts[3]))
+    
+    # Create DataFrame
+    df = pd.DataFrame({
+        'bin': bins,
+        'start': starts,
+        'end': ends,
+        'width': widths,
+        'items': items_list
+    })
+    
+    return df
+
+
+def plot_precursors_per_scan(window_type, df_window, file_name, gui=False):
     """
     Function to plot precursors per scan with bar color indications for scan width.
     
     Arguments:
-    lst: list of precursors
-    list_mzs: list of scan window representing ranges
-    df_window: Dataframe containing information about the window widths and middle points
+    df_window: DataFrame containing columns 'start', 'end', 'width', and 'items'
+    window_type: string indicating window type ('dynamic' or 'fixed')
+    file_name: string for output file path
+    gui: boolean to determine if figure should be returned
     
-    Returns: None
+    Returns: matplotlib figure if gui=True, else None
     """
-    
-    # Calculate precursors per bin
-    sublists_counts = []
-    for sublist in list_mzs:
-        count = len(list(filter(lambda x: sublist[0] <= x <= sublist[-1], lst)))
-        sublists_counts.append(count)
+    # Calculate middle points for each window
+    df_window['middle_of_window'] = (df_window['start'] + df_window['end']) / 2
     
     # Normalize your data to 0-1 range
-    norm = plt.Normalize(min(df_window["window_width"]), max(df_window["window_width"]))
-
+    norm = plt.Normalize(min(df_window['width']), max(df_window['width']))
+    
     # Setting color map
     cmap = plt.cm.viridis
-    colors = cmap(norm(df_window["window_width"]))
-
-    fig, ax = plt.subplots()  
-    if window_type == "variable":
-        bars = ax.bar(df_window["middle_of_window"], sublists_counts, 
-                    width=df_window["window_width"], color=colors, 
-                    edgecolor='black', linewidth=0.25)
+    colors = cmap(norm(df_window['width']))
+    
+    fig, ax = plt.subplots()
+    
+    if window_type == "dynamic":
+        bars = ax.bar(df_window['middle_of_window'], 
+                     df_window['items'],  # Using pre-calculated items
+                     width=df_window['width'], 
+                     color=colors,
+                     edgecolor='black', 
+                     linewidth=0.25)
         # Create colorbar
         sm = ScalarMappable(cmap=cmap, norm=norm)
         sm.set_array([])
         cb = fig.colorbar(sm, ax=ax, orientation='vertical')
         cb.set_label('scan width')
-
-    if window_type == "fixed":
-        bars = ax.bar(df_window["middle_of_window"], sublists_counts, 
-            width=df_window["window_width"], color=[0.127568, 0.566949, 0.550556, 1. ], 
-            edgecolor='black', linewidth=0.25)
-
+        
+    elif window_type == "fixed":
+        bars = ax.bar(df_window['middle_of_window'], 
+                     df_window['items'],  # Using pre-calculated items
+                     width=df_window['width'], 
+                     color=[0.127568, 0.566949, 0.550556, 1.],
+                     edgecolor='black', 
+                     linewidth=0.25)
+    
     plt.xlabel('m/z range [Da]')
     plt.ylabel('# precursors')
-    # plt.title('precursors per scan')
-
-
+    
     plt.savefig(file_name, bbox_inches='tight', pad_inches=0, dpi=300)
+    
     if gui:
         return fig
     else:
