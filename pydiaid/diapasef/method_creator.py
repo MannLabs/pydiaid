@@ -6,7 +6,7 @@ import numpy as np
 
 import os
 
-import pydiaid.oadia.method_generator as method_generator
+# import pydiaid.oadia.method_generator as method_generator
 
 
 def method_creation(
@@ -50,18 +50,18 @@ def method_creation(
 
     # calculate the start and end mz range for each diaPASEF window
     # [400,420][420,450], ... :
-    # x_splits = divide_mz_range_in_equally_filled_parts(
-    #     library_mz_values,
-    #     method_parameters["mz"],
-    #     num_splits
-    # )
-    x_splits = method_generator.create_variable_bins(
-        library_mz_values, 
+    x_splits = divide_mz_range_in_equally_filled_parts(
+        library_mz_values,
         method_parameters["mz"],
-        num_splits,
-        # method_parameters["min_width"],
-        max_width = method_parameters["max_width"]
+        num_splits
     )
+    # x_splits = method_generator.create_variable_bins(
+    #     library_mz_values, 
+    #     method_parameters["mz"],
+    #     num_splits,
+    #     # method_parameters["min_width"],
+    #     max_width = method_parameters["max_width"]
+    # )
     # calculate the position of each diaPASEF window. 1st scan: position 0, 12;
     # 2nd scan: position 1, 13:
     window_position = [[
