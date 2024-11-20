@@ -807,7 +807,7 @@ class EvaluateMethodCard(BaseWidget):
             df_window = method_evaluator.parse_stats_text(stats['tabular_stats'])
 
             # Determine window type
-            window_type = "fixed" if round(stats['min_width'], 2) == round(stats['max_width'], 2) else "dynamic"
+            window_type = "fixed" if stats['max_width']-stats['min_width']<2 else "dynamic"
 
             # Update layout with results in three columns
             self.layout[3] = pn.Row(
