@@ -3,13 +3,15 @@
 #!python
 import os
 import json
+import glob
+
 # import logging
 import platform
 import pandas as pd
 
 # visualization
 import panel as pn
-# import bokeh.server.views.ws
+import imageio.v3 as iio
 
 # modules
 import pydiaid.diapasef as pydiaid
@@ -18,6 +20,7 @@ import pydiaid.diapasef.main as main
 import pydiaid.diapasef.graphs as graphs
 import pydiaid.diapasef.method_optimizer as method_optimizer
 import pydiaid.diapasef.method_evaluation as method_evaluation
+import pydiaid.synchropasef.plots as syP_plots
 
 import warnings
 warnings.filterwarnings("ignore")
@@ -113,7 +116,6 @@ class LoadLibraryCard(BaseWidget):
             name='Specify the path to the library:',
             placeholder=library_path_placeholder,
             value=os.path.join(os.path.dirname(__file__), "static", "AlphaPept_results.csv"),
-            # width=900,
             sizing_mode='stretch_width',
             margin=(15, 15, 0, 15)
         )
@@ -121,7 +123,6 @@ class LoadLibraryCard(BaseWidget):
             name='Save the output to the following folder:',
             # value=method_conf["input"]["save_at"],
             placeholder=save_folder_placeholder,
-            # width=900,
             sizing_mode='stretch_width',
             margin=(15, 15, 0, 15)
         )
@@ -129,7 +130,6 @@ class LoadLibraryCard(BaseWidget):
             name='Specify the PTM:',
             # value=method_conf["input"]["PTM"],
             placeholder="['Phospho']",
-            # width=680,
             sizing_mode='stretch_width',
             margin=(15, 15, 15, 15)
         )
@@ -251,8 +251,6 @@ class LoadLibraryCard(BaseWidget):
                 sizing_mode='stretch_width',
             ),
             pn.layout.Divider(
-                # sizing_mode='stretch_width',
-                # margin=(0, 10),
             ),
             pn.Row(
                 None, None, None
@@ -377,8 +375,6 @@ class LoadLibraryCard(BaseWidget):
                 gui=True
             ),
             tight=True,
-            # margin=(20, 0),
-            # sizing_mode='scale_both'
         )
         )
         dict_charge_of_precursor = method_evaluation.calculate_percentage_multiple_charged_precursors(self.library)
@@ -406,9 +402,7 @@ class LoadLibraryCard(BaseWidget):
                 layout='fit_data_table', 
                 width=400
             ),
-            # margin=(0, 50),
             sizing_mode='stretch_width',
-            # align='center'
         )
         self.trigger_dependancy()
         self.upload_progress.active = False
@@ -500,25 +494,6 @@ class SpecifyParametersCard(BaseWidget):
             margin=(15, 15, 0, 15),
             sizing_mode='stretch_width',
         )
-        # self.min_width = pn.widgets.FloatInput(
-        #     name='Lower Limit (m/z width)',
-        #     start=0.2,
-        #     end=50,
-        #     value=2,
-        #     step=0.01,
-        #     margin=(15, 15, 0, 15),
-        #     sizing_mode='stretch_width'
-        # )
-
-        self.max_width = pn.widgets.IntInput(
-            name='Upper Limit (m/z width)',
-            start=1,
-            end=300,
-            value=method_conf['method_parameters']['max_width'],
-            step=1,
-            margin=(15, 15, 0, 15),
-            sizing_mode='stretch_width'
-        )
         self.spec_param_table = pn.widgets.DataFrame(
             autosize_mode='fit_viewport',
             align='center',
@@ -543,7 +518,6 @@ class SpecifyParametersCard(BaseWidget):
             pn.Row(pn.Column(self.mz), pn.Column(self.ion_mobility)),
             pn.Row(self.num_dia_pasef_scans, self.im_steps, sizing_mode='stretch_width'),
             pn.Row(self.overlap, self.shift_of_final_method, sizing_mode='stretch_width'),
-            pn.Row(self.max_width, sizing_mode='stretch_width'),
             pn.Spacer(height=20),
             sizing_mode='stretch_width',
         )
@@ -574,7 +548,7 @@ class SpecifyParametersCard(BaseWidget):
                 None,
             ),
             title='Specify Method Parameters',
-            collapsed=True,
+            collapsed=False,
             collapsible=True,
             header_background='#eaeaea',
             background='white',
@@ -592,8 +566,6 @@ class SpecifyParametersCard(BaseWidget):
             self.im_steps: [self.update_parameters, 'value'],
             self.overlap: [self.update_parameters, 'value'],
             self.shift_of_final_method: [self.update_parameters, 'value'],
-            # self.min_width: [self.update_parameters, 'value'],
-            self.max_width: [self.update_parameters, 'value'],
             self.calculate_button: [self.run_calculation, 'clicks'],
         }
         for k in dependances.keys():
@@ -613,8 +585,6 @@ class SpecifyParametersCard(BaseWidget):
             self.im_steps.name: "im_steps",
             self.overlap.name: "overlap",
             self.shift_of_final_method.name: "shift_of_final_method",
-            # self.min_width.name: "min_width",
-            self.max_width.name: "max_width",
         }
         if isinstance(event.new, tuple):
             method_conf['method_parameters'][convertion_dict[event.obj.name]] = list(event.new)
@@ -829,7 +799,7 @@ class OptimizationCard(BaseWidget):
                 align='center',
             ),
             title='Optimization',
-            collapsed=True,
+            collapsed=False,
             collapsible=True,
             header_background='#eaeaea',
             background='white',
@@ -1042,7 +1012,7 @@ class CreateMethodCard(BaseWidget):
                 sizing_mode='stretch_width',
             ),
             title='Create Method',
-            collapsed=True,
+            collapsed=False,
             collapsible=True,
             header_background='#eaeaea',
             background='white',
@@ -1196,7 +1166,7 @@ class EvaluateMethodCard(object):
                 sizing_mode='stretch_width',
             ),
             title='Evaluate Method',
-            collapsed=True,
+            collapsed=False,
             collapsible=True,
             header_background='#eaeaea',
             background='white',
@@ -1235,6 +1205,7 @@ class EvaluateMethodCard(object):
             skiprows=4,
             names=["MS Type", "Cycle Id", "Start IM", "End IM", "Start Mass", "End Mass", "CE"]
         )
+        self.df_method = df_parameters_final
 
         main.final_method_information(
             df_parameters_final,
@@ -1323,6 +1294,198 @@ class EvaluateMethodCard(object):
         )
 
 
+class MakeGifCard(object):
+    """
+    MakeGifCard class includes properties and methods that provide users the ability to create a GIF of 
+    a dia-PASEF method.
+
+    Attributes:
+    layout: Placeholder for the layout of the widget card.
+    data: Provided data for the card.
+    load_method: Details of the method loaded
+    make_gif_descr (Markdown): A pane that displays the description.
+    gif_button (Button): A button widget that allows users to create a GIF of dia-PASEF method.
+    upload_progress (Progress): An indicator that displays a progress bar during GIF upload.
+    gif_duration (FloatInput): Widget that allows user to input the time per frame in ms.
+    im_steps (IntInput): Widget that allows user to input the ion mobility steps.
+    scans_plotted_at_once (IntInput): Widget that allows user to input the windows highlighted at once.
+
+    Methods:
+    init: Constructor for the MakeGifCard class.
+    create_layout(): Creates the panel layout for this widget card and sets up dependencies.
+    run_gif(*args): Creates a GIF of a dia-PASEF method and displays it in the user interface.
+    """
+    def __init__(self, data, load_method, description):
+        self.data = data
+        self.load_method = load_method
+        self.make_gif_descr = pn.pane.Markdown(
+            description,
+            margin=(5, 0, 2, 15),
+            align='start',
+        )
+        self.gif_button = pn.widgets.Button(
+            name='Create dia-PASEF method GIF',
+            button_type='primary',
+            height=31,
+            width=250,
+            align='center',
+            margin=(0, 0, 0, 0)
+        )
+        self.gif_progress = pn.indicators.Progress(
+            active=False,
+            bar_color='light',
+            width=250,
+            align='center',
+            margin=(0, 0, 30, 0)
+        )
+        self.gif_duration = pn.widgets.FloatInput(
+            name='Time per frame [ms]',
+            start=0.001,
+            end=1,
+            value=0.001,  # Default value adjusted for dia-PASEF
+            step=0.001,
+            margin=(15, 15, 0, 15),
+            sizing_mode='stretch_width',
+        )
+        self.im_steps = pn.widgets.IntInput(
+            name='Ion mobility steps',
+            start=0,
+            end=200,
+            value=10,  # Default value adjusted for dia-PASEF
+            step=1,
+            margin=(15, 15, 0, 15),
+            sizing_mode='stretch_width',
+        )
+        self.scans_plotted_at_once = pn.widgets.IntInput(
+            name='Windows highlighted at once',
+            start=0,
+            end=20,
+            value=1,
+            step=1,
+            margin=(15, 15, 0, 15),
+            sizing_mode='stretch_width',
+        )
+
+    def create_layout(self):
+        gif_settings = pn.Column(
+            pn.Row(self.gif_duration, self.scans_plotted_at_once, sizing_mode='stretch_width'),
+            pn.Row(self.im_steps, sizing_mode='stretch_width'),
+            pn.Spacer(height=20),
+            sizing_mode='stretch_width',
+        )
+
+        self.layout = pn.Card(
+            self.make_gif_descr,
+            pn.Row(
+                pn.Column(
+                    pn.WidgetBox(
+                        gif_settings,
+                        sizing_mode='stretch_width',
+                        margin=(20, 10, 50, 10),
+                    ),
+                    margin=(10, 30, 10, 10),
+                    sizing_mode='stretch_width',
+                ),
+                pn.Column(
+                    pn.Spacer(),
+                    self.gif_button,
+                    self.gif_progress,
+                    pn.Spacer(),
+                    width=400,
+                    align='center',
+                ),
+                sizing_mode='stretch_width',
+            ),
+            pn.layout.Divider(),
+            pn.Column(
+                None,
+                align='center',
+                sizing_mode='stretch_width',
+            ),
+            title='Make a GIF of a dia-PASEF Method',
+            collapsed=True,
+            collapsible=True,
+            header_background='#eaeaea',
+            background='white',
+            header_color='#333',
+            align='center',
+            sizing_mode='stretch_width',
+            margin=(5, 8, 10, 8),
+            css_classes=['background']
+        )
+
+        dependances = {
+            self.gif_button: [self.run_gif, 'clicks'],
+        }
+        for k in dependances.keys():
+            k.param.watch(
+                dependances[k][0],
+                dependances[k][1],
+                onlychanged=True
+            )
+
+        return self.layout
+
+    def run_gif(self, *args):
+        self.gif_progress.active = True
+
+        save_at = os.path.join(
+            self.data.path_save_folder.value,
+            'gif',
+        )
+
+        # Clean up existing files
+        if os.path.exists(save_at):
+            files = glob.glob(os.path.join(save_at, "*"))
+            for f in files:
+                os.remove(f)
+        else:
+            os.makedirs(save_at)
+
+        # Generate boxes for dia-PASEF
+        boxes, df_filtered = graphs.generate_dia_boxes(
+            self.load_method.df_method, 
+            im_steps=self.im_steps.value
+        )
+        # Generate GIF frames
+        syP_plots.generate_gif_single_windows(
+            self.data.xi,
+            self.data.yi,
+            self.data.zi,
+            method_conf["graphs"],
+            boxes,
+            range(1, len(df_filtered)+1),
+            save_at+ "/",
+            facecolor="#FF0098",
+            window_color="white_grey",
+            scans_plotted_at_once=self.scans_plotted_at_once.value,
+        )
+
+        # Compile frames into GIF
+        images = []
+        for file_name in sorted(os.listdir(save_at)):
+            if file_name.endswith('.png'):
+                file_path = os.path.join(save_at, file_name)
+                images.append(iio.imread(file_path))
+
+        gif_path = os.path.join(save_at, "diaPASEF.gif")
+        iio.imwrite(gif_path, images, duration=self.gif_duration.value, loop=0)
+
+        # Display the GIF in the interface
+        self.layout[3] = pn.Column(
+            pn.pane.Markdown('### dia-PASEF Method GIF', align='center'),
+            pn.pane.GIF(
+                gif_path,
+                alt_text="Sorry, please try using a different browser",
+                width=640, height=360
+            ),
+            sizing_mode='stretch_width',
+            align='center',
+        )
+
+        self.gif_progress.active = False
+
+
 class DiaCardWidget(object):
     """
     DiaCardWidget class describes the widgets and layout used in a Dashboard Interface for assessing 
@@ -1357,6 +1520,7 @@ class DiaCardWidget(object):
         self.optimization_description = "#### py_diAID uses a Bayesian optimization following a Gaussian process to find the optimal scan area. We recommend 100 optimization steps and 20 starting points."
         self.create_method_description = "#### Create a dia-PASEF method with an optimal or an individually specified scan area."
         self.evaluate_method_description = "#### Evaluate the optimal dia-PASEF method or confirm if an already existing dia-PASEF method is suitable for your experiment."
+        self.make_gif_description = "#### Visualize the scanning of your dia-PASEF method with a GIF."
         self.manual_path = os.path.join(
             DOCS_PATH,
             "manual.pdf"
@@ -1384,6 +1548,11 @@ class DiaCardWidget(object):
             self.method_creation,
             self.evaluate_method_description
         )
+        self.make_gif_method = MakeGifCard(
+            self.data,
+            self.method_evaluation,
+            self.make_gif_description
+            )
 
     def create_layout(
         self,
@@ -1395,5 +1564,6 @@ class DiaCardWidget(object):
             self.optimization.create_layout(),
             self.method_creation.create_layout(),
             self.method_evaluation.create_layout(),
+            self.make_gif_method.create_layout(),
             sizing_mode='stretch_width',
         )

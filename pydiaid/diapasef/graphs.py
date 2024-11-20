@@ -214,3 +214,59 @@ def kernel_density_calculation_multiple_charge(
     zi = k(np.vstack([xi.flatten(), yi.flatten()]))
 
     return xi, yi, zi
+
+
+def generate_dia_boxes(
+    df_parameters_final, 
+    im_steps
+    ):
+    """
+    Generates boxes for dia-PASEF scans. Each box represents the coordinates of the quadrupole 
+    per TOF trigger. This function adapts the synchro-PASEF box generation for dia-PASEF's 
+    rectangular windows.
+    
+    Parameters:
+    df_parameters_final (pd.DataFrame): Method parameters from dia-PASEF method file. Should include
+        columns: 'MS Type', 'Cycle Id', 'Start IM', 'End IM', 'Start Mass', 'End Mass'
+    im_steps (int): The number of steps (boxes) within each ion mobility range
+    
+    Returns:
+    list: A list of boxes, where each box is a list containing:
+        [mz_start, im_position, mz_width, im_step_size, cycle_id]
+    pd.DataFrame: Filtered dataframe containing only PASEF scan entries
+    """
+    # Filter out MS1 scans and reset index
+    df_temp = df_parameters_final[df_parameters_final["MS Type"].str.contains("PASEF", case=False)].copy()
+    df_temp = df_temp.reset_index(drop=True)
+    
+    boxes = []
+    
+    # Calculate ion mobility step size
+    im_range = df_temp["End IM"].max() - df_temp["Start IM"].min()
+    general_im_step_size = im_range / im_steps
+
+    for index, row in df_temp.iterrows():
+        # Calculate m/z width for this window
+        mz_width = row["End Mass"] - row["Start Mass"]
+        im_height = row["End IM"] - row["Start IM"]
+        num_im_steps = round(im_height/general_im_step_size)
+        individual_im_step_size = im_height/num_im_steps
+        
+        # Generate boxes for each step in the ion mobility range
+        for step in range(1, num_im_steps+1):
+            # Calculate current ion mobility position
+            im_position = row["End IM"] - (step * individual_im_step_size)
+            
+            # In dia-PASEF, mz_start is constant within each window
+            mz_start = row["Start Mass"]
+    
+            boxes.append([
+                mz_start,           # m/z start position
+                im_position,        # current IM position
+                mz_width,          # m/z width of window
+                individual_im_step_size,      # IM step size
+                row["Cycle Id"]    # cycle ID
+            ])
+
+    
+    return boxes, df_temp
