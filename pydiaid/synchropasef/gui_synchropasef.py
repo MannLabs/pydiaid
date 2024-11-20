@@ -713,7 +713,7 @@ class GenerateMethodCard(BaseWidget):
             sizing_mode='stretch_width',
         )
         self.window_type = pn.widgets.Select(
-            name='Window Type',
+            name='Window type',
             value=method_conf["method_parameters"]["window_type"],
             options=["equidistant", "variable", "pre-definied"],
             margin=(15, 15, 0, 15),
