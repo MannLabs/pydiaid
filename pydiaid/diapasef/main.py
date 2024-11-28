@@ -1,4 +1,4 @@
-from pydiaid.diapasef import loader
+from pydiaid import loader
 from pydiaid.diapasef import method_creator
 from pydiaid.diapasef import method_evaluation
 from pydiaid.diapasef import graphs

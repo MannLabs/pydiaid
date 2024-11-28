@@ -7,3 +7,4 @@ twine==3.4.1
 bumpversion==0.6.0
 pipdeptree==2.1.0
 ipykernel==6.4.0
+alphabase==1.2.1

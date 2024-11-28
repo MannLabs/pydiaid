@@ -1,0 +1,52 @@
+{
+    "input": {
+        "save_at": "/Users/patriciaskowronek/Documents/test_folder",
+        "PTM": "None",
+        "library_name": "/Users/patriciaskowronek/Documents/pydiaid/pydiaid/oadia/static/AlphaPept_results.csv",
+        "analysis_software": "AlphaPept",
+        "dia_method_only_used_for_evaluate": "/Users/patriciaskowronek/Documents/pydiaid/pydiaid/oadia/static/MassListTable_targeted.csv"
+    },
+    "method_parameters": {
+        "mz_range": [
+            300,
+            1200
+        ],
+        "num_bins": 60,
+        "window_type": "fixed",
+        "output_format": "all",
+        "min_width": 2,
+        "max_width": 50,
+        "forbidden_zone": true,
+        "forbidden_zones_for_phospho": false,
+        "rt_time": 16.5,
+        "window": 33
+    },
+    "graphs": {
+        "plot_mz": [
+            300,
+            1100
+        ]
+    },
+    "optimizer": {
+        "optimizer": "Gauss",
+        "n_calls": 100,
+        "initial_points": 20,
+        "YA1": [
+            0.4,
+            0.9
+        ],
+        "YA2": [
+            0.5,
+            1.0
+        ],
+        "YB1": [
+            0.8,
+            1.5
+        ],
+        "YB2": [
+            0.9,
+            1.8
+        ],
+        "evaluation_parameter": "No. of covered precursors"
+    }
+}

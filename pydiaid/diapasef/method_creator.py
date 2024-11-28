@@ -6,6 +6,8 @@ import numpy as np
 
 import os
 
+# import pydiaid.oadia.method_generator as method_generator
+
 
 def method_creation(
     library_mz_values: list,
@@ -53,6 +55,13 @@ def method_creation(
         method_parameters["mz"],
         num_splits
     )
+    # x_splits = method_generator.create_variable_bins(
+    #     library_mz_values, 
+    #     method_parameters["mz"],
+    #     num_splits,
+    #     # method_parameters["min_width"],
+    #     max_width = method_parameters["max_width"]
+    # )
     # calculate the position of each diaPASEF window. 1st scan: position 0, 12;
     # 2nd scan: position 1, 13:
     window_position = [[
