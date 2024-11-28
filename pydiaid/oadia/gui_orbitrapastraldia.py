@@ -368,6 +368,26 @@ class SpecifyMethodParametersCard(BaseWidget):
             min_width=200
         )
 
+        self.rt_time = pn.widgets.FloatInput(
+            name='RT (min) (only for targeted output format)',
+            start=1,
+            end=300,
+            value=16.5,
+            step=0.1,
+            margin=(15, 15, 0, 15),
+            sizing_mode='stretch_width'
+        )
+
+        self.window = pn.widgets.IntInput(
+            name='Window (only for targeted output format)',
+            start=1,
+            end=300,
+            value=33,
+            step=1,
+            margin=(15, 15, 0, 15),
+            sizing_mode='stretch_width'
+        )
+
         self.min_width = pn.widgets.FloatInput(
             name='Lower limit (m/z width)',
             start=0.2,
@@ -423,6 +443,7 @@ class SpecifyMethodParametersCard(BaseWidget):
             pn.Row(pn.Column(self.mz_range), pn.Column(self.num_bins)),
             pn.Row(self.window_type, self.output_format, sizing_mode='stretch_width'),
             pn.Row(pn.Column(self.min_width), pn.Column(self.max_width)),
+            pn.Row(pn.Column(self.rt_time), pn.Column(self.window)),
             pn.Row(pn.Column(self.forbidden_zone), pn.Column(self.phospho_method)),
             pn.Spacer(height=20),
             sizing_mode='stretch_width',
@@ -471,6 +492,8 @@ class SpecifyMethodParametersCard(BaseWidget):
             self.max_width: [self.update_parameters, 'value'],
             self.forbidden_zone: [self.update_parameters, 'value'],
             self.phospho_method: [self.update_parameters, 'value'],
+            self.rt_time: [self.update_parameters, 'value'],
+            self.window: [self.update_parameters, 'value'],
             self.calculate_button: [self.calculate_method, 'clicks'],
         }
         for k in dependances.keys():
@@ -494,6 +517,8 @@ class SpecifyMethodParametersCard(BaseWidget):
             self.max_width.name: "max_width",
             self.forbidden_zone.name: "forbidden_zone",
             self.phospho_method.name: "forbidden_zones_for_phospho",
+            self.rt_time: "rt_time",
+            self.window: "window"
         }
         method_conf['method_parameters'][convertion_dict[event.obj.name]] = event.new
 
@@ -814,7 +839,7 @@ class EvaluateMethodCard(BaseWidget):
                 # Left column: Method details
                 pn.Column(
                     pn.pane.Markdown(
-                        '### Method Windows',
+                        '### Method Table',
                         align='center'
                     ),
                     pn.widgets.Tabulator(
@@ -833,13 +858,13 @@ class EvaluateMethodCard(BaseWidget):
                     pn.widgets.Tabulator(
                         pd.DataFrame({
                             'Metric': [
-                                'Number of bins',
+                                'Number of scans',
                                 'Min width (Da)',
                                 'Max width (Da)',
                                 'Average width (Da)',
-                                'Min items per bin',
-                                'Max items per bin',
-                                'Average items per bin',
+                                'Min items per scan',
+                                'Max items per scan',
+                                'Average items per scan',
                                 'Window type'
                             ],
                             'Value': [
@@ -860,7 +885,7 @@ class EvaluateMethodCard(BaseWidget):
                 # Right column: Distribution plot
                 pn.Column(
                     pn.pane.Markdown(
-                        '### Precursor per Scan',
+                        '### Precursor per Window',
                         align='center'
                     ),
                     pn.pane.Matplotlib(

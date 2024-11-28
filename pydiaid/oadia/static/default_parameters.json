@@ -17,7 +17,9 @@
         "min_width": 2,
         "max_width": 50,
         "forbidden_zone": true,
-        "forbidden_zones_for_phospho": false
+        "forbidden_zones_for_phospho": false,
+        "rt_time": 16.5,
+        "window": 33
     },
     "graphs": {
         "plot_mz": [
