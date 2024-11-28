@@ -142,7 +142,8 @@ jobs:
           asset_content_type: application/octet-stream
   Create_PyPi_Release:
     runs-on: ubuntu-latest
-    needs: [Create_Linux_Release, Create_MacOs_Release, Create_Windows_Release]
+    # needs: [Create_Linux_Release, Create_MacOs_Release, Create_Windows_Release]
+    needs: [Create_Linux_Release, Create_Windows_Release]
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -178,7 +179,8 @@ jobs:
     needs: Create_PyPi_Release
     strategy:
       matrix:
-        os: [ubuntu-latest, macOS-latest, windows-latest]
+        # os: [ubuntu-latest, macOS-latest, windows-latest]
+        os: [ubuntu-latest, windows-latest]
     steps:
       - uses: actions/checkout@v2
       - uses: conda-incubator/setup-miniconda@v2
