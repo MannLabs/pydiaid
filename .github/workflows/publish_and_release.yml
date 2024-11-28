@@ -74,7 +74,7 @@ jobs:
           asset_name: pydiaid_gui_installer_linux.deb
           asset_content_type: application/octet-stream
   Create_MacOS_Release:
-    runs-on: macos-latest
+    runs-on: macos-13
     needs: Create_Draft_On_GitHub
     steps:
       - name: Checkout code
