@@ -134,7 +134,7 @@ def __parse_max_quant(
     dataframe (pd.DataFrame): imported output file from the analysis software
         "MaxQuant".
     File format: evidence.txt, required columns: "Reverse",  'm/z', '1/K0', 'Charge', 
-        'Proteins', 'Modified sequence', 1/K0 length'.
+        'Proteins', 'Modified sequence', '1/K0 length'.
     ptm_list (list): a list with identifiers used for filtering a specific dataframe column.
     require_im (bool): if True, requires ion mobility data; if False, makes ion mobility optional.
 
@@ -313,7 +313,7 @@ def __parse_diann_lib(
 
     Parameters:
     dataframe (pd.DataFrame): imported library file from the analysis software
-        "DIANN". File format: .csv, required columns:
+        "DIANN". Required columns:
         'PrecursorMz',
         'IonMobility',
         'PrecursorCharge',
@@ -362,7 +362,7 @@ def __parse_diann_single_run(
 
     Parameters:
     tsv_file (str): path to the DIA-NN single-run output file.
-        File format: tsv, the file should contain the following columns:
+        the file should contain the following columns:
         'precursor_mz': precursor mass-to-charge ratio, calculated by alphabase
         'sequence': peptide sequence, Stripped.Sequence
         'charge': precursor charge state, Precursor.Charge
