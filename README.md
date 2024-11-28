@@ -5,6 +5,9 @@
 The [Mann Labs at the Max Planck Institute of Biochemistry](https://www.biochem.mpg.de/mann) developed py_diAID, a tool that facilitates the generation of dia-PASEF and synchro-PASEF methods with an optimal window design. py_diAID, an abbreviation for Data-Independent Acquisition with an Automated Isolation Design, is available as an open-source Python and Graphical User Interface (GUI) package. To access all the hyperlinks in this document, please view it on [GitHub](https://github.com/MannLabs/pydiaid).
 
 * [**About**](#about)
+  * [**py_diAID**](#py_diaid)
+  * [**Supported Scan Modes**](#supported-scan-modes)
+  * [**Key Features**](#key-features)
 * [**License**](#license)
 * [**Installation**](#installation)
   * [**One-click GUI**](#one-click-gui)
@@ -12,7 +15,6 @@ The [Mann Labs at the Max Planck Institute of Biochemistry](https://www.biochem.
   * [**Developer installer**](#developer)
 * [**Usage**](#usage)
   * [**GUI**](#gui)
-  * [**CLI**](#cli)
   * [**Python and jupyter notebooks**](#python-and-jupyter-notebooks)
 * [**Troubleshooting**](#troubleshooting)
 * [**Citations**](#citations)
@@ -22,11 +24,17 @@ The [Mann Labs at the Max Planck Institute of Biochemistry](https://www.biochem.
 ---
 ## About
 
-Over the last few years, Data-Independent Acquisition (DIA) coupled with Parallel Accumulation – Serial Fragmentation (PASEF) has been gaining interest among proteomics researchers. The scan mode dia-PASEF offers comprehensive proteome coverage, a high degree of reproducibility, and quantitative accuracy while utilizing a much larger ion beam proportion than conventional DIA methods. Its successor, synchro-PASEF, enables the creation of methods with even shorter cycle times, improving quantitative accuracy while also being highly specific due to the linking of fragment signals with precursor masses. Existing tools generate dia-PASEF and synchro-PASEF methods with equidistant isolation widths and necessitate manual adjustment of the window design to the precursor density cloud.
+### py_diAID
+py_diAID (Automated Isolation Design for Data-Independent Acquisition) is a Python package that streamlines the generation of data-independent acquisition (DIA) methods for mass spectrometry-based proteomics.
 
-We present py_diAID, a Python-based package for Data-Independent Acquisition providing Automated Isolation Design. py_diAID optimally generates dia-PASEF and synchro-PASEF methods and places them optimally within the m/z – ion mobility (IM) plane. Additionally, it can generate variable isolation widths aligned to the precursor density in m/z, facilitating short acquisition cycles while covering virtually the entire m/z-IM-range. Our findings indicate that methods created with py_diAID are advantageous for studying deep proteomes from cell lines, clinical samples with regular and very low sample input, as well as for exploring post-translational modifications such as phosphorylation.
+### Supported Scan Modes
+The package supports several advanced scan modes. 
+- dia-PASEF offers comprehensive proteome coverage with a high degree of quantitative reproducibility. It utilizes a much larger ion beam proportion than conventional DIA methods and is particularly advantageous for studying deep proteomes from cell lines, clinical samples with regular and very low sample input, as well as for exploring post-translational modifications such as phosphorylation.
+- As the successor to dia-PASEF, synchro-PASEF more efficiently samples precursors leading to shorter cycle times than dia-PASEF, thereby improving quantitative reproducibility. It also allows linking fragment signals with precursor masses increasing specificity. This unites the benefits of both DDA and DIA approaches.
+- The Orbitrap Astral DIA mode provides comprehensive proteome coverage with high quantitative reproducibility. Users can generate window schemes with either fixed or dynamic window widths, and the system ensures optimal window border placement within the forbidden zone.
 
-py_diAID is an open-source Python package and also offers a Graphical User Interface (GUI). It was developed by the [Mann Labs at the Max Planck Institute of Biochemistry](https://www.biochem.mpg.de/mann). py_diAID is designed to generate dia-PASEF and synchro-PASEF methods with an optimal window design. Furthermore, it aids in quality control by assessing the precursor distribution in the m/z-IM plane and evaluating existing dia-PASEF and synchro-PASEF methods.
+### Key Features
+py_diAID is an open-source Python package and also offers a Graphical User Interface (GUI). It was developed by the [Mann Labs at the Max Planck Institute of Biochemistry](https://www.biochem.mpg.de/mann). py_diAID automatically generates optimal isolation windows and supports variable/dynamic isolation widths. These widths are aligned to the precursor density, enabling short acquisition cycles while covering virtually the entire m/z (-ion mobility) range. The package facilitates quality control of measured samples through precursor distribution visualization and enables evaluation of existing dia-PASEF and synchro-PASEF methods. 
 
 ---
 ## License
