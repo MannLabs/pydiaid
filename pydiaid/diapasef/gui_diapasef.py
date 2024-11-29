@@ -872,10 +872,15 @@ class OptimizationCard(BaseWidget):
             'png'
         )
 
+        self.start_position_player = method_optimizer.find_matching_filename_index(
+            self.filenames_plots, 
+            self.scan_area_A1_A2_B1_B2_only_used_for_specific_diaPASEF.value
+            )
+
         self.player = pn.widgets.Player(
             start=0,
             end=len(self.filenames_plots)-1,
-            value=0,
+            value=self.start_position_player,
             loop_policy='loop',
             align='center',
             margin=(20, 0)

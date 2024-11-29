@@ -197,3 +197,28 @@ def write_tested_parameters_into_csv(
     df_tested_parameters.to_csv(
         method_conf["input"]["save_at"] + '/optimization_plots/tested_polygon_parameters.csv',
         index=False)
+
+
+def find_matching_filename_index(filenames, parameters):
+    """
+    Find the index of a filename that matches the given parameters.
+    
+    Args:
+        filenames (list): List of filenames to search through
+        parameters (list): List of parameter values [A1, A2, B1, B2]
+    
+    Returns:
+        int: Index of matching filename or -1 if no match found
+    """
+    # Create the search pattern
+    param_names = ['A1', 'A2', 'B1', 'B2']
+    search_pattern = '_'.join(f"{name}_{value}" for name, value in zip(param_names, parameters))
+    
+    # Search through filenames
+    for index, filename in enumerate(filenames):
+        # Remove potential spaces in filename for consistent comparison
+        cleaned_filename = filename.replace(' ', '')
+        if search_pattern in cleaned_filename:
+            return index
+            
+    return -1
