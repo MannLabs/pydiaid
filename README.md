@@ -165,7 +165,7 @@ In case of issues, check out the following links:
 ---
 ## Citations
 
-Check out the [dia-PASEF publication](https://doi.org/10.1016/j.mcpro.2022.100279) and [synchro-PASEF publication](https://doi.org/10.1016/j.mcpro.2022.100489).
+Check out the [dia-PASEF publication](https://doi.org/10.1016/j.mcpro.2022.100279), [synchro-PASEF publication](https://doi.org/10.1016/j.mcpro.2022.100489) and [PASEF workflows and py_diAID](https://doi.org/10.1038/s41596-024-01104-w).
 
 ---
 ## How to contribute
