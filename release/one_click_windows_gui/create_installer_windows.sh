@@ -22,13 +22,7 @@ pip install "../../dist/pydiaid-0.0.31-py3-none-any.whl[stable]"
 # Creating the stand-alone pyinstaller folder
 pip install pyinstaller==4.10
 
-conda install -y -c conda-forge --strict-channel-priority ^
-    scikit-optimize=0.9.0 ^
-    numpy=1.23.5 ^
-    openblas=0.3.23 ^
-    scipy=1.10.1 ^
-    pandas=1.3.4 ^
-    matplotlib=3.6.0
+conda install -y -c conda-forge --strict-channel-priority scikit-optimize=0.9.0 numpy=1.23.5 openblas=0.3.23 scipy=1.10.1 pandas=1.3.4 matplotlib=3.6.0
     # geos ^
 
 pyinstaller ../pyinstaller/pydiaid.spec -y --clean
