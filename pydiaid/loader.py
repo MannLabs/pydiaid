@@ -73,6 +73,8 @@ def __load_dataframe_from_file(
 
     if library_name.split(".")[-1] == "csv":
         return pd.read_csv(library_name, sep=',')
+    if library_name.split(".")[-1] == "parquet":
+        return pd.read_parquet(library_name, engine='fastparquet')
     else:
         return pd.read_csv(library_name, sep='\t')  # .xls, .tsv, .txt
 
@@ -327,14 +329,43 @@ def __parse_diann_lib(
     Returns:
     pd.DataFrame: returns a pre-filtered data frame with unified column names.
     """
-    # Filter out decoys and apply Q-value thresholdt
+    def get_matching_column(df, possible_names):
+        """Find the first matching column name from a list of possibilities."""
+        for name in possible_names:
+            if name in df.columns:
+                return name
+        return None
+
+    # Define possible column names for each field
+    decoy_variants = ['decoy', 'Decoy']
+    qvalue_variants = ['QValue', 'Q.Value', 'q_value']
+    mobility_variants = ['IonMobility', 'IM', 'ion_mobility', 'Mobility']
+    mz_variants = ['PrecursorMz', 'Precursor.Mz']
+    charge_variants = ['PrecursorCharge', 'Precursor.Charge']
+    protein_variants = ['ProteinName', 'Protein.Names']
+    modified_peptide_variants = ['ModifiedPeptide', 'Modified.Sequence']
+
+    # Get actual column names present in the dataframe
+    decoy_col = get_matching_column(dataframe, decoy_variants)
+    qvalue_col = get_matching_column(dataframe, qvalue_variants)
+    mobility_col = get_matching_column(dataframe, mobility_variants)
+    mz_col = get_matching_column(dataframe, mz_variants)
+    charge_col = get_matching_column(dataframe, charge_variants)
+    protein_col = get_matching_column(dataframe, protein_variants)
+    modified_peptide_col = get_matching_column(dataframe, modified_peptide_variants)
+
+    # Validate required columns exist
+    if not all([decoy_col, qvalue_col]):
+        raise ValueError("Required columns missing. Need decoy and Q-value columns.")
+
+    # Filter dataframe
     filtered_dataframe = dataframe[
-        (dataframe['decoy'] == 0) &  # Remove decoy entries
-        (dataframe['QValue'] <= 0.01)  # Filter for 1% FDR
+        (dataframe[decoy_col] == 0) & # Remove decoy entries
+        (dataframe[qvalue_col] <= 0.01)# Filter for 1% FDR
     ]
 
-    # Check if IM column exists
-    im_col = 'IonMobility' if 'IonMobility' in dataframe.columns else None
+    # Store mobility column name if it exists
+    im_col = mobility_col  # Will be None if no matching column found
     
     if require_im and im_col is None:
         raise Exception("Ion mobility data required but not found in DIANN library")
@@ -342,11 +373,11 @@ def __parse_diann_lib(
     return library_loader(
         filtered_dataframe,
         ptm_list,
-        mz='PrecursorMz',
+        mz=mz_col,
         im=im_col,
-        charge='PrecursorCharge',
-        protein='ProteinName',
-        modified_peptide='ModifiedPeptide'
+        charge=charge_col,
+        protein=protein_col,
+        modified_peptide=modified_peptide_col
     )
 
 
