@@ -78,6 +78,62 @@ def __load_dataframe_from_file(
     else:
         return pd.read_csv(library_name, sep='\t')  # .xls, .tsv, .txt
 
+class ColumnMapper:
+    """Handles column name mapping across different software versions."""
+    
+    # Define all possible column variants as class attributes
+    COLUMN_VARIANTS = {
+        'decoy': ['decoy', 'Decoy', 'is_decoy'],
+        'qvalue': ['QValue', 'Q.Value', 'q_value', 'Q_Value'],
+        'mobility': [
+            'PrecursorIonMobility',
+            'IonMobility',
+            'Ion Mobility',
+            'ion_mobility',
+            'IM',
+            'Mobility',
+            '1/K0'
+        ],
+        'mz': ['PrecursorMz', 'Precursor.Mz', 'Mz', 'PrecursorMZ', 'Calibrated Observed M/Z'],
+        'charge': ['PrecursorCharge', 'Precursor.Charge', 'Charge'],
+        'protein': ['ProteinId', 'ProteinName', 'Protein.Names', 'Protein', 'Protein ID'],
+        'modified_peptide': [
+            'ModifiedPeptideSequence',
+            'ModifiedPeptide',
+            'Modified.Sequence',
+            'Modified Sequence',
+            'Modified Peptide'
+        ],
+        'peptide': ['Peptide', 'PeptideSequence', 'Sequence']
+    }
+
+    def __init__(self, dataframe: pd.DataFrame):
+        """Initialize with a dataframe and map its columns."""
+        self.df = dataframe
+        self.column_map = self._create_column_map()
+
+    def _create_column_map(self) -> dict:
+        """Create mapping of standard names to actual column names in dataframe."""
+        column_map = {}
+        for standard_name, variants in self.COLUMN_VARIANTS.items():
+            found_col = next((col for col in variants if col in self.df.columns), None)
+            column_map[standard_name] = found_col
+        return column_map
+
+    def get_column(self, standard_name: str) -> str:
+        """Get the actual column name for a standard column identifier."""
+        return self.column_map.get(standard_name)
+
+    def validate_required_columns(self, required_columns: list) -> None:
+        """Validate that all required columns exist."""
+        missing = [col for col in required_columns if self.get_column(col) is None]
+        if missing:
+            raise ValueError(f"Required columns missing: {', '.join(missing)}")
+
+    def has_column(self, standard_name: str) -> bool:
+        """Check if a standard column exists in the dataframe."""
+        return self.get_column(standard_name) is not None
+
 
 def __parse_alpha_pept(
     dataframe: pd.DataFrame,
@@ -177,8 +233,8 @@ def __parse_ms_fragger(
         columns.
 
     Parameters:
-    dataframe (pd.DataFrame): imported output file from the analysis software
-        "MSFragger".
+    dataframe (pd.DataFrame): imported library or psm file from the analysis software
+        "MSFragger". Required columns (supports multiple naming variants)
     File format: .tsv, required columns: 'PrecursorMz', 'PrecursorIonMobility',
         'PrecursorCharge', 'ProteinId', 'ModifiedPeptideSequence'.
     ptm_list (list): a list with identifiers used for filtering a specific dataframe column.
@@ -188,19 +244,28 @@ def __parse_ms_fragger(
     pd.DataFrame: returns a pre-filtered data frame with unified column names.
     """
 
-    im_col = 'PrecursorIonMobility' if 'PrecursorIonMobility' in dataframe.columns else None
+    mapper = ColumnMapper(dataframe)
     
-    if require_im and im_col is None:
-        raise Exception("Ion mobility data required but not found in MSFragger output")
+    required_columns = ['mz', 'charge', 'protein', 'modified_peptide']
+    if require_im:
+        required_columns.append('mobility')
+    
+    mapper.validate_required_columns(required_columns)
+    
+    if mapper.has_column('peptide'):
+        peptide_col = mapper.get_column('peptide')
+        mod_peptide_col = mapper.get_column('modified_peptide')
+        dataframe[mod_peptide_col] = dataframe[mod_peptide_col].replace('', pd.NA)
+        dataframe[mod_peptide_col] = dataframe[mod_peptide_col].fillna(dataframe[peptide_col])
     
     return library_loader(
         dataframe,
         ptm_list,
-        mz='PrecursorMz',
-        im=im_col,
-        charge='PrecursorCharge',
-        protein='ProteinId',
-        modified_peptide='ModifiedPeptideSequence'
+        mz=mapper.get_column('mz'),
+        im=mapper.get_column('mobility'),
+        charge=mapper.get_column('charge'),
+        protein=mapper.get_column('protein'),
+        modified_peptide=mapper.get_column('modified_peptide')
     )
 
 
@@ -315,69 +380,37 @@ def __parse_diann_lib(
 
     Parameters:
     dataframe (pd.DataFrame): imported library file from the analysis software
-        "DIANN". Required columns:
-        'PrecursorMz',
-        'IonMobility',
-        'PrecursorCharge',
-        'ProteinName',
-        'ModifiedPeptide',
-        'decoy',
-        'QValue'.
+        "DIANN". Required columns (supports multiple naming variants)
     ptm_list (list): a list with identifiers used for filtering a specific dataframe column.
     require_im (bool): if True, requires ion mobility data; if False, makes ion mobility optional.
 
     Returns:
     pd.DataFrame: returns a pre-filtered data frame with unified column names.
     """
-    def get_matching_column(df, possible_names):
-        """Find the first matching column name from a list of possibilities."""
-        for name in possible_names:
-            if name in df.columns:
-                return name
-        return None
-
-    # Define possible column names for each field
-    decoy_variants = ['decoy', 'Decoy']
-    qvalue_variants = ['QValue', 'Q.Value', 'q_value']
-    mobility_variants = ['IonMobility', 'IM', 'ion_mobility', 'Mobility']
-    mz_variants = ['PrecursorMz', 'Precursor.Mz']
-    charge_variants = ['PrecursorCharge', 'Precursor.Charge']
-    protein_variants = ['ProteinName', 'Protein.Names']
-    modified_peptide_variants = ['ModifiedPeptide', 'Modified.Sequence']
-
-    # Get actual column names present in the dataframe
-    decoy_col = get_matching_column(dataframe, decoy_variants)
-    qvalue_col = get_matching_column(dataframe, qvalue_variants)
-    mobility_col = get_matching_column(dataframe, mobility_variants)
-    mz_col = get_matching_column(dataframe, mz_variants)
-    charge_col = get_matching_column(dataframe, charge_variants)
-    protein_col = get_matching_column(dataframe, protein_variants)
-    modified_peptide_col = get_matching_column(dataframe, modified_peptide_variants)
-
-    # Validate required columns exist
-    if not all([decoy_col, qvalue_col]):
-        raise ValueError("Required columns missing. Need decoy and Q-value columns.")
-
+        # Initialize column mapper
+    mapper = ColumnMapper(dataframe)
+    
+    # Check required columns
+    required_columns = ['decoy', 'qvalue', 'mz', 'charge', 'protein', 'modified_peptide']
+    if require_im:
+        required_columns.append('mobility')
+    
+    mapper.validate_required_columns(required_columns)
+    
     # Filter dataframe
     filtered_dataframe = dataframe[
-        (dataframe[decoy_col] == 0) & # Remove decoy entries
-        (dataframe[qvalue_col] <= 0.01)# Filter for 1% FDR
+        (dataframe[mapper.get_column('decoy')] == 0) &
+        (dataframe[mapper.get_column('qvalue')] <= 0.01)
     ]
-
-    # Store mobility column name if it exists
-    im_col = mobility_col  # Will be None if no matching column found
     
-    if require_im and im_col is None:
-        raise Exception("Ion mobility data required but not found in DIANN library")
-
     return library_loader(
         filtered_dataframe,
         ptm_list,
-        mz=mz_col,
-        im=im_col,
-        charge=charge_col,
-        protein=protein_col,
-        modified_peptide=modified_peptide_col
+        mz=mapper.get_column('mz'),
+        im=mapper.get_column('mobility'),
+        charge=mapper.get_column('charge'),
+        protein=mapper.get_column('protein'),
+        modified_peptide=mapper.get_column('modified_peptide')
     )
 
 
