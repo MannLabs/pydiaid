@@ -901,17 +901,9 @@ def adjust_bin_boundaries(bins, phospho_enriched=False):
         start_value = bins[i][0]
         end_value = bins[i][1]
         
-        # Adjust start value (except for first bin)
-        if i == 0:
-            adjusted_start = start_value
-        else:
-            adjusted_start = find_closest_forbidden_zone(start_value, phospho_enriched)
-            
-        # Adjust end value (except for last bin)
-        if i == len(bins) - 1:
-            adjusted_end = end_value
-        else:
-            adjusted_end = find_closest_forbidden_zone(end_value, phospho_enriched)
+        # Adjust value (including first and lastbin)
+        adjusted_start = find_closest_forbidden_zone(start_value, phospho_enriched)
+        adjusted_end = find_closest_forbidden_zone(end_value, phospho_enriched)
             
         adjusted_bins.append([adjusted_start, adjusted_end])
     
