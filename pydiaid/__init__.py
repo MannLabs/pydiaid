@@ -2,7 +2,7 @@
 
 
 __project__ = "pydiaid"
-__version__ = "0.0.37"
+__version__ = "0.0.38"
 __license__ = "Apache"
 __description__ = "An open-source Python package of the AlphaPept ecosystem"
 __author__ = "Mann Labs"
