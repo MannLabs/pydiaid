@@ -31,7 +31,11 @@ def load_library(
     try:
         # Special case for DIANN single-run which needs the file path directly
         if analysis_software == 'DIANN single-run':
-            return __parse_diann_single_run(library_name, ptm_list, require_im)
+            if library_name.split(".")[-1] == "parquet":
+                analysis_software = 'DIANN library'
+            else:
+                return __parse_diann_single_run(library_name, ptm_list, require_im)
+
         
         # For all other software, load the dataframe first
         dataframe = __load_dataframe_from_file(library_name)
