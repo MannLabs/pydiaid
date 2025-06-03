@@ -373,6 +373,15 @@ def calculate_scan_area(
 
 
     return df_scan_area
+
+
+def check_slope(params_list):
+    """Fix floating-point precision errors in parameter lists"""
+    for i, params in enumerate(params_list):
+        col0, col1, col2, col3, col4 = params
+        slope = (col4 - col1) / (col3 - col0)
+        print(slope)
+        print(params)
     
 
 def generate_isolation_windows(
@@ -438,17 +447,19 @@ def generate_isolation_windows(
         "2"
     )
 
+    rounding_factor = 0
     list_method_parameters = list()
     for index in range(len(mz_start_lower_IM)):
         list_temp = [
             df_scan_area["lower_IM"].iloc[0], 
-            round(mz_start_lower_IM[index], 1), 
-            round(mz_start_lower_IM[index]+mz_width_lower_IM[index], 1),
+            np.round(mz_start_lower_IM[index], rounding_factor), 
+            np.round(mz_start_lower_IM[index]+mz_width_lower_IM[index], rounding_factor),
             df_scan_area["upper_IM"].iloc[0],
-            round(mz_start_upper_IM[index], 1)
+            np.round(mz_start_upper_IM[index], rounding_factor)
         ]
         list_method_parameters.append(list_temp)
-    list_method_parameters 
+    
+    # check_slope(list_method_parameters)
 
     df_method_parameters = pd.DataFrame(
         list_method_parameters,
