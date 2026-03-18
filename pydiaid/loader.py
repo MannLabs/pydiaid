@@ -579,9 +579,13 @@ def __parse_alphadia(
     """Filters a data frame from AlphaDIA output and parses it to unify
     the column names of the required columns.
 
+    Supports both v1 and v2+ AlphaDIA output formats.
+
     Parameters:
-    dataframe (pd.DataFrame): imported output file from AlphaDIA. 
-        File format: csv/tsv, required columns:
+    dataframe (pd.DataFrame): imported output file from AlphaDIA.
+        File format: csv/tsv, supports both old and new column naming:
+
+        V1 format (old):
         'mz_calibrated': calibrated precursor m/z
         'mobility_calibrated': calibrated ion mobility
         'charge': precursor charge state
@@ -590,38 +594,110 @@ def __parse_alphadia(
         'base_width_mobility': ion mobility peak width
         'decoy': decoy indicator (0 for targets, 1 for decoys)
         'qval': q-value for false discovery rate control
+
+        V2+ format (new):
+        'precursor.mz.observed': observed precursor m/z
+        'precursor.mobility.observed': observed ion mobility
+        'precursor.charge': precursor charge state
+        'pg.proteins': protein identifiers
+        'precursor.idx': precursor identifier
+        'precursor.mobility.fwhm': ion mobility peak width
+        'precursor.decoy': decoy indicator (0 for targets, 1 for decoys)
+        'precursor.qval': q-value for false discovery rate control
+
     ptm_list (list): a list with identifiers used for filtering a specific dataframe column.
     require_im (bool): if True, requires ion mobility data; if False, makes ion mobility optional.
 
     Returns:
     pd.DataFrame: returns a pre-filtered data frame with unified column names.
     """
-    # Check if required columns exist
-    required_cols = ['mz_calibrated', 'charge', 'proteins', 'precursor_idx', 'decoy', 'qval']
-    missing_cols = [col for col in required_cols if col not in dataframe.columns]
+    # Define column mappings for both old and new formats
+    column_mappings = {
+        'mz': {
+            'old': 'mz_calibrated',
+            'new': 'precursor.mz.observed'  # Using observed as suggested by user
+        },
+        'charge': {
+            'old': 'charge',
+            'new': 'precursor.charge'
+        },
+        'proteins': {
+            'old': 'proteins',
+            'new': 'pg.proteins'
+        },
+        'precursor_idx': {
+            'old': 'precursor_idx',
+            'new': 'precursor.idx'
+        },
+        'decoy': {
+            'old': 'decoy',
+            'new': 'precursor.decoy'
+        },
+        'qval': {
+            'old': 'qval',
+            'new': 'precursor.qval'
+        },
+        'mobility': {
+            'old': 'mobility_calibrated',
+            'new': 'precursor.mobility.observed'
+        },
+        'mobility_width': {
+            'old': 'base_width_mobility',
+            'new': 'precursor.mobility.fwhm'
+        }
+    }
+
+    # Detect format and map columns
+    detected_columns = {}
+    format_type = None
+
+    for col_type, mapping in column_mappings.items():
+        if mapping['new'] in dataframe.columns:
+            detected_columns[col_type] = mapping['new']
+            format_type = 'new'
+        elif mapping['old'] in dataframe.columns:
+            detected_columns[col_type] = mapping['old']
+            if format_type is None:
+                format_type = 'old'
+        else:
+            detected_columns[col_type] = None
+
+    # Check required columns exist
+    required_col_types = ['mz', 'charge', 'proteins', 'precursor_idx', 'decoy', 'qval']
+    missing_cols = []
+
+    for col_type in required_col_types:
+        if detected_columns[col_type] is None:
+            # Show both old and new expected names in error
+            old_name = column_mappings[col_type]['old']
+            new_name = column_mappings[col_type]['new']
+            missing_cols.append(f"{old_name} (v1) or {new_name} (v2+)")
+
     if missing_cols:
         raise Exception(f"Required columns missing from AlphaDIA output: {missing_cols}")
-    
+
     # Filter for high-quality identifications
     filtered_dataframe = dataframe[
-        (dataframe['decoy'] == 0) &  # Keep only target hits
-        (dataframe['qval'] <= 0.01)  # Filter at 1% FDR
+        (dataframe[detected_columns['decoy']] == 0) &  # Keep only target hits
+        (dataframe[detected_columns['qval']] <= 0.01)  # Filter at 1% FDR
     ]
 
-    # Check if IM columns exist
-    im_col = 'mobility_calibrated' if 'mobility_calibrated' in filtered_dataframe.columns else None
-    im_width_col = 'base_width_mobility' if 'base_width_mobility' in filtered_dataframe.columns else None
-    
-    if require_im and (im_col is None or im_width_col is None):
-        raise Exception("Ion mobility data required but not found in AlphaDIA output")
+    # Handle ion mobility columns
+    im_col = detected_columns['mobility']
+    im_width_col = detected_columns['mobility_width']
+
+    if require_im and im_col is None:
+        mobility_old = column_mappings['mobility']['old']
+        mobility_new = column_mappings['mobility']['new']
+        raise Exception(f"Ion mobility data required but not found in AlphaDIA output. Expected: {mobility_old} (v1) or {mobility_new} (v2+)")
 
     return library_loader(
         library=filtered_dataframe,
         ptm_list=ptm_list,
-        mz='mz_calibrated',
-        charge='charge',
-        protein='proteins',
-        modified_peptide='precursor_idx',
+        mz=detected_columns['mz'],
+        charge=detected_columns['charge'],
+        protein=detected_columns['proteins'],
+        modified_peptide=detected_columns['precursor_idx'],
         im=im_col,
         im_length=im_width_col
     )
