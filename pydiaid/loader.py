@@ -87,8 +87,8 @@ class ColumnMapper:
     
     # Define all possible column variants as class attributes
     COLUMN_VARIANTS = {
-        'decoy': ['decoy', 'Decoy', 'is_decoy'],
-        'qvalue': ['QValue', 'Q.Value', 'q_value', 'Q_Value'],
+        'decoy': ['decoy', 'Decoy', 'is_decoy', 'precursor.decoy'],
+        'qvalue': ['QValue', 'Q.Value', 'q_value', 'Q_Value', 'qval', 'precursor.qval'],
         'mobility': [
             'PrecursorIonMobility',
             'IonMobility',
@@ -96,11 +96,41 @@ class ColumnMapper:
             'ion_mobility',
             'IM',
             'Mobility',
-            '1/K0'
+            '1/K0',
+            'mobility_calibrated',
+            'precursor.mobility.observed',
+            'precursor.mobility.library'
         ],
-        'mz': ['PrecursorMz', 'Precursor.Mz', 'Mz', 'PrecursorMZ', 'Calibrated Observed M/Z'],
-        'charge': ['PrecursorCharge', 'Precursor.Charge', 'Charge'],
-        'protein': ['ProteinId', 'ProteinName', 'Protein.Names', 'Protein', 'Protein ID'],
+        'mobility_width': [
+            'base_width_mobility',
+            'precursor.mobility.fwhm',
+            '1/K0 length'
+        ],
+        'mz': [
+            'PrecursorMz',
+            'Precursor.Mz',
+            'Mz',
+            'PrecursorMZ',
+            'Calibrated Observed M/Z',
+            'mz_calibrated',
+            'precursor.mz.observed',
+            'precursor.mz.library'
+        ],
+        'charge': ['PrecursorCharge', 'Precursor.Charge', 'Charge', 'precursor.charge'],
+        'protein': [
+            'ProteinId',
+            'ProteinName',
+            'Protein.Names',
+            'Protein',
+            'Protein ID',
+            'proteins',
+            'pg.proteins'
+        ],
+        'precursor_idx': [
+            'precursor_idx',
+            'precursor.idx',
+            'EG.PrecursorId'
+        ],
         'modified_peptide': [
             'ModifiedPeptideSequence',
             'ModifiedPeptide',
@@ -571,6 +601,7 @@ def __parse_openswath(
     )
 
 
+
 def __parse_alphadia(
     dataframe: pd.DataFrame,
     ptm_list: list,
@@ -579,13 +610,13 @@ def __parse_alphadia(
     """Filters a data frame from AlphaDIA output and parses it to unify
     the column names of the required columns.
 
-    Supports both v1 and v2+ AlphaDIA output formats.
+    Supports both AlphaDIA version < 2.0.0 and version >= 2.0.0 output formats.
 
     Parameters:
     dataframe (pd.DataFrame): imported output file from AlphaDIA.
-        File format: csv/tsv, supports both old and new column naming:
+        File format: csv/tsv/parquet, supports both old and new column naming:
 
-        V1 format (old):
+        AlphaDIA version < 2.0.0:
         'mz_calibrated': calibrated precursor m/z
         'mobility_calibrated': calibrated ion mobility
         'charge': precursor charge state
@@ -595,7 +626,7 @@ def __parse_alphadia(
         'decoy': decoy indicator (0 for targets, 1 for decoys)
         'qval': q-value for false discovery rate control
 
-        V2+ format (new):
+        AlphaDIA version >= 2.0.0:
         'precursor.mz.observed': observed precursor m/z
         'precursor.mobility.observed': observed ion mobility
         'precursor.charge': precursor charge state
@@ -606,98 +637,73 @@ def __parse_alphadia(
         'precursor.qval': q-value for false discovery rate control
 
     ptm_list (list): a list with identifiers used for filtering a specific dataframe column.
-    require_im (bool): if True, requires ion mobility data; if False, makes ion mobility optional.
+    require_im (bool): if True, requires ion mobility data and width columns; if False, makes ion mobility optional.
 
     Returns:
     pd.DataFrame: returns a pre-filtered data frame with unified column names.
     """
-    # Define column mappings for both old and new formats
-    column_mappings = {
-        'mz': {
-            'old': 'mz_calibrated',
-            'new': 'precursor.mz.observed'  # Using observed as suggested by user
-        },
-        'charge': {
-            'old': 'charge',
-            'new': 'precursor.charge'
-        },
-        'proteins': {
-            'old': 'proteins',
-            'new': 'pg.proteins'
-        },
-        'precursor_idx': {
-            'old': 'precursor_idx',
-            'new': 'precursor.idx'
-        },
-        'decoy': {
-            'old': 'decoy',
-            'new': 'precursor.decoy'
-        },
-        'qval': {
-            'old': 'qval',
-            'new': 'precursor.qval'
-        },
-        'mobility': {
-            'old': 'mobility_calibrated',
-            'new': 'precursor.mobility.observed'
-        },
-        'mobility_width': {
-            'old': 'base_width_mobility',
-            'new': 'precursor.mobility.fwhm'
-        }
-    }
-
-    # Detect format and map columns
-    detected_columns = {}
-    format_type = None
-
-    for col_type, mapping in column_mappings.items():
-        if mapping['new'] in dataframe.columns:
-            detected_columns[col_type] = mapping['new']
-            format_type = 'new'
-        elif mapping['old'] in dataframe.columns:
-            detected_columns[col_type] = mapping['old']
-            if format_type is None:
-                format_type = 'old'
-        else:
-            detected_columns[col_type] = None
+    # Use ColumnMapper to detect and map columns
+    mapper = ColumnMapper(dataframe)
 
     # Check required columns exist
-    required_col_types = ['mz', 'charge', 'proteins', 'precursor_idx', 'decoy', 'qval']
-    missing_cols = []
+    required_col_types = ['mz', 'charge', 'protein', 'precursor_idx', 'decoy', 'qvalue']
 
-    for col_type in required_col_types:
-        if detected_columns[col_type] is None:
-            # Show both old and new expected names in error
-            old_name = column_mappings[col_type]['old']
-            new_name = column_mappings[col_type]['new']
-            missing_cols.append(f"{old_name} (v1) or {new_name} (v2+)")
+    try:
+        mapper.validate_required_columns(required_col_types)
+    except ValueError:
+        # Provide more specific error for AlphaDIA context
+        missing_cols = []
+        for col_type in required_col_types:
+            if not mapper.has_column(col_type):
+                variants = mapper.COLUMN_VARIANTS[col_type]
+                # Find AlphaDIA-specific variants for better error message
+                v1_variants = [v for v in variants if '.' not in v and 'precursor.' not in v]
+                v2_variants = [v for v in variants if 'precursor.' in v or 'pg.' in v]
 
-    if missing_cols:
-        raise Exception(f"Required columns missing from AlphaDIA output: {missing_cols}")
+                if v1_variants and v2_variants:
+                    missing_cols.append(f"{v1_variants[0]} (< v2.0.0) or {v2_variants[0]} (>= v2.0.0)")
+                else:
+                    missing_cols.append(f"any of: {', '.join(variants[:3])}")
+
+        if missing_cols:
+            missing_str = '\n  - '.join([''] + missing_cols)
+            raise Exception(f"Required columns missing from AlphaDIA output:{missing_str}")
 
     # Filter for high-quality identifications
     filtered_dataframe = dataframe[
-        (dataframe[detected_columns['decoy']] == 0) &  # Keep only target hits
-        (dataframe[detected_columns['qval']] <= 0.01)  # Filter at 1% FDR
+        (dataframe[mapper.get_column('decoy')] == 0) &  # Keep only target hits
+        (dataframe[mapper.get_column('qvalue')] <= 0.01)  # Filter at 1% FDR
     ]
 
     # Handle ion mobility columns
-    im_col = detected_columns['mobility']
-    im_width_col = detected_columns['mobility_width']
+    im_col = mapper.get_column('mobility')
+    im_width_col = mapper.get_column('mobility_width')
 
-    if require_im and im_col is None:
-        mobility_old = column_mappings['mobility']['old']
-        mobility_new = column_mappings['mobility']['new']
-        raise Exception(f"Ion mobility data required but not found in AlphaDIA output. Expected: {mobility_old} (v1) or {mobility_new} (v2+)")
+    if require_im:
+        # Check both mobility and width columns are present
+        if im_col is None:
+            variants = mapper.COLUMN_VARIANTS['mobility']
+            v1_variants = [v for v in variants if 'mobility_calibrated' in v]
+            v2_variants = [v for v in variants if 'precursor.mobility' in v]
+            raise Exception(f"Ion mobility data required but not found in AlphaDIA output. "
+                          f"Expected: {v1_variants[0] if v1_variants else variants[0]} (< v2.0.0) or "
+                          f"{v2_variants[0] if v2_variants else variants[-1]} (>= v2.0.0)")
+
+        if im_width_col is None:
+            variants = mapper.COLUMN_VARIANTS['mobility_width']
+            v1_variants = [v for v in variants if 'base_width_mobility' in v]
+            v2_variants = [v for v in variants if 'precursor.mobility.fwhm' in v]
+            raise Exception(f"Ion mobility width data required but not found in AlphaDIA output. "
+                          f"Expected: {v1_variants[0] if v1_variants else variants[0]} (< v2.0.0) or "
+                          f"{v2_variants[0] if v2_variants else variants[-1]} (>= v2.0.0)")
 
     return library_loader(
         library=filtered_dataframe,
         ptm_list=ptm_list,
-        mz=detected_columns['mz'],
-        charge=detected_columns['charge'],
-        protein=detected_columns['proteins'],
-        modified_peptide=detected_columns['precursor_idx'],
+        mz=mapper.get_column('mz'),
+        charge=mapper.get_column('charge'),
+        protein=mapper.get_column('protein'),
+        modified_peptide=mapper.get_column('precursor_idx'),
         im=im_col,
         im_length=im_width_col
     )
