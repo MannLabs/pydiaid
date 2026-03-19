@@ -87,8 +87,16 @@ class ColumnMapper:
     
     # Define all possible column variants as class attributes
     COLUMN_VARIANTS = {
-        'decoy': ['decoy', 'Decoy', 'is_decoy', 'precursor.decoy'],
-        'qvalue': ['QValue', 'Q.Value', 'q_value', 'Q_Value', 'qval', 'precursor.qval'],
+        'decoy': [
+            'decoy',  # alphadia < 2
+            'Decoy', 'is_decoy',
+            'precursor.decoy'  # alphadia >= 2
+        ],
+        'qvalue': [
+            'QValue', 'Q.Value', 'q_value', 'Q_Value',
+            'qval',  # alphadia < 2
+            'precursor.qval'  # alphadia >= 2
+        ],
         'mobility': [
             'PrecursorIonMobility',
             'IonMobility',
@@ -97,13 +105,13 @@ class ColumnMapper:
             'IM',
             'Mobility',
             '1/K0',
-            'mobility_calibrated',
-            'precursor.mobility.observed',
-            'precursor.mobility.library'
+            'mobility_calibrated',  # alphadia < 2
+            'precursor.mobility.observed',  # alphadia >= 2
+            'precursor.mobility.library'  # alphadia >= 2
         ],
         'mobility_width': [
-            'base_width_mobility',
-            'precursor.mobility.fwhm',
+            'base_width_mobility',  # alphadia < 2
+            'precursor.mobility.fwhm',  # alphadia >= 2
             '1/K0 length'
         ],
         'mz': [
@@ -112,23 +120,27 @@ class ColumnMapper:
             'Mz',
             'PrecursorMZ',
             'Calibrated Observed M/Z',
-            'mz_calibrated',
-            'precursor.mz.observed',
-            'precursor.mz.library'
+            'mz_calibrated',  # alphadia < 2
+            'precursor.mz.observed',  # alphadia >= 2 (assumption: using observed values will not change window placement much)
+            'precursor.mz.library'  # alphadia >= 2
         ],
-        'charge': ['PrecursorCharge', 'Precursor.Charge', 'Charge', 'precursor.charge'],
+        'charge': [
+            'PrecursorCharge', 'Precursor.Charge',
+            'charge',  # alphadia < 2
+            'precursor.charge'  # alphadia >= 2
+        ],
         'protein': [
             'ProteinId',
             'ProteinName',
             'Protein.Names',
             'Protein',
             'Protein ID',
-            'proteins',
-            'pg.proteins'
+            'proteins',  # alphadia < 2
+            'pg.proteins'  # alphadia >= 2
         ],
         'precursor_idx': [
-            'precursor_idx',
-            'precursor.idx',
+            'precursor_idx',  # alphadia < 2
+            'precursor.idx',  # alphadia >= 2
             'EG.PrecursorId'
         ],
         'modified_peptide': [
@@ -601,6 +613,33 @@ def __parse_openswath(
     )
 
 
+def _raise_alphadia_missing_columns_error(mapper: ColumnMapper, required_col_types: list) -> None:
+    """Generate detailed error message for missing AlphaDIA columns.
+
+    Args:
+        mapper: ColumnMapper instance with detected columns
+        required_col_types: List of required column types
+
+    Raises:
+        Exception: With detailed message showing expected column names for both v1 and v2+ formats
+    """
+    missing_cols = []
+    for col_type in required_col_types:
+        if not mapper.has_column(col_type):
+            variants = mapper.COLUMN_VARIANTS[col_type]
+            # Find AlphaDIA-specific variants for better error message
+            v1_variants = [v for v in variants if '.' not in v and 'precursor.' not in v]
+            v2_variants = [v for v in variants if 'precursor.' in v or 'pg.' in v]
+
+            if v1_variants and v2_variants:
+                missing_cols.append(f"{v1_variants[0]} (< v2.0.0) or {v2_variants[0]} (>= v2.0.0)")
+            else:
+                missing_cols.append(f"any of: {', '.join(variants[:3])}")
+
+    if missing_cols:
+        missing_str = '\n  - '.join([''] + missing_cols)
+        raise Exception(f"Required columns missing from AlphaDIA output:{missing_str}")
+
 
 def __parse_alphadia(
     dataframe: pd.DataFrame,
@@ -651,23 +690,7 @@ def __parse_alphadia(
     try:
         mapper.validate_required_columns(required_col_types)
     except ValueError:
-        # Provide more specific error for AlphaDIA context
-        missing_cols = []
-        for col_type in required_col_types:
-            if not mapper.has_column(col_type):
-                variants = mapper.COLUMN_VARIANTS[col_type]
-                # Find AlphaDIA-specific variants for better error message
-                v1_variants = [v for v in variants if '.' not in v and 'precursor.' not in v]
-                v2_variants = [v for v in variants if 'precursor.' in v or 'pg.' in v]
-
-                if v1_variants and v2_variants:
-                    missing_cols.append(f"{v1_variants[0]} (< v2.0.0) or {v2_variants[0]} (>= v2.0.0)")
-                else:
-                    missing_cols.append(f"any of: {', '.join(variants[:3])}")
-
-        if missing_cols:
-            missing_str = '\n  - '.join([''] + missing_cols)
-            raise Exception(f"Required columns missing from AlphaDIA output:{missing_str}")
+        _raise_alphadia_missing_columns_error(mapper, required_col_types)
 
     # Filter for high-quality identifications
     filtered_dataframe = dataframe[
